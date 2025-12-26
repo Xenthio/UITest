@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 
-namespace UITest.UI;
+namespace Avalazor.UI;
 
 /// <summary>
 /// Base class for UI components

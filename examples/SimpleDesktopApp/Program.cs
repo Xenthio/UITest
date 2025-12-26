@@ -1,4 +1,4 @@
-using Avalonia;
+using Avalazor.Runtime;
 using System;
 
 namespace SimpleDesktopApp;
@@ -6,11 +6,10 @@ namespace SimpleDesktopApp;
 class Program
 {
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
-
-    public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .LogToTrace();
+    public static void Main(string[] args)
+    {
+        // Run the application with MainApp as the root component
+        // No AXAML files needed - everything is Razor!
+        AvalazorApplication.Run<MainApp>(args);
+    }
 }

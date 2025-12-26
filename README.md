@@ -1,43 +1,16 @@
-# UITest - Desktop Blazor/Razor Framework
+# Avalazor - Desktop Blazor/Razor Framework
 
-A desktop implementation of a Blazor/Razor-like system for building cross-platform desktop applications (Windows, macOS, Linux) using C# and Razor syntax with SCSS styling support.
+**Avalazor** (Avalonia + Razor) is a desktop implementation of a Blazor/Razor-like system for building cross-platform desktop applications (Windows, macOS, Linux) using only C# and Razor syntax with SCSS styling support - **no AXAML required**!
 
-## Overview
+## 🎯 Key Features
 
-UITest brings the power of Razor components to desktop application development, inspired by and based on the [s&box](https://github.com/Facepunch/sbox-public) Razor system (MIT licensed). It provides:
+- **Razor-Only Development**: Write your entire UI in Razor - no AXAML, no XAML, just Razor components
+- **Automatic Transpilation**: Razor files are automatically transpiled to C# at build time  
+- **SCSS Styling**: Full SCSS support with variables, nesting, and mixins
+- **Cross-Platform**: Runs on Windows, macOS, and Linux
+- **Zero Avalonia Boilerplate**: All Avalonia setup is hidden - you only work with Razor
 
-- **Razor-to-C# Transpilation**: Write UI components in Razor syntax that get automatically transpiled to C# at build time
-- **SCSS Compilation**: Style your components using SCSS with full support for variables, nesting, and mixins
-- **Automatic Build Integration**: MSBuild tasks handle all transpilation automatically
-- **Cross-Platform**: Works on Windows, macOS, and Linux
-
-## Architecture
-
-The framework consists of several components:
-
-### Core Libraries
-
-1. **UITest.Razor** - Razor file transpilation engine
-   - Based on `Microsoft.AspNetCore.Razor.Language`
-   - Converts `.razor` files to C# code
-   - Supports folder-based namespacing
-
-2. **UITest.Scss** - SCSS compilation engine
-   - Uses `SharpScss` for SCSS-to-CSS compilation
-   - Supports imports, variables, and nesting
-   - Compiles `.scss` files to `.css` at build time
-
-3. **UITest.Core** - Core UI framework
-   - Base component classes
-   - `StyleSheetAttribute` for automatic stylesheet loading
-   - Component lifecycle management
-
-4. **UITest.Build** - MSBuild integration
-   - Automatic Razor transpilation during build
-   - Automatic SCSS compilation during build
-   - Incremental build support
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Installation
 
@@ -49,215 +22,270 @@ cd UITest
 
 2. Build the solution:
 ```bash
-dotnet build
+dotnet build Avalazor.sln
 ```
 
-3. Run the example application:
+3. Run the example:
 ```bash
 cd examples/SimpleDesktopApp
 dotnet run
 ```
 
-### Creating a New Project
+### Your First Avalazor App
 
-1. Create a new project and add references:
-```xml
-<ItemGroup>
-  <ProjectReference Include="path/to/UITest.Core/UITest.Core.csproj" />
-  <ProjectReference Include="path/to/UITest.Build/UITest.Build.csproj" />
-</ItemGroup>
+1. Create a new console project:
+```bash
+dotnet new console -n MyAvalazorApp
+cd MyAvalazorApp
 ```
 
-2. Create a Razor component (e.g., `MyComponent.razor`):
-```razor
-@using UITest.UI
-@inherits UIComponent
-@attribute [StyleSheet("MyComponent.scss")]
+2. Add Avalazor references:
+```xml
+<ItemGroup>
+  <ProjectReference Include="path/to/Avalazor.Core/Avalazor.Core.csproj" />
+  <ProjectReference Include="path/to/Avalazor.Runtime/Avalazor.Runtime.csproj" />
+  <ProjectReference Include="path/to/Avalazor.Build/Avalazor.Build.csproj" />
+</ItemGroup>
 
-<div class="my-component">
+<Import Project="path/to/Avalazor.Build/build/Avalazor.Build.targets" />
+```
+
+3. Create `MainApp.razor`:
+```razor
+@using Avalazor.UI
+@inherits UIComponent
+
+<div class="app">
+    <h1>Hello Avalazor!</h1>
+    <button @onclick="HandleClick">Clicks: @count</button>
+</div>
+
+@code {
+    private int count = 0;
+
+    private void HandleClick()
+    {
+        count++;
+    }
+}
+```
+
+4. Update `Program.cs`:
+```csharp
+using Avalazor.Runtime;
+
+AvalazorApplication.Run<MainApp>(args);
+```
+
+5. Build and run - that's it! No AXAML files needed!
+
+## 📁 Project Structure
+
+```
+MyAvalazorApp/
+├── Program.cs           # Just calls AvalazorApplication.Run<MainApp>()
+├── MainApp.razor        # Your root component
+├── MainApp.scss         # Styling for your app
+└── Components/
+    ├── Button.razor     # Reusable components
+    └── Button.scss
+```
+
+**What you DON'T need:**
+- ❌ No App.axaml
+- ❌ No App.axaml.cs
+- ❌ No MainWindow.axaml  
+- ❌ No MainWindow.axaml.cs
+- ❌ No Avalonia boilerplate
+
+## 🎨 Styling with SCSS
+
+Avalazor automatically compiles SCSS to CSS at build time:
+
+**MyComponent.scss:**
+```scss
+$primary-color: #007acc;
+
+.my-component {
+    background-color: $primary-color;
+    padding: 20px;
+
+    button {
+        color: white;
+        border: none;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+}
+```
+
+Associate the stylesheet with your component:
+```razor
+@attribute [StyleSheet("MyComponent.scss")]
+```
+
+## 🏗️ Architecture
+
+### Core Libraries
+
+1. **Avalazor.Razor** - Razor file transpilation engine
+   - Converts `.razor` files to C# code
+   - Based on AspNetCore.Razor.Language
+
+2. **Avalazor.Scss** - SCSS compilation engine  
+   - Compiles `.scss` files to CSS
+   - Supports all SCSS features
+
+3. **Avalazor.Core** - Core UI framework
+   - Base component classes
+   - StyleSheet attribute system
+
+4. **Avalazor.Runtime** - Avalonia integration (hidden from user)
+   - Handles all Avalonia bootstrapping internally
+   - Provides simple `AvalazorApplication.Run<T>()` API
+
+5. **Avalazor.Build** - MSBuild integration
+   - Automatic Razor transpilation
+   - Automatic SCSS compilation
+
+## 🔧 Build Process
+
+When you build your project:
+
+1. **Razor Transpilation**: All `.razor` files are transpiled to `.razor.g.cs` files
+2. **SCSS Compilation**: All `.scss` files are compiled to `.css` files
+3. **Compilation**: Generated C# files are compiled with your project
+4. **Output**: A single executable with all your UI code
+
+Example build output:
+```
+Avalazor: Transpiling 3 Razor file(s)...
+Successfully transpiled 3 Razor file(s)
+Avalazor: Compiling 3 SCSS file(s)...
+Successfully compiled 3 SCSS file(s)
+```
+
+## 📚 Component Examples
+
+### Interactive Component
+```razor
+@using Avalazor.UI
+@inherits UIComponent
+
+<div class="counter">
     <h2>@Title</h2>
-    <button @onclick="HandleClick">Click me!</button>
+    <button @onclick="Increment">Count: @count</button>
 </div>
 
 @code {
     [Parameter]
-    public string Title { get; set; } = "Hello World";
+    public string Title { get; set; } = "Counter";
 
-    private void HandleClick()
-    {
-        Console.WriteLine("Button clicked!");
-    }
+    private int count = 0;
+
+    private void Increment() => count++;
 }
 ```
 
-3. Create a stylesheet (e.g., `MyComponent.scss`):
-```scss
-.my-component {
-    padding: 20px;
-    background-color: #f5f5f5;
-
-    h2 {
-        color: #007acc;
-        margin-bottom: 10px;
-    }
-
-    button {
-        background-color: #007acc;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-
-        &:hover {
-            background-color: #005a9e;
-        }
-    }
-}
-```
-
-4. Build your project - the Razor file will be automatically transpiled to C# and the SCSS will be compiled to CSS.
-
-## How It Works
-
-### Razor Transpilation
-
-The transpilation process follows these steps:
-
-1. **Discovery**: The build system finds all `.razor` files in your project
-2. **Namespace Injection**: If enabled, namespaces are automatically added based on folder structure
-3. **Transpilation**: The Razor processor converts the markup and code to pure C#
-4. **Compilation**: The generated C# is compiled along with your other source files
-
-Example input (`MyComponent.razor`):
+### Component with Children
 ```razor
-@using UITest.UI
+@using Avalazor.UI
 @inherits UIComponent
 
-<div class="container">
-    <p>@Message</p>
+<div class="panel">
+    <header>@Header</header>
+    <div class="content">
+        @ChildContent
+    </div>
 </div>
 
 @code {
-    public string Message { get; set; } = "Hello!";
+    [Parameter]
+    public string Header { get; set; } = "";
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
 }
 ```
 
-Generated output (`MyComponent.razor.g.cs`):
-```csharp
-using UITest.UI;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Rendering;
+## 🆚 Comparison with Traditional Avalonia
 
-namespace YourNamespace
+| Feature | Traditional Avalonia | Avalazor |
+|---------|---------------------|----------|
+| UI Markup | AXAML | Razor |
+| Code-Behind | .axaml.cs files | Inline @code blocks |
+| Styling | XAML styles | SCSS |
+| Boilerplate | Lots (App.axaml, etc.) | None |
+| Learning Curve | XAML + C# | Just C# + Razor |
+
+## 🎯 Why Avalazor?
+
+**If you're familiar with Blazor/Razor:**
+- Use the same component model you know
+- No need to learn XAML
+- Familiar `@code` blocks and `@onclick` syntax
+
+**If you're coming from s&box:**
+- Same Razor transpilation system
+- Same SCSS workflow
+- Familiar component structure
+
+**If you want simplicity:**
+- One language (C#) for everything
+- No AXAML ceremony
+- Just write Razor and go!
+
+## 📖 Documentation
+
+### Program Entry Point
+
+The simplest possible Avalazor app:
+```csharp
+using Avalazor.Runtime;
+
+AvalazorApplication.Run<MainApp>(args);
+```
+
+That's it! Avalonia is completely hidden.
+
+### Component Lifecycle
+
+Components inherit from `UIComponent`:
+```csharp
+protected override void OnInitialized()
 {
-    public partial class MyComponent : UIComponent
-    {
-        protected override void BuildRenderTree(RenderTreeBuilder __builder)
-        {
-            // Generated rendering code...
-        }
+    // Component initialized
+}
 
-        public string Message { get; set; } = "Hello!";
-    }
+protected override int BuildHash()
+{
+    // Return hash for change detection
+    return HashCode.Combine(myState);
 }
 ```
 
-### SCSS Compilation
+## 🤝 Contributing
 
-The SCSS compilation process:
+Contributions are welcome! This project is open source and licensed under MIT.
 
-1. **Discovery**: The build system finds all `.scss` files (excluding partials starting with `_`)
-2. **Compilation**: Each SCSS file is compiled to CSS
-3. **Output**: CSS files are placed in the output directory
+## 📜 License
 
-### StyleSheet Attribute
-
-The `[StyleSheet]` attribute (inspired by s&box) allows you to associate stylesheets with components:
-
-```csharp
-@attribute [StyleSheet("MyStyles.scss")]
-@attribute [StyleSheet("themes/dark.scss")]
-```
-
-Multiple stylesheets can be specified using multiple attributes.
-
-## Examples
-
-See the `examples/SimpleDesktopApp` directory for a complete working example that demonstrates:
-
-- Razor component creation
-- SCSS styling with variables and nesting
-- Component composition
-- Build-time transpilation
-
-## Project Structure
-
-```
-UITest/
-├── src/
-│   ├── UITest.Razor/         # Razor transpilation engine
-│   ├── UITest.Scss/          # SCSS compilation engine
-│   ├── UITest.Core/          # Core UI framework
-│   └── UITest.Build/         # MSBuild tasks and targets
-├── examples/
-│   └── SimpleDesktopApp/     # Example application
-└── README.md
-```
-
-## Technical Details
-
-### Dependencies
-
-- **.NET 8.0** - Target framework
-- **Microsoft.AspNetCore.Razor.Language** - Razor parsing and code generation
-- **Microsoft.AspNetCore.Components** - Component model
-- **SharpScss** - SCSS compilation
-- **Avalonia UI** - Cross-platform UI framework (for examples)
-
-### Build Process
-
-The build process is integrated via MSBuild targets:
-
-1. `UITestTranspileRazor` - Runs before `CoreCompile` to transpile Razor files
-2. `UITestCompileScss` - Runs before `Build` to compile SCSS files
-3. `UITestCleanGenerated` - Runs before `Clean` to remove generated files
-
-Generated files are placed in `$(IntermediateOutputPath)UITest/Generated/` by default.
-
-## Comparison with s&box
-
-This framework is based on the s&box Razor system but adapted for desktop applications:
-
-| Feature | s&box | UITest |
-|---------|-------|--------|
-| Razor Transpilation | ✅ | ✅ |
-| SCSS Support | ✅ | ✅ |
-| Build Integration | ✅ | ✅ |
-| Runtime Environment | Game Engine | Desktop Apps |
-| Target Platform | Source 2 | Windows/macOS/Linux |
-| License | MIT | MIT |
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit issues and pull requests.
-
-## License
-
-MIT License - see LICENSE file for details.
+MIT License - See LICENSE file
 
 Based on the s&box Razor system by Facepunch Studios (MIT licensed):
 - https://github.com/Facepunch/sbox-public
 
-## Credits
+## 🙏 Credits
 
 - **s&box** by Facepunch Studios - Original Razor transpilation system
-- **XGUI-3** by Xenthio - Reference implementation and examples
-- **Microsoft** - AspNetCore.Razor.Language and Components libraries
-- **SharpScss** - SCSS compilation library
+- **XGUI-3** by Xenthio - Reference implementation
+- **Avalonia** - Cross-platform UI framework
+- **Microsoft** - AspNetCore.Razor.Language and Components
 
-## References
+## 🔗 References
 
 - [s&box Public Repository](https://github.com/Facepunch/sbox-public)
 - [XGUI-3](https://github.com/Xenthio/XGUI-3)
-- [XGUI-3 Test Repository](https://github.com/Xenthio/xgui-3_test)
-- [Microsoft Razor SDK](https://github.com/dotnet/razor)
+- [Avalonia UI](https://avaloniaui.net/)

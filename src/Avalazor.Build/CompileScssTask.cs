@@ -3,9 +3,9 @@ using Microsoft.Build.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using UITest.Scss;
+using Avalazor.Scss;
 
-namespace UITest.Build;
+namespace Avalazor.Build;
 
 /// <summary>
 /// MSBuild task to compile SCSS files to CSS

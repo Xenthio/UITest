@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Razor.Language;
 using System.Collections.Generic;
 
-namespace UITest.Razor;
+namespace Avalazor.Razor;
 
 /// <summary>
 /// Razor to C# transpilation processor based on s&box implementation (MIT licensed)

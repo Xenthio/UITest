@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UITest.Razor\UITest.Razor.csproj" />
-    <ProjectReference Include="..\UITest.Scss\UITest.Scss.csproj" />
+    <ProjectReference Include="..\Avalazor.Razor\Avalazor.Razor.csproj" />
+    <ProjectReference Include="..\Avalazor.Scss\Avalazor.Scss.csproj" />
   </ItemGroup>
 
   <ItemGroup>

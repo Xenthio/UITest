@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <!-- When imported directly, use relative path to bin -->
+    <AvalazorBuildTasksPath Condition="'$(AvalazorBuildTasksPath)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\net8.0\Avalazor.Build.dll</AvalazorBuildTasksPath>
+    <!-- Fallback for packaged version -->
+    <AvalazorBuildTasksPath Condition="!Exists('$(AvalazorBuildTasksPath)')">$(MSBuildThisFileDirectory)..\lib\net8.0\Avalazor.Build.dll</AvalazorBuildTasksPath>
+    <AvalazorGeneratedPath Condition="'$(AvalazorGeneratedPath)' == ''">$(IntermediateOutputPath)Avalazor\Generated\</AvalazorGeneratedPath>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+  </PropertyGroup>
+
+  <UsingTask TaskName="Avalazor.Build.TranspileRazorTask" AssemblyFile="$(AvalazorBuildTasksPath)" Condition="Exists('$(AvalazorBuildTasksPath)')" />
+  <UsingTask TaskName="Avalazor.Build.CompileScssTask" AssemblyFile="$(AvalazorBuildTasksPath)" Condition="Exists('$(AvalazorBuildTasksPath)')" />
+
+  <ItemGroup>
+    <!-- Include all .razor files -->
+    <AvalazorRazorFiles Include="**\*.razor" Exclude="$(BaseIntermediateOutputPath)**;$(BaseOutputPath)**;bin\**;obj\**" />
+    <!-- Include all .scss files -->
+    <AvalazorScssFiles Include="**\*.scss" Exclude="$(BaseIntermediateOutputPath)**;$(BaseOutputPath)**;bin\**;obj\**" />
+  </ItemGroup>
+
+  <!-- Transpile Razor files before CoreCompile -->
+  <Target Name="AvalazorTranspileRazor" BeforeTargets="CoreCompile" Inputs="@(AvalazorRazorFiles)" Outputs="$(AvalazorGeneratedPath)razor.stamp" Condition="'@(AvalazorRazorFiles)' != '' AND Exists('$(AvalazorBuildTasksPath)')">
+    <Message Importance="High" Text="Avalazor: Transpiling @(AvalazorRazorFiles->Count()) Razor file(s)..." />
+    <MakeDir Directories="$(AvalazorGeneratedPath)" />
+    
+    <TranspileRazorTask 
+      RazorFiles="@(AvalazorRazorFiles)"
+      RootNamespace="$(RootNamespace)"
+      OutputPath="$(AvalazorGeneratedPath)"
+      UseFolderNamespacing="true">
+      <Output TaskParameter="GeneratedFiles" ItemName="AvalazorGeneratedRazor" />
+    </TranspileRazorTask>
+
+    <!-- Add generated files to compilation -->
+    <ItemGroup>
+      <Compile Include="@(AvalazorGeneratedRazor)" />
+    </ItemGroup>
+
+    <Touch Files="$(AvalazorGeneratedPath)razor.stamp" AlwaysCreate="true" />
+  </Target>
+
+  <!-- Compile SCSS files before Build -->
+  <Target Name="AvalazorCompileScss" BeforeTargets="Build" Inputs="@(AvalazorScssFiles)" Outputs="$(AvalazorGeneratedPath)scss.stamp" Condition="'@(AvalazorScssFiles)' != '' AND Exists('$(AvalazorBuildTasksPath)')">
+    <Message Importance="High" Text="Avalazor: Compiling @(AvalazorScssFiles->Count()) SCSS file(s)..." />
+    <MakeDir Directories="$(AvalazorGeneratedPath)css\" />
+    
+    <CompileScssTask 
+      ScssFiles="@(AvalazorScssFiles)"
+      OutputPath="$(AvalazorGeneratedPath)css\"
+      IncludePaths="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="GeneratedFiles" ItemName="AvalazorGeneratedCss" />
+    </CompileScssTask>
+
+    <!-- Copy CSS files to output -->
+    <ItemGroup>
+      <Content Include="@(AvalazorGeneratedCss)">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <Touch Files="$(AvalazorGeneratedPath)scss.stamp" AlwaysCreate="true" />
+  </Target>
+
+  <!-- Clean generated files -->
+  <Target Name="AvalazorCleanGenerated" BeforeTargets="Clean">
+    <RemoveDir Directories="$(AvalazorGeneratedPath)" />
+  </Target>
+
+  <!-- Warning if tasks DLL not found -->
+  <Target Name="AvalazorCheckTasksExist" BeforeTargets="BeforeBuild" Condition="!Exists('$(AvalazorBuildTasksPath)')">
+    <Warning Text="Avalazor.Build.dll not found at '$(AvalazorBuildTasksPath)'. Razor transpilation and SCSS compilation will be skipped. Build Avalazor.Build project first." />
+  </Target>
+
+</Project>

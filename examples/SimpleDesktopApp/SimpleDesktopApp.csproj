@@ -3,23 +3,15 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <RootNamespace>SimpleDesktopApp</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.0.7" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.0.7" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.7" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.7" />
+    <ProjectReference Include="..\..\src\Avalazor.Core\Avalazor.Core.csproj" />
+    <ProjectReference Include="..\..\src\Avalazor.Runtime\Avalazor.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\Avalazor.Build\Avalazor.Build.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\UITest.Core\UITest.Core.csproj" />
-    <ProjectReference Include="..\..\src\UITest.Build\UITest.Build.csproj" />
-  </ItemGroup>
-
-  <!-- Import UITest build targets -->
-  <Import Project="..\..\src\UITest.Build\build\UITest.Build.targets" />
+  <!-- Import Avalazor build targets for Razor and SCSS -->
+  <Import Project="..\..\src\Avalazor.Build\build\Avalazor.Build.targets" />
 </Project>

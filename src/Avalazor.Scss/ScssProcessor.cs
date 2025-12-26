@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace UITest.Scss;
+namespace Avalazor.Scss;
 
 /// <summary>
 /// SCSS to CSS compilation processor

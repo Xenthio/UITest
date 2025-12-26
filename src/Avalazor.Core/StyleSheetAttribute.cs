@@ -1,6 +1,6 @@
 using System;
 
-namespace UITest.UI;
+namespace Avalazor.UI;
 
 /// <summary>
 /// Attribute to automatically apply a stylesheet to a component.

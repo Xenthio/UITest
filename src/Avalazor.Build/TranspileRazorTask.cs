@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UITest.Razor;
+using Avalazor.Razor;
 
-namespace UITest.Build;
+namespace Avalazor.Build;
 
 /// <summary>
 /// MSBuild task to transpile Razor files to C#
