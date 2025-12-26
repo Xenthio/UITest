@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <UITestBuildTasksPath Condition="'$(UITestBuildTasksPath)' == ''">$(MSBuildThisFileDirectory)..\lib\net8.0\UITest.Build.dll</UITestBuildTasksPath>
+    <UITestGeneratedPath Condition="'$(UITestGeneratedPath)' == ''">$(IntermediateOutputPath)UITest\Generated\</UITestGeneratedPath>
+  </PropertyGroup>
+
+  <UsingTask TaskName="UITest.Build.TranspileRazorTask" AssemblyFile="$(UITestBuildTasksPath)" />
+  <UsingTask TaskName="UITest.Build.CompileScssTask" AssemblyFile="$(UITestBuildTasksPath)" />
+
+  <ItemGroup>
+    <!-- Include all .razor files -->
+    <UITestRazorFiles Include="**\*.razor" Exclude="$(BaseIntermediateOutputPath)**;$(BaseOutputPath)**;bin\**;obj\**" />
+    <!-- Include all .scss files -->
+    <UITestScssFiles Include="**\*.scss" Exclude="$(BaseIntermediateOutputPath)**;$(BaseOutputPath)**;bin\**;obj\**" />
+  </ItemGroup>
+
+  <!-- Transpile Razor files before CoreCompile -->
+  <Target Name="UITestTranspileRazor" BeforeTargets="CoreCompile" Inputs="@(UITestRazorFiles)" Outputs="$(UITestGeneratedPath)razor.stamp">
+    <MakeDir Directories="$(UITestGeneratedPath)" />
+    
+    <TranspileRazorTask 
+      RazorFiles="@(UITestRazorFiles)"
+      RootNamespace="$(RootNamespace)"
+      OutputPath="$(UITestGeneratedPath)"
+      UseFolderNamespacing="true">
+      <Output TaskParameter="GeneratedFiles" ItemName="UITestGeneratedRazor" />
+    </TranspileRazorTask>
+
+    <!-- Add generated files to compilation -->
+    <ItemGroup>
+      <Compile Include="@(UITestGeneratedRazor)" />
+    </ItemGroup>
+
+    <Touch Files="$(UITestGeneratedPath)razor.stamp" AlwaysCreate="true" />
+  </Target>
+
+  <!-- Compile SCSS files before Build -->
+  <Target Name="UITestCompileScss" BeforeTargets="Build" Inputs="@(UITestScssFiles)" Outputs="$(UITestGeneratedPath)scss.stamp" Condition="'@(UITestScssFiles)' != ''">
+    <MakeDir Directories="$(UITestGeneratedPath)css\" />
+    
+    <CompileScssTask 
+      ScssFiles="@(UITestScssFiles)"
+      OutputPath="$(UITestGeneratedPath)css\"
+      IncludePaths="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="GeneratedFiles" ItemName="UITestGeneratedCss" />
+    </CompileScssTask>
+
+    <!-- Copy CSS files to output -->
+    <ItemGroup>
+      <Content Include="@(UITestGeneratedCss)">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <Touch Files="$(UITestGeneratedPath)scss.stamp" AlwaysCreate="true" />
+  </Target>
+
+  <!-- Clean generated files -->
+  <Target Name="UITestCleanGenerated" BeforeTargets="Clean">
+    <RemoveDir Directories="$(UITestGeneratedPath)" />
+  </Target>
+
+</Project>

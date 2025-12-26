@@ -1,0 +1,27 @@
+@using UITest.UI
+@inherits UIComponent
+@attribute [StyleSheet("ExampleComponent.scss")]
+
+<div class="example-component">
+    <h2>@Title</h2>
+    <p>This is an example Razor component that gets transpiled to C#.</p>
+    <button @onclick="HandleClick">Click Count: @clickCount</button>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Example Component";
+
+    private int clickCount = 0;
+
+    private void HandleClick()
+    {
+        clickCount++;
+        StateHasChanged();
+    }
+
+    protected override int BuildHash()
+    {
+        return HashCode.Combine(clickCount);
+    }
+}

@@ -1,0 +1,35 @@
+.example-component {
+    padding: 20px;
+    border: 2px solid #007acc;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+
+    h2 {
+        color: #007acc;
+        margin-bottom: 10px;
+    }
+
+    p {
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    button {
+        background-color: #007acc;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+
+        &:hover {
+            background-color: #005a9e;
+        }
+
+        &:active {
+            background-color: #004578;
+        }
+    }
+}
