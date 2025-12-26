@@ -2,12 +2,16 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <UITestBuildTasksPath Condition="'$(UITestBuildTasksPath)' == ''">$(MSBuildThisFileDirectory)..\lib\net8.0\UITest.Build.dll</UITestBuildTasksPath>
+    <!-- When imported directly, use relative path to bin -->
+    <UITestBuildTasksPath Condition="'$(UITestBuildTasksPath)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\net8.0\UITest.Build.dll</UITestBuildTasksPath>
+    <!-- Fallback for packaged version -->
+    <UITestBuildTasksPath Condition="!Exists('$(UITestBuildTasksPath)')">$(MSBuildThisFileDirectory)..\lib\net8.0\UITest.Build.dll</UITestBuildTasksPath>
     <UITestGeneratedPath Condition="'$(UITestGeneratedPath)' == ''">$(IntermediateOutputPath)UITest\Generated\</UITestGeneratedPath>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
   </PropertyGroup>
 
-  <UsingTask TaskName="UITest.Build.TranspileRazorTask" AssemblyFile="$(UITestBuildTasksPath)" />
-  <UsingTask TaskName="UITest.Build.CompileScssTask" AssemblyFile="$(UITestBuildTasksPath)" />
+  <UsingTask TaskName="UITest.Build.TranspileRazorTask" AssemblyFile="$(UITestBuildTasksPath)" Condition="Exists('$(UITestBuildTasksPath)')" />
+  <UsingTask TaskName="UITest.Build.CompileScssTask" AssemblyFile="$(UITestBuildTasksPath)" Condition="Exists('$(UITestBuildTasksPath)')" />
 
   <ItemGroup>
     <!-- Include all .razor files -->
@@ -17,7 +21,8 @@
   </ItemGroup>
 
   <!-- Transpile Razor files before CoreCompile -->
-  <Target Name="UITestTranspileRazor" BeforeTargets="CoreCompile" Inputs="@(UITestRazorFiles)" Outputs="$(UITestGeneratedPath)razor.stamp">
+  <Target Name="UITestTranspileRazor" BeforeTargets="CoreCompile" Inputs="@(UITestRazorFiles)" Outputs="$(UITestGeneratedPath)razor.stamp" Condition="'@(UITestRazorFiles)' != '' AND Exists('$(UITestBuildTasksPath)')">
+    <Message Importance="High" Text="UITest: Transpiling @(UITestRazorFiles->Count()) Razor file(s)..." />
     <MakeDir Directories="$(UITestGeneratedPath)" />
     
     <TranspileRazorTask 
@@ -37,7 +42,8 @@
   </Target>
 
   <!-- Compile SCSS files before Build -->
-  <Target Name="UITestCompileScss" BeforeTargets="Build" Inputs="@(UITestScssFiles)" Outputs="$(UITestGeneratedPath)scss.stamp" Condition="'@(UITestScssFiles)' != ''">
+  <Target Name="UITestCompileScss" BeforeTargets="Build" Inputs="@(UITestScssFiles)" Outputs="$(UITestGeneratedPath)scss.stamp" Condition="'@(UITestScssFiles)' != '' AND Exists('$(UITestBuildTasksPath)')">
+    <Message Importance="High" Text="UITest: Compiling @(UITestScssFiles->Count()) SCSS file(s)..." />
     <MakeDir Directories="$(UITestGeneratedPath)css\" />
     
     <CompileScssTask 
@@ -60,6 +66,11 @@
   <!-- Clean generated files -->
   <Target Name="UITestCleanGenerated" BeforeTargets="Clean">
     <RemoveDir Directories="$(UITestGeneratedPath)" />
+  </Target>
+
+  <!-- Warning if tasks DLL not found -->
+  <Target Name="UITestCheckTasksExist" BeforeTargets="BeforeBuild" Condition="!Exists('$(UITestBuildTasksPath)')">
+    <Warning Text="UITest.Build.dll not found at '$(UITestBuildTasksPath)'. Razor transpilation and SCSS compilation will be skipped. Build UITest.Build project first." />
   </Target>
 
 </Project>
