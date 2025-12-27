@@ -51,6 +51,16 @@ public partial class Panel
     public SKRect ComputedRect { get; internal set; }
 
     /// <summary>
+    /// Computed style after CSS processing
+    /// </summary>
+    public ComputedStyle? ComputedStyle => _computedStyle;
+
+    /// <summary>
+    /// Layout node for Yoga flexbox layout
+    /// </summary>
+    public LayoutNode? LayoutNode => _layoutNode;
+
+    /// <summary>
     /// Whether this panel is visible
     /// </summary>
     public bool IsVisible { get; set; } = true;
@@ -160,6 +170,21 @@ public partial class Panel
     /// Check if panel has a CSS class
     /// </summary>
     public bool HasClass(string className) => Classes.Contains(className);
+
+    /// <summary>
+    /// Compute CSS styles for this panel
+    /// </summary>
+    public void ComputeStyle(StyleEngine engine)
+    {
+        _computedStyle = engine.ComputeStyle(this);
+        _needsStyleCompute = false;
+
+        // Ensure layout node exists
+        if (_layoutNode == null)
+        {
+            _layoutNode = new LayoutNode();
+        }
+    }
 
     /// <summary>
     /// Called when panel needs to paint itself
