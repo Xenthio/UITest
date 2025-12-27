@@ -18,6 +18,7 @@
     <!-- Windowing -->
     <PackageReference Include="Silk.NET.Windowing" Version="2.21.0" />
     <PackageReference Include="Silk.NET.Input" Version="2.21.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.21.0" />
     
     <!-- Blazor components for Razor support -->
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.0" />
