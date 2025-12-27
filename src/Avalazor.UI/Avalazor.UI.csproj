@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core rendering dependencies -->
+    <PackageReference Include="SkiaSharp" Version="2.88.7" />
+    <PackageReference Include="HarfBuzzSharp" Version="7.3.0.3" />
+    
+    <!-- CSS parsing -->
+    <PackageReference Include="ExCSS" Version="4.2.3" />
+    
+    <!-- Flexbox layout engine (Facebook Yoga) -->
+    <PackageReference Include="YogaSharp" Version="1.0.0" />
+    
+    <!-- Windowing -->
+    <PackageReference Include="Silk.NET.Windowing" Version="2.21.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.21.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Avalazor.Core\Avalazor.Core.csproj" />
+  </ItemGroup>
+
+</Project>
