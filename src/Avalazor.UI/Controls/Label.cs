@@ -52,11 +52,16 @@ public class Label : Panel
                 Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal)
             };
 
-            // Draw text with proper positioning
-            var metrics = paint.FontMetrics;
-            var y = -metrics.Ascent + 10; // Offset from top with padding
+            // Draw text positioned within this panel's bounds (0,0 to Width,Height)
+            // Use padding from computed style if available
+            var paddingLeft = ComputedStyle?.PaddingLeft ?? 0;
+            var paddingTop = ComputedStyle?.PaddingTop ?? 0;
             
-            canvas.DrawText(Text, 10, y, paint);
+            var metrics = paint.FontMetrics;
+            var x = paddingLeft;
+            var y = paddingTop - metrics.Ascent; // Position baseline
+            
+            canvas.DrawText(Text, x, y, paint);
         }
     }
 }
