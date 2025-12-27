@@ -24,17 +24,29 @@ public static class AvalazorApplication
     /// <summary>
     /// Run a Razor component as the root of the application
     /// </summary>
-    public static async void RunComponent<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : IComponent
+    public static void RunComponent<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : IComponent
     {
-        // Set up DI for Blazor components
-        var services = new ServiceCollection();
-        services.AddLogging();
-        var serviceProvider = services.BuildServiceProvider();
+        try
+        {
+            // Set up DI for Blazor components
+            var services = new ServiceCollection();
+            services.AddLogging();
+            var serviceProvider = services.BuildServiceProvider();
 
-        // Create renderer and render the component
-        var renderer = new RazorRenderer(serviceProvider);
-        var rootPanel = await renderer.RenderComponent<T>();
+            // Create renderer and render the component
+            var renderer = new RazorRenderer(serviceProvider);
+            var rootPanel = renderer.RenderComponent<T>().GetAwaiter().GetResult();
 
-        Run(rootPanel, width, height, title);
+            Console.WriteLine($"Root panel created: {rootPanel != null}");
+            Console.WriteLine($"Root panel type: {rootPanel?.GetType().Name}");
+            Console.WriteLine($"Root panel children: {rootPanel?.Children.Count ?? 0}");
+
+            Run(rootPanel, width, height, title);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in RunComponent: {ex}");
+            throw;
+        }
     }
 }
