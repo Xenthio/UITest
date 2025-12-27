@@ -96,6 +96,12 @@ public class TranspileRazorTask : Task
                 catch (Exception ex)
                 {
                     Log.LogError($"Error transpiling {razorFile.ItemSpec}: {ex.Message}");
+                    Log.LogError($"Stack trace: {ex.StackTrace}");
+                    if (ex.InnerException != null)
+                    {
+                        Log.LogError($"Inner exception: {ex.InnerException.Message}");
+                        Log.LogError($"Inner stack trace: {ex.InnerException.StackTrace}");
+                    }
                     return false;
                 }
             }

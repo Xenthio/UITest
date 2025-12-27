@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Razor.Language;
+using Microsoft.AspNetCore.Razor.Language.Components;
 using System.Collections.Generic;
 
 namespace Avalazor.Razor;
@@ -19,6 +20,13 @@ public static class RazorProcessor
     /// <returns>Generated C# code</returns>
     public static string GenerateFromSource(string text, string filename, string? rootNamespace = null, bool useFolderNamespacing = true)
     {
+        // Get the class name from the file name
+        var className = System.IO.Path.GetFileNameWithoutExtension(filename);
+        if (className.EndsWith(".razor", System.StringComparison.OrdinalIgnoreCase))
+        {
+            className = className.Substring(0, className.Length - 6);
+        }
+
         // If a root namespace is provided and the file doesn't have a namespace, inject one
         if (useFolderNamespacing)
         {
@@ -32,8 +40,49 @@ public static class RazorProcessor
         code.SetCodeGenerationOptions(RazorCodeGenerationOptions.Create(o => { }));
 
         RazorCSharpDocument document = code.GetCSharpDocument();
+        
+        // Post-process to fix the namespace and class name
+        var generatedCode = document.GeneratedCode;
+        var targetNamespace = ExtractNamespace(text);
+        generatedCode = FixNamespaceAndClassName(generatedCode, targetNamespace, className);
 
-        return document.GeneratedCode;
+        return generatedCode;
+    }
+
+    private static string ExtractNamespace(string text)
+    {
+        // Extract namespace from @namespace directive
+        var lines = text.Split(new[] { '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in lines)
+        {
+            var trimmedLine = line.Trim();
+            if (trimmedLine.StartsWith("@namespace "))
+            {
+                return trimmedLine.Substring("@namespace ".Length).Trim();
+            }
+        }
+        return "__GeneratedComponent";
+    }
+
+    private static string FixNamespaceAndClassName(string generatedCode, string targetNamespace, string expectedClassName)
+    {
+        // Replace the auto-generated namespace with the target namespace
+        // Pattern: namespace __GeneratedComponent
+        generatedCode = System.Text.RegularExpressions.Regex.Replace(
+            generatedCode,
+            @"namespace __GeneratedComponent\b",
+            $"namespace {targetNamespace}"
+        );
+        
+        // Replace the auto-generated class name pattern with the expected class name
+        // The pattern is: public partial class AspNetCore_[hash] : 
+        generatedCode = System.Text.RegularExpressions.Regex.Replace(
+            generatedCode, 
+            @"public partial class AspNetCore_[a-f0-9]+ :",
+            $"public partial class {expectedClassName} :"
+        );
+        
+        return generatedCode;
     }
 
     private static string AddNamespace(string text, string filename, string? rootNamespace)
