@@ -155,17 +155,45 @@ public class AvalazorWindow : IDisposable
     private void PerformLayout(Panel panel, float width, float height)
     {
         // Simple layout algorithm (Yoga integration will be added later)
-        // For now, just set the panel to fill available space
+        // Set root panel to fill available space
         panel.ComputedRect = new SKRect(0, 0, width, height);
 
-        // Layout children in a simple vertical stack
-        float y = 0;
+        // Layout children recursively
+        LayoutChildren(panel, width);
+    }
+    
+    private float LayoutChildren(Panel panel, float availableWidth)
+    {
+        float y = panel.ComputedStyle?.PaddingTop ?? 0;
+        float x = panel.ComputedStyle?.PaddingLeft ?? 0;
+        float contentWidth = availableWidth - (panel.ComputedStyle?.PaddingLeft ?? 0) - (panel.ComputedStyle?.PaddingRight ?? 0);
+        
         foreach (var child in panel.Children)
         {
-            var childHeight = 50; // Default height for now
-            child.ComputedRect = new SKRect(0, y, width, y + childHeight);
-            y += childHeight;
+            // Get style-based dimensions
+            var style = child.ComputedStyle;
+            var childHeight = style?.Height ?? 30; // Auto height
+            var childWidth = style?.Width ?? contentWidth;
+            
+            // Add margin
+            y += style?.MarginTop ?? 0;
+            
+            // Position the child
+            child.ComputedRect = new SKRect(x, y, x + childWidth, y + childHeight);
+            
+            // Layout child's children
+            if (child.Children.Count > 0)
+            {
+                var actualHeight = LayoutChildren(child, childWidth);
+                // Update height based on content
+                child.ComputedRect = new SKRect(x, y, x + childWidth, y + Math.Max(childHeight, actualHeight));
+            }
+            
+            // Move to next position
+            y += child.ComputedRect.Height + (style?.MarginBottom ?? 0);
         }
+        
+        return y + (panel.ComputedStyle?.PaddingBottom ?? 0);
     }
 
 

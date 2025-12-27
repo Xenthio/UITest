@@ -38,14 +38,23 @@ public class Label : Panel
 
         if (!string.IsNullOrEmpty(Text))
         {
+            // Use computed style color if available, otherwise black
+            var textColor = ComputedStyle?.Color ?? SKColors.Black;
+            var fontSize = ComputedStyle?.FontSize ?? 14;
+            
             using var paint = new SKPaint
             {
-                Color = SKColors.Black,
-                TextSize = 14,
-                IsAntialias = true
+                Color = textColor,
+                TextSize = fontSize,
+                IsAntialias = true,
+                SubpixelText = true
             };
 
-            canvas.DrawText(Text, 10, 20, paint);
+            // Draw text with proper positioning
+            var metrics = paint.FontMetrics;
+            var y = -metrics.Ascent + 10; // Offset from top with padding
+            
+            canvas.DrawText(Text, 10, y, paint);
         }
     }
 }

@@ -88,6 +88,9 @@ public class RazorRenderer : Renderer
     private Panel ProcessFrames(ArrayRange<RenderTreeFrame> frames, int start, int count)
     {
         var rootPanel = new Panel();
+        
+        // Apply default styling to make panels visible
+        rootPanel.Style = "background-color: white; padding: 10px;";
 
         for (int i = start; i < start + count; i++)
         {
@@ -178,14 +181,26 @@ public class RazorRenderer : Renderer
 
     private Panel CreatePanelForElement(string elementName)
     {
-        return elementName.ToLower() switch
+        Panel panel = elementName.ToLower() switch
         {
-            "div" => new Panel(),
-            "span" => new Panel(),
+            "div" => new Panel { Tag = "div" },
+            "span" => new Panel { Tag = "span" },
+            "header" => new Panel { Tag = "header", Style = "background-color: #4CAF50; padding: 20px; color: white;" },
+            "main" => new Panel { Tag = "main", Style = "padding: 20px;" },
+            "footer" => new Panel { Tag = "footer", Style = "background-color: #333; color: white; padding: 10px;" },
+            "section" => new Panel { Tag = "section", Style = "margin: 10px 0; padding: 10px; background-color: #f5f5f5;" },
+            "h1" => new Label { Tag = "h1", Style = "font-size: 24px; font-weight: bold; margin: 10px 0;" },
+            "h2" => new Label { Tag = "h2", Style = "font-size: 20px; font-weight: bold; margin: 8px 0;" },
+            "p" => new Label { Tag = "p", Style = "margin: 5px 0;" },
+            "ul" => new Panel { Tag = "ul", Style = "margin: 5px 0; padding-left: 20px;" },
+            "li" => new Label { Tag = "li", Style = "margin: 3px 0;" },
+            "strong" => new Label { Tag = "strong", Style = "font-weight: bold;" },
             "label" => new Label(),
-            "button" => new Panel(), // Future: Button control
+            "button" => new Panel { Tag = "button" }, // Future: Button control
             _ => new Panel()
         };
+        
+        return panel;
     }
 
     private void ProcessAttribute(Panel panel, RenderTreeFrame frame)
