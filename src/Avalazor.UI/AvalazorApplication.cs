@@ -40,6 +40,11 @@ public static class AvalazorApplication
             Console.WriteLine($"Root panel created: {rootPanel != null}");
             Console.WriteLine($"Root panel type: {rootPanel?.GetType().Name}");
             Console.WriteLine($"Root panel children: {rootPanel?.Children.Count ?? 0}");
+            
+            if (rootPanel != null)
+            {
+                PrintPanelTree(rootPanel, 0);
+            }
 
             if (rootPanel == null)
             {
@@ -52,6 +57,17 @@ public static class AvalazorApplication
         {
             Console.WriteLine($"Error in RunComponent: {ex}");
             throw;
+        }
+    }
+    
+    private static void PrintPanelTree(Panel panel, int depth)
+    {
+        var indent = new string(' ', depth * 2);
+        var text = panel is Label label ? $" Text='{label.Text}'" : "";
+        Console.WriteLine($"{indent}{panel.GetType().Name} (Tag={panel.Tag}, Children={panel.Children.Count}){text}");
+        foreach (var child in panel.Children)
+        {
+            PrintPanelTree(child, depth + 1);
         }
     }
 }
