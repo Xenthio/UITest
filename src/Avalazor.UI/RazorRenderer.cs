@@ -104,11 +104,15 @@ public class RazorRenderer : Renderer
                     break;
 
                 case RenderTreeFrameType.Text:
-                    var textPanel = new Label 
-                    { 
-                        Text = frame.TextContent 
-                    };
-                    rootPanel.AddChild(textPanel);
+                    if (!string.IsNullOrWhiteSpace(frame.TextContent))
+                    {
+                        var textPanel = new Label 
+                        { 
+                            Text = frame.TextContent.Trim()
+                        };
+                        Console.WriteLine($"Adding text: '{textPanel.Text}'");
+                        rootPanel.AddChild(textPanel);
+                    }
                     break;
 
                 case RenderTreeFrameType.Component:
@@ -123,7 +127,10 @@ public class RazorRenderer : Renderer
     private Panel ProcessElement(ArrayRange<RenderTreeFrame> frames, ref int index)
     {
         var frame = frames.Array[index];
-        var panel = CreatePanelForElement(frame.ElementName);
+        var elementName = frame.ElementName;
+        var panel = CreatePanelForElement(elementName);
+        
+        Console.WriteLine($"Processing element: {elementName}");
 
         // Process attributes
         index++;
@@ -142,37 +149,54 @@ public class RazorRenderer : Renderer
             }
         }
 
-        // Process children (content until we reach the matching close tag)
-        var depth = 1;
+        // Process children - look for text content and nested elements
         var childStart = index;
+        var childCount = 0;
         
-        while (index < frames.Count && depth > 0)
+        // Scan ahead to find the subtree size
+        while (index < frames.Count)
         {
             var current = frames.Array[index];
             
-            if (current.FrameType == RenderTreeFrameType.Element)
+            // Check if we're at the end of this element
+            if (index > childStart && current.FrameType == RenderTreeFrameType.Element && current.ElementSubtreeLength == 0)
             {
-                depth++;
-            }
-            else if (current.FrameType == RenderTreeFrameType.ElementReferenceCapture)
-            {
-                depth--;
-                if (depth == 0) break;
+                // This might be a sibling element
+                break;
             }
             
-            index++;
-        }
-
-        // Process child content
-        if (index > childStart)
-        {
-            var childPanel = ProcessFrames(frames, childStart, index - childStart);
-            if (childPanel.Children.Count > 0)
+            if (current.FrameType == RenderTreeFrameType.Text)
             {
-                foreach (var child in childPanel.Children)
+                // Add text directly to label elements
+                if (panel is Label label && !string.IsNullOrWhiteSpace(current.TextContent))
                 {
-                    panel.AddChild(child);
+                    label.Text = current.TextContent.Trim();
+                    Console.WriteLine($"Set label text: '{label.Text}'");
                 }
+                else if (!string.IsNullOrWhiteSpace(current.TextContent))
+                {
+                    var textLabel = new Label { Text = current.TextContent.Trim() };
+                    panel.AddChild(textLabel);
+                    Console.WriteLine($"Added text child: '{textLabel.Text}'");
+                }
+                index++;
+                childCount++;
+            }
+            else if (current.FrameType == RenderTreeFrameType.Element)
+            {
+                var childPanel = ProcessElement(frames, ref index);
+                panel.AddChild(childPanel);
+                childCount++;
+            }
+            else
+            {
+                index++;
+            }
+            
+            // Check if we've processed all children based on subtree length
+            if (childCount > 0 && index >= childStart + frame.ElementSubtreeLength - 1)
+            {
+                break;
             }
         }
 
