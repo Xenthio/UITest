@@ -3,8 +3,31 @@ using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.RenderTree;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Avalazor.UI;
+
+/// <summary>
+/// Simple dispatcher that doesn't enforce thread affinity
+/// </summary>
+internal class SimpleDispatcher : Dispatcher
+{
+    public override bool CheckAccess() => true;
+
+    public override Task InvokeAsync(Action workItem)
+    {
+        workItem();
+        return Task.CompletedTask;
+    }
+
+    public override Task InvokeAsync(Func<Task> workItem) => workItem();
+
+    public override Task<TResult> InvokeAsync<TResult>(Func<TResult> workItem) =>
+        Task.FromResult(workItem());
+
+    public override Task<TResult> InvokeAsync<TResult>(Func<Task<TResult>> workItem) =>
+        workItem();
+}
 
 /// <summary>
 /// Connects Razor component output to Panel tree
@@ -14,12 +37,13 @@ public class RazorRenderer : Renderer
 {
     private Panel? _rootPanel;
     private readonly Dictionary<int, Panel> _componentToPanelMap = new();
+    private readonly SimpleDispatcher _dispatcher = new();
 
     public RazorRenderer(IServiceProvider serviceProvider) : base(serviceProvider, new NullLoggerFactory())
     {
     }
 
-    public override Dispatcher Dispatcher => Dispatcher.CreateDefault();
+    public override Dispatcher Dispatcher => _dispatcher;
 
     public async Task<Panel> RenderComponent<T>() where T : IComponent
     {

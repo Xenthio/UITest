@@ -33,13 +33,18 @@ public static class AvalazorApplication
             services.AddLogging();
             var serviceProvider = services.BuildServiceProvider();
 
-            // Create renderer and render the component
+            // Create renderer and render the component directly
             var renderer = new RazorRenderer(serviceProvider);
             var rootPanel = renderer.RenderComponent<T>().GetAwaiter().GetResult();
 
             Console.WriteLine($"Root panel created: {rootPanel != null}");
             Console.WriteLine($"Root panel type: {rootPanel?.GetType().Name}");
             Console.WriteLine($"Root panel children: {rootPanel?.Children.Count ?? 0}");
+
+            if (rootPanel == null)
+            {
+                throw new InvalidOperationException("Failed to create root panel from component");
+            }
 
             Run(rootPanel, width, height, title);
         }
