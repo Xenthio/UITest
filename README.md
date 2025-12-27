@@ -7,6 +7,7 @@
 ## 🎯 Key Features
 
 - **Razor-Only Development**: Write your entire UI in Razor - no AXAML, no XAML, just Razor components
+- **Full IntelliSense Support**: Complete Razor IntelliSense in Visual Studio (component autocomplete, parameters, directives)
 - **Automatic Transpilation**: Razor files are automatically transpiled to C# at build time  
 - **SCSS Styling**: Full SCSS support with variables, nesting, and mixins
 - **XGUI Theme System**: Complete themes ported from XGUI-3 - use them as-is or create your own
@@ -188,7 +189,8 @@ See `themes/XGUI/README.md` for detailed theme documentation.
 
 1. **Avalazor.Razor** - Razor file transpilation engine
    - Converts `.razor` files to C# code
-   - Based on AspNetCore.Razor.Language
+   - **Embeds Microsoft.AspNetCore.Razor.Language from s&box for full IntelliSense**
+   - Provides component autocomplete, parameter validation, and directive support
 
 2. **Avalazor.Scss** - SCSS compilation engine  
    - Compiles `.scss` files to CSS
@@ -265,6 +267,24 @@ Successfully compiled 3 SCSS file(s)
     public RenderFragment? ChildContent { get; set; }
 }
 ```
+
+## 💡 IntelliSense & IDE Support
+
+Avalazor provides **full IntelliSense support** for Razor files in Visual Studio and compatible IDEs by embedding s&box's `Microsoft.AspNetCore.Razor.Language` implementation.
+
+**What Works:**
+- ✅ **Component Autocomplete** - IntelliSense for custom Razor components
+- ✅ **Parameter IntelliSense** - Autocomplete and validation for component parameters
+- ✅ **Directive Support** - Full support for `@using`, `@namespace`, `@inherits`, etc.
+- ✅ **C# IntelliSense in @code blocks** - Full C# language support
+- ✅ **Syntax Validation** - Real-time error checking in Razor files
+- ✅ **Go to Definition** - Navigate to component definitions
+
+**No Configuration Required:**
+Simply reference `Avalazor.Razor` and IntelliSense works automatically. No need for special project SDKs or configuration files.
+
+**Credit:**
+This IntelliSense implementation is ported from [s&box](https://github.com/Facepunch/sbox-public) (MIT licensed), which discovered that embedding the Razor Language Server components was necessary for full IDE support.
 
 ## 🆚 Comparison with Traditional Avalonia
 
