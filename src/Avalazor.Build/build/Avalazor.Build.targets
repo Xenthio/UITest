@@ -20,8 +20,8 @@
     <AvalazorScssFiles Include="**\*.scss" Exclude="$(BaseIntermediateOutputPath)**;$(BaseOutputPath)**;bin\**;obj\**" />
   </ItemGroup>
 
-  <!-- Transpile Razor files before CoreCompile -->
-  <Target Name="AvalazorTranspileRazor" BeforeTargets="CoreCompile" Inputs="@(AvalazorRazorFiles)" Outputs="$(AvalazorGeneratedPath)razor.stamp" Condition="'@(AvalazorRazorFiles)' != '' AND Exists('$(AvalazorBuildTasksPath)')">
+  <!-- Transpile Razor files before BeforeCompile (earlier than CoreCompile) -->
+  <Target Name="AvalazorTranspileRazor" BeforeTargets="BeforeCompile;ResolveReferences" Inputs="@(AvalazorRazorFiles)" Outputs="$(AvalazorGeneratedPath)razor.stamp" Condition="'@(AvalazorRazorFiles)' != '' AND Exists('$(AvalazorBuildTasksPath)')">
     <Message Importance="High" Text="Avalazor: Transpiling @(AvalazorRazorFiles->Count()) Razor file(s)..." />
     <MakeDir Directories="$(AvalazorGeneratedPath)" />
     
