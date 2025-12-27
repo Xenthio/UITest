@@ -30,12 +30,14 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Copy DLL (check multiple possible locations)
+# Copy DLL (check multiple possible locations including bin directory)
 Write-Host "Copying yoga.dll..." -ForegroundColor Yellow
 $dllLocations = @(
     "Release\yoga.dll",
     "yoga\Release\yoga.dll",
-    "lib\Release\yoga.dll"
+    "lib\Release\yoga.dll",
+    "bin\Release\yoga.dll",
+    "yoga\bin\Release\yoga.dll"
 )
 
 $copied = $false
@@ -56,7 +58,37 @@ if (-not $copied) {
     }
     Write-Host "Build directory contents:" -ForegroundColor Yellow
     Get-ChildItem -Recurse -Filter "*.dll" | ForEach-Object { Write-Host "  Found: $($_.FullName)" -ForegroundColor Cyan }
-    exit 1
+    Write-Host "" -ForegroundColor Yellow
+    Write-Host "Build directory .lib files:" -ForegroundColor Yellow
+    Get-ChildItem -Recurse -Filter "*.lib" | ForEach-Object { Write-Host "  Found: $($_.FullName)" -ForegroundColor Cyan }
+    Write-Host "" -ForegroundColor Yellow
+    Write-Host "NOTE: If only yogacore.lib exists, the shared library build failed." -ForegroundColor Red
+    Write-Host "This may be due to Yoga v3.1.0 not supporting BUILD_SHARED_LIBS properly." -ForegroundColor Red
+    Write-Host "Trying alternative approach: Building all targets to generate DLL..." -ForegroundColor Yellow
+    
+    # Try building all targets which might generate the DLL
+    Set-Location ..
+    Remove-Item -Recurse -Force build
+    New-Item -ItemType Directory -Force -Path "build" | Out-Null
+    Set-Location build
+    cmake .. -G "Visual Studio 18 2026" -A x64 -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF -DYOGA_BUILD_SHARED=ON
+    cmake --build . --config Release
+    
+    # Try to find DLL again
+    foreach ($location in $dllLocations) {
+        if (Test-Path $location) {
+            Write-Host "Found yoga.dll at $location after rebuild" -ForegroundColor Cyan
+            Copy-Item $location "..\..\yoga.dll" -Force
+            $copied = $true
+            break
+        }
+    }
+    
+    if (-not $copied) {
+        Write-Host "ERROR: Still could not find yoga.dll. Yoga v3.1.0 may not support building as DLL." -ForegroundColor Red
+        Write-Host "Please try using a prebuilt yoga.dll from React Native or Flutter." -ForegroundColor Yellow
+        exit 1
+    }
 }
 
 # Cleanup
