@@ -1,12 +1,15 @@
-# Avalazor - Desktop Blazor/Razor Framework
+# Avalazor - Desktop Blazor/Razor Framework with XGUI Themes
 
 **Avalazor** (Avalonia + Razor) is a desktop implementation of a Blazor/Razor-like system for building cross-platform desktop applications (Windows, macOS, Linux) using only C# and Razor syntax with SCSS styling support - **no AXAML required**!
+
+**Now featuring XGUI-3 themes** - Use authentic UI themes that mimic Windows 95, XP, 7, 11, Half-Life 2, Garry's Mod, and more!
 
 ## 🎯 Key Features
 
 - **Razor-Only Development**: Write your entire UI in Razor - no AXAML, no XAML, just Razor components
 - **Automatic Transpilation**: Razor files are automatically transpiled to C# at build time  
 - **SCSS Styling**: Full SCSS support with variables, nesting, and mixins
+- **XGUI Theme System**: Complete themes ported from XGUI-3 - use them as-is or create your own
 - **Cross-Platform**: Runs on Windows, macOS, and Linux
 - **Zero Avalonia Boilerplate**: All Avalonia setup is hidden - you only work with Razor
 
@@ -126,6 +129,59 @@ Associate the stylesheet with your component:
 @attribute [StyleSheet("MyComponent.scss")]
 ```
 
+## 🎭 XGUI Themes
+
+Avalazor includes a complete port of **XGUI-3 themes** that accurately mimic various UI styles. These themes work as-is - no modifications needed!
+
+### Available Themes
+
+**Classic Windows:**
+- `Computer95.scss` - Windows 95 classic look
+- `ComputerXP.scss` - Windows XP Luna theme
+- `Computer7.scss` - Windows 7 Aero-inspired
+- `Computer11.scss` - Windows 11 modern design
+
+**Gaming UI:**
+- `OliveGreen.scss` - Half-Life 2 / Valve style
+- `Derma.scss` - Garry's Mod default UI
+- `SboxDark.scss` - s&box dark theme
+- `Vapour.scss` - Steam-inspired interface
+
+**Minimal:**
+- `Simple.scss` - Clean, minimal design
+- `ThinGrey.scss` - Lightweight grey theme
+- `IMGUI.scss` - Dear ImGui style
+
+### Using XGUI Themes
+
+Apply a theme to your component:
+
+```razor
+@attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
+```
+
+Or use multiple themes:
+
+```razor
+@attribute [StyleSheet("/themes/XGUI/DefaultStyles/ComputerXP.scss")]
+@attribute [StyleSheet("MyCustomOverrides.scss")]
+```
+
+### Creating XGUI-Compatible Themes
+
+XGUI themes use a modular structure with FunctionStyles (base component styles) and DefaultStyles (complete themes):
+
+```scss
+// MyTheme.scss
+$base-colour: #your-color;
+$default-text-colour: #your-text;
+
+@import "/themes/XGUI/FunctionStyles/FunctionStyles.scss";
+@import "/themes/XGUI/DefaultStyles/BaseStyles/VGUI.scss";
+```
+
+See `themes/XGUI/README.md` for detailed theme documentation.
+
 ## 🏗️ Architecture
 
 ### Core Libraries
@@ -231,6 +287,7 @@ Successfully compiled 3 SCSS file(s)
 - Same Razor transpilation system
 - Same SCSS workflow
 - Familiar component structure
+- **XGUI themes work directly - port your UI easily!**
 
 **If you want simplicity:**
 - One language (C#) for everything
@@ -280,9 +337,13 @@ Based on the s&box Razor system by Facepunch Studios (MIT licensed):
 ## 🙏 Credits
 
 - **s&box** by Facepunch Studios - Original Razor transpilation system
-- **XGUI-3** by Xenthio - Reference implementation
+- **XGUI-3** by Xenthio - Theme system and reference implementation
 - **Avalonia** - Cross-platform UI framework
 - **Microsoft** - AspNetCore.Razor.Language and Components
+
+### XGUI Themes
+
+The themes in `themes/XGUI/` are ported from [XGUI-3](https://github.com/Xenthio/XGUI-3) (MIT licensed). These themes accurately recreate various UI styles including Windows 95, XP, 7, 11, Half-Life 2, Garry's Mod, and more.
 
 ## 🔗 References
 
