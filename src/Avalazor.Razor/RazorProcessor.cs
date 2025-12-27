@@ -152,8 +152,24 @@ public static class RazorProcessor
 
     private static RazorProjectEngine GetEngine()
     {
-        var configuration = RazorConfiguration.Default;
-        var razorProjectEngine = RazorProjectEngine.Create(configuration, RazorProjectFileSystem.Create("."));
+        // Create a configuration with Component mode to generate Element/Text frames
+        // instead of Markup frames (raw HTML strings)
+        var configuration = RazorConfiguration.Create(
+            RazorLanguageVersion.Latest,
+            "Default",
+            System.Array.Empty<RazorExtension>()
+        );
+
+        var razorProjectEngine = RazorProjectEngine.Create(
+            configuration,
+            RazorProjectFileSystem.Create("."),
+            builder =>
+            {
+                // Register Component extensions for proper Element/Text frame generation
+                // This makes HTML tags compile to Element frames instead of Markup frames
+                ComponentsRazorExtensions.Register(builder);
+            }
+        );
 
         return razorProjectEngine;
     }
