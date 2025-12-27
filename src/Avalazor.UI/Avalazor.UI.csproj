@@ -15,6 +15,9 @@
     <!-- CSS parsing -->
     <PackageReference Include="ExCSS" Version="4.2.3" />
     
+    <!-- HTML parsing for Markup frames -->
+    <PackageReference Include="AngleSharp" Version="1.1.2" />
+    
     <!-- Windowing -->
     <PackageReference Include="Silk.NET.Windowing" Version="2.21.0" />
     <PackageReference Include="Silk.NET.Input" Version="2.21.0" />

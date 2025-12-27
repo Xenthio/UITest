@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.RenderTree;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AngleSharp.Html.Parser;
 
 namespace Avalazor.UI;
 
@@ -123,6 +124,16 @@ public class RazorRenderer : Renderer
                         };
                         Console.WriteLine($"Adding text: '{textPanel.Text}'");
                         rootPanel.AddChild(textPanel);
+                    }
+                    break;
+
+                case RenderTreeFrameType.Markup:
+                    Console.WriteLine($"Processing Markup frame with HTML: {frame.MarkupContent?.Substring(0, Math.Min(100, frame.MarkupContent?.Length ?? 0))}...");
+                    var markupPanel = ParseMarkupToPanel(frame.MarkupContent);
+                    if (markupPanel != null)
+                    {
+                        rootPanel.AddChild(markupPanel);
+                        Console.WriteLine($"Added parsed markup with {markupPanel.Children.Count} children");
                     }
                     break;
 
@@ -262,6 +273,89 @@ public class RazorRenderer : Renderer
                 // Future: Parse inline styles
                 break;
         }
+    }
+
+    private Panel? ParseMarkupToPanel(string? html)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+            return null;
+
+        try
+        {
+            var parser = new HtmlParser();
+            var document = parser.ParseDocument(html);
+            
+            // Convert the first element in the body
+            var firstElement = document.Body?.FirstElementChild;
+            if (firstElement == null)
+                return null;
+            
+            return ConvertNodeToPanel(firstElement);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing markup: {ex.Message}");
+            return null;
+        }
+    }
+
+    private Panel? ConvertNodeToPanel(AngleSharp.Dom.IElement? element)
+    {
+        if (element == null)
+            return null;
+
+        // Create panel for this element
+        var panel = CreatePanelForElement(element.TagName);
+        
+        // Set attributes
+        if (element.HasAttribute("class"))
+        {
+            var className = element.GetAttribute("class");
+            if (!string.IsNullOrEmpty(className))
+            {
+                foreach (var cls in className.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    panel.AddClass(cls);
+                }
+            }
+        }
+        
+        if (element.HasAttribute("style"))
+        {
+            panel.Style = element.GetAttribute("style");
+        }
+
+        // Process child nodes
+        foreach (var child in element.ChildNodes)
+        {
+            if (child is AngleSharp.Dom.IElement childElement)
+            {
+                var childPanel = ConvertNodeToPanel(childElement);
+                if (childPanel != null)
+                {
+                    panel.AddChild(childPanel);
+                }
+            }
+            else if (child is AngleSharp.Dom.IText textNode)
+            {
+                var text = textNode.TextContent?.Trim();
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    // Add text directly to label elements
+                    if (panel is Label label)
+                    {
+                        label.Text = text;
+                    }
+                    else
+                    {
+                        var textLabel = new Label { Text = text };
+                        panel.AddChild(textLabel);
+                    }
+                }
+            }
+        }
+
+        return panel;
     }
 }
 
