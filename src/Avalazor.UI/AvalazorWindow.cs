@@ -68,8 +68,8 @@ public class AvalazorWindow : IDisposable
         // Compute styles if needed
         ComputeStyles(_rootPanel);
 
-        // Perform layout using Yoga
-        YogaLayoutEngine.Layout(_rootPanel, _window.Size.X, _window.Size.Y);
+        // Perform layout (Yoga integration will be added later)
+        PerformLayout(_rootPanel, _window.Size.X, _window.Size.Y);
 
         // Paint the UI
         _rootPanel.Paint(canvas);
@@ -94,6 +94,21 @@ public class AvalazorWindow : IDisposable
         }
     }
 
+    private void PerformLayout(Panel panel, float width, float height)
+    {
+        // Simple layout algorithm (Yoga integration will be added later)
+        // For now, just set the panel to fill available space
+        panel.ComputedRect = new SKRect(0, 0, width, height);
+
+        // Layout children in a simple vertical stack
+        float y = 0;
+        foreach (var child in panel.Children)
+        {
+            var childHeight = 50; // Default height for now
+            child.ComputedRect = new SKRect(0, y, width, y + childHeight);
+            y += childHeight;
+        }
+    }
 
 
     private void OnResize(Vector2D<int> size)

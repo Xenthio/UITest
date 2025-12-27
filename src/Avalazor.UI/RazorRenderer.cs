@@ -23,7 +23,8 @@ public class RazorRenderer : Renderer
 
     public async Task<Panel> RenderComponent<T>() where T : IComponent
     {
-        var componentId = AssignRootComponentId(typeof(T));
+        var component = (IComponent)Activator.CreateInstance(typeof(T))!;
+        var componentId = AssignRootComponentId(component);
         await RenderRootComponentAsync(componentId);
         return _rootPanel ?? new Panel();
     }
@@ -36,8 +37,9 @@ public class RazorRenderer : Renderer
     protected override Task UpdateDisplayAsync(in RenderBatch renderBatch)
     {
         // Process the render batch and update Panel tree
-        foreach (var update in renderBatch.UpdatedComponents)
+        for (int i = 0; i < renderBatch.UpdatedComponents.Count; i++)
         {
+            var update = renderBatch.UpdatedComponents.Array[i];
             ProcessComponentUpdate(update);
         }
 
@@ -75,7 +77,7 @@ public class RazorRenderer : Renderer
                     break;
 
                 case RenderTreeFrameType.Text:
-                    var textPanel = new Controls.Label 
+                    var textPanel = new Label 
                     { 
                         Text = frame.TextContent 
                     };
@@ -156,7 +158,7 @@ public class RazorRenderer : Renderer
         {
             "div" => new Panel(),
             "span" => new Panel(),
-            "label" => new Controls.Label(),
+            "label" => new Label(),
             "button" => new Panel(), // Future: Button control
             _ => new Panel()
         };
