@@ -18,7 +18,7 @@ Set-Location yoga-3.1.0
 New-Item -ItemType Directory -Force -Path "build" | Out-Null
 Set-Location build
 
-cmake .. -G "Visual Studio 18 2026" -A x64 -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
+cmake .. -G "Visual Studio 17 2022" -A x64 -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON
 if ($LASTEXITCODE -ne 0) {
     Write-Host "CMake configuration failed. Make sure Visual Studio 2022 with C++ tools is installed." -ForegroundColor Red
     exit 1
@@ -34,10 +34,15 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "Copying yoga.dll..." -ForegroundColor Yellow
 $dllLocations = @(
     "Release\yoga.dll",
+    "Release\yogacore.dll",
     "yoga\Release\yoga.dll",
+    "yoga\Release\yogacore.dll",
     "lib\Release\yoga.dll",
+    "lib\Release\yogacore.dll",
     "bin\Release\yoga.dll",
-    "yoga\bin\Release\yoga.dll"
+    "bin\Release\yogacore.dll",
+    "yoga\bin\Release\yoga.dll",
+    "yoga\bin\Release\yogacore.dll"
 )
 
 $copied = $false
@@ -71,7 +76,7 @@ if (-not $copied) {
     Remove-Item -Recurse -Force build
     New-Item -ItemType Directory -Force -Path "build" | Out-Null
     Set-Location build
-    cmake .. -G "Visual Studio 18 2026" -A x64 -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF -DYOGA_BUILD_SHARED=ON
+    cmake .. -G "Visual Studio 17 2022" -A x64 -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON
     cmake --build . --config Release
     
     # Try to find DLL again
