@@ -204,18 +204,18 @@ public partial class Panel
     {
         if (!IsVisible) return;
 
-        canvas.Save();
-        canvas.Translate(ComputedRect.Left, ComputedRect.Top);
-
+        // OnPaint draws at (0,0) using ComputedRect.Width/Height
         OnPaint(canvas);
 
-        // Paint children
+        // Paint children relative to this panel
         foreach (var child in _children)
         {
+            canvas.Save();
+            // Translate to child's position relative to parent
+            canvas.Translate(child.ComputedRect.Left - ComputedRect.Left, child.ComputedRect.Top - ComputedRect.Top);
             child.Paint(canvas);
+            canvas.Restore();
         }
-
-        canvas.Restore();
     }
 
     private void PaintBackground(SKCanvas canvas)
