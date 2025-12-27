@@ -18,7 +18,7 @@ Set-Location yoga-3.1.0
 New-Item -ItemType Directory -Force -Path "build" | Out-Null
 Set-Location build
 
-cmake .. -G "Visual Studio 18 2026" -A x64
+cmake .. -G "Visual Studio 17 2022" -A x64 -DBUILD_SHARED_LIBS=ON
 if ($LASTEXITCODE -ne 0) {
     Write-Host "CMake configuration failed. Make sure Visual Studio 2022 with C++ tools is installed." -ForegroundColor Red
     exit 1
@@ -30,9 +30,34 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Copy DLL
+# Copy DLL (check multiple possible locations)
 Write-Host "Copying yoga.dll..." -ForegroundColor Yellow
-Copy-Item "Release\yoga.dll" "..\..\yoga.dll" -Force
+$dllLocations = @(
+    "Release\yoga.dll",
+    "yoga\Release\yoga.dll",
+    "lib\Release\yoga.dll"
+)
+
+$copied = $false
+foreach ($location in $dllLocations) {
+    if (Test-Path $location) {
+        Write-Host "Found yoga.dll at $location" -ForegroundColor Cyan
+        Copy-Item $location "..\..\yoga.dll" -Force
+        $copied = $true
+        break
+    }
+}
+
+if (-not $copied) {
+    Write-Host "ERROR: Could not find yoga.dll in expected locations." -ForegroundColor Red
+    Write-Host "Searched locations:" -ForegroundColor Yellow
+    foreach ($location in $dllLocations) {
+        Write-Host "  - $location" -ForegroundColor Yellow
+    }
+    Write-Host "Build directory contents:" -ForegroundColor Yellow
+    Get-ChildItem -Recurse -Filter "*.dll" | ForEach-Object { Write-Host "  Found: $($_.FullName)" -ForegroundColor Cyan }
+    exit 1
+}
 
 # Cleanup
 Write-Host "Cleaning up..." -ForegroundColor Yellow
