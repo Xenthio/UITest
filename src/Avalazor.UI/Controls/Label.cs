@@ -47,7 +47,9 @@ public class Label : Panel
                 Color = textColor,
                 TextSize = fontSize,
                 IsAntialias = true,
-                SubpixelText = true
+                SubpixelText = true,
+                LcdRenderText = true,
+                Typeface = SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal)
             };
 
             // Draw text with proper positioning
