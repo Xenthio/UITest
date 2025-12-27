@@ -58,6 +58,7 @@ cd MyAvalazorApp
 ```razor
 @using Avalazor.UI
 @inherits UIComponent
+@attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
 
 <div class="app">
     <h1>Hello Avalazor!</h1>
@@ -73,6 +74,8 @@ cd MyAvalazorApp
     }
 }
 ```
+
+> **Note:** The `Avalazor.Defaults.scss` import provides s&box-compatible flexbox-by-default behavior, making XGUI themes work correctly.
 
 4. Update `Program.cs`:
 ```csharp
@@ -155,18 +158,58 @@ Avalazor includes a complete port of **XGUI-3 themes** that accurately mimic var
 
 ### Using XGUI Themes
 
-Apply a theme to your component:
+**Important:** XGUI themes require flexbox-by-default behavior. Always import `Avalazor.Defaults.scss` first:
 
 ```razor
+@attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
 @attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
 ```
 
-Or use multiple themes:
+Or in your SCSS file:
+
+```scss
+@import "/themes/Avalazor.Defaults.scss";
+@import "/themes/XGUI/DefaultStyles/OliveGreen.scss";
+```
+
+You can also add custom overrides:
 
 ```razor
+@attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
 @attribute [StyleSheet("/themes/XGUI/DefaultStyles/ComputerXP.scss")]
 @attribute [StyleSheet("MyCustomOverrides.scss")]
 ```
+
+### Window Decorations
+
+XGUI themes include full window decoration support with titlebar, control buttons, and window chrome:
+
+**Window Structure Expected:**
+```razor
+<div class="Window">
+    <div class="TitleBar">
+        <div class="TitleElements">
+            <div class="TitleIcon"></div>
+            <div class="TitleLabel">My Window</div>
+            <div class="TitleSpacer"></div>
+            <div class="Control MinimiseButton">_</div>
+            <div class="Control MaximiseButton">□</div>
+            <div class="Control CloseButton">×</div>
+        </div>
+        <div class="TitleBackground"></div>
+    </div>
+    <div class="window-content">
+        <!-- Your content here -->
+    </div>
+</div>
+```
+
+The themes handle:
+- **Title bar styling** with proper colors for active/inactive states
+- **Control buttons** (minimize, maximize, close) with hover effects
+- **Window borders** matching the theme style
+- **Resizer handles** where applicable
+- **Focus states** (unfocused windows have dimmed titlebars)
 
 ### Creating XGUI-Compatible Themes
 
