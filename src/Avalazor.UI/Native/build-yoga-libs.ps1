@@ -18,7 +18,7 @@ Set-Location yoga-3.1.0
 New-Item -ItemType Directory -Force -Path "build" | Out-Null
 Set-Location build
 
-cmake .. -G "Visual Studio 18 2026" -A x64 -DBUILD_SHARED_LIBS=ON
+cmake .. -G "Visual Studio 18 2026" -A x64 -DBUILD_SHARED_LIBS=ON -DYOGA_BUILD_TESTS=OFF
 if ($LASTEXITCODE -ne 0) {
     Write-Host "CMake configuration failed. Make sure Visual Studio 2022 with C++ tools is installed." -ForegroundColor Red
     exit 1
