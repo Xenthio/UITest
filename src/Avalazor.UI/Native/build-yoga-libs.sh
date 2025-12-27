@@ -15,7 +15,7 @@ ARCH=$(uname -m)
 echo "Platform: $PLATFORM"
 echo "Architecture: $ARCH"
 echo ""
-echo "NOTE: This script builds Yoga from source."
+echo "Building Yoga as a shared library..."
 echo "Required: CMake 3.15+ and C++ compiler (GCC/Clang)"
 echo ""
 
@@ -48,20 +48,57 @@ curl -L "https://github.com/facebook/yoga/archive/refs/tags/v3.1.0.tar.gz" -o yo
 echo "Extracting..."
 tar -xzf yoga.tar.gz
 
+# Create custom CMakeLists.txt for building as shared library
+echo "Creating custom CMakeLists.txt for shared library build..."
+cat > yoga-3.1.0/CMakeLists.txt << 'EOF'
+cmake_minimum_required(VERSION 3.15)
+
+project(yoga-shared)
+
+# Yoga requires C++20
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(YOGA_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Collect all Yoga source files
+file(GLOB_RECURSE SOURCES 
+    ${YOGA_ROOT}/yoga/*.cpp
+)
+
+# Create shared library
+add_library(yoga SHARED ${SOURCES})
+
+# Include directories
+target_include_directories(yoga
+    PUBLIC
+    $<BUILD_INTERFACE:${YOGA_ROOT}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/yoga>
+)
+
+# Debug definitions
+target_compile_definitions(yoga PRIVATE
+    $<$<CONFIG:Debug>:DEBUG=1>
+)
+
+# Set output name (removes "lib" prefix on some platforms if needed)
+set_target_properties(yoga PROPERTIES OUTPUT_NAME "yoga")
+EOF
+
 # Build
 echo "Building with CMake..."
 cd yoga-3.1.0
 mkdir -p build
 cd build
 
-cmake .. -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
+cmake .. -DCMAKE_BUILD_TYPE=Release
 if [ $? -ne 0 ]; then
     echo "CMake configuration failed."
     echo "Make sure CMake and a C++ compiler are installed."
     exit 1
 fi
 
-cmake --build . --config Release -- -j$(nproc 2>/dev/null || echo 4)
+cmake --build . -- -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 if [ $? -ne 0 ]; then
     echo "Build failed."
     exit 1
@@ -71,20 +108,14 @@ fi
 echo "Searching for built library..."
 LIB_FOUND=false
 
-# Search common locations
+# Search for the built library
 for location in \
-    "yoga/libyoga.so" \
-    "yoga/libyogacore.so" \
-    "yoga/libyoga.dylib" \
-    "yoga/libyogacore.dylib" \
-    "lib/libyoga.so" \
-    "lib/libyogacore.so" \
-    "lib/libyoga.dylib" \
-    "lib/libyogacore.dylib" \
     "libyoga.so" \
-    "libyogacore.so" \
     "libyoga.dylib" \
-    "libyogacore.dylib"
+    "yoga.so" \
+    "yoga.dylib" \
+    "lib/libyoga.so" \
+    "lib/libyoga.dylib"
 do
     if [ -f "$location" ]; then
         echo "Found at: $location"
@@ -96,16 +127,10 @@ done
 
 if [ "$LIB_FOUND" = false ]; then
     echo ""
-    echo "WARNING: Could not find shared library"
-    echo "Yoga v3.1.0 may have built as static library instead."
+    echo "ERROR: Could not find shared library after build"
     echo ""
-    echo "Found .a files:"
-    find . -name "*.a" | head -5
-    echo ""
-    echo "Suggested solutions:"
-    echo "1. Modify Yoga's CMakeLists.txt to use SHARED instead of STATIC"
-    echo "2. Use an older Yoga version with better shared library support"
-    echo "3. Extract library from React Native installation"
+    echo "Searching for any built files:"
+    find . -name "*.so" -o -name "*.dylib" -o -name "*.a" | head -10
     echo ""
     exit 1
 fi
@@ -117,3 +142,5 @@ rm -rf "$TEMP_DIR"
 echo ""
 echo "Successfully built and installed $TARGET!"
 echo "Location: $SCRIPT_DIR/$TARGET"
+echo ""
+echo "The native Yoga library is now ready for P/Invoke."

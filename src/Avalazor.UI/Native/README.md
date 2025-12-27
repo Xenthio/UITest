@@ -4,11 +4,11 @@ This directory contains the native Yoga layout engine library required by Avalaz
 
 ## Setup
 
-Avalazor uses Facebook's Yoga layout engine via P/Invoke for maximum performance flexbox layout. You need to obtain the native library file before building the project.
+Avalazor uses Facebook's Yoga layout engine via P/Invoke for maximum performance flexbox layout. You need to build the native library before running the project.
 
-### Quick Start
+### Quick Start: Build from Source ✅
 
-#### Option 1: Build from Source (Recommended)
+The build scripts use a custom CMakeLists.txt (inspired by YogaSharp) that properly builds Yoga as a **shared library** (.dll/.so/.dylib).
 
 **Linux / macOS:**
 ```bash
@@ -25,27 +25,40 @@ cd src/Avalazor.UI/Native
 
 **Build Requirements:**
 - **CMake** 3.15+ (`cmake --version`)
-- **C++ compiler**:
-  - Linux: GCC or Clang (`gcc --version`)
+- **C++20 compiler**:
+  - Linux: GCC 10+ or Clang 12+ (`gcc --version`)
   - macOS: Xcode Command Line Tools (`xcode-select --install`)
   - Windows: Visual Studio 2022 with C++ Desktop Development workload
-- Internet connection to download Yoga source
+- Internet connection to download Yoga source (1.2 MB)
 
-The scripts will:
+### What the Scripts Do
+
 1. Download Yoga v3.1.0 source from GitHub
-2. Configure with CMake
-3. Build the library
-4. Copy to this directory
+2. Create a custom CMakeLists.txt that builds as SHARED library
+3. Configure with CMake (C++20 standard)
+4. Build the library
+5. Copy to this directory as:
+   - `yoga.dll` (Windows)
+   - `libyoga.so` (Linux)
+   - `libyoga.dylib` (macOS)
 
-**Note**: Yoga v3.1.0's CMake config may build as a static library (.lib/.a) instead of shared (.dll/.so/.dylib). The scripts will warn you if this happens.
+### Why a Custom CMakeLists.txt?
 
-#### Option 2: Manual Download
+Yoga v3.1.0's default CMake configuration builds `yogacore` as a **static library**. The scripts replace it with a custom CMakeLists.txt that:
+- Explicitly uses `add_library(yoga SHARED ...)` 
+- Sets `CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON` for Windows
+- Requires C++20 standard
+- Includes all Yoga source files
 
-Since Yoga v3.1.0 doesn't easily build as a shared library, you can manually obtain prebuilt binaries:
+This approach is based on [YogaSharp](https://github.com/VanderCat/YogaSharp)'s CMakeLists.txt.
+
+### Alternative: Manual Download
+
+If you prefer not to build from source:
 
 **From React Native:**
 1. Install React Native for your platform
-2. Find `yoga.dll` (Windows), `libyoga.so` (Linux), or `libyoga.dylib` (macOS)
+2. Extract `yoga.dll` (Windows), `libyoga.so` (Linux), or `libyoga.dylib` (macOS) from the React Native installation
 3. Place in this directory
 
 **From Community Builds:**
