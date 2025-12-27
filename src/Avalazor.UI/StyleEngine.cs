@@ -9,8 +9,8 @@ namespace Avalazor.UI;
 /// </summary>
 public class StyleEngine
 {
-    private readonly Dictionary<string, StyleSheet> _stylesheets = new();
-    private readonly Parser _cssParser = new();
+    private readonly Dictionary<string, Stylesheet> _stylesheets = new();
+    private readonly StylesheetParser _cssParser = new();
 
     public void AddStylesheet(string name, string css)
     {
@@ -42,12 +42,13 @@ public class StyleEngine
         }
 
         // Apply inline styles
-        if (!string.is NullOrWhiteSpace(panel.Style))
+        if (!string.IsNullOrWhiteSpace(panel.Style))
         {
             var inlineStyle = _cssParser.Parse($"* {{{panel.Style}}}");
-            if (inlineStyle.StyleRules.Count > 0)
+            var styleRules = inlineStyle.StyleRules.ToList();
+            if (styleRules.Count > 0)
             {
-                ApplyDeclarations(style, inlineStyle.StyleRules[0].Style);
+                ApplyDeclarations(style, styleRules[0].Style);
             }
         }
 
@@ -73,7 +74,7 @@ public class StyleEngine
         return false;
     }
 
-    private void ApplyDeclarations(ComputedStyle style, ICssStyleDeclaration declarations)
+    private void ApplyDeclarations(ComputedStyle style, StyleDeclaration declarations)
     {
         foreach (var prop in declarations)
         {

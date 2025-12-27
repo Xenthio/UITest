@@ -205,7 +205,7 @@ public partial class Panel
             };
 
             var rect = new SKRect(0, 0, ComputedRect.Width, ComputedRect.Height);
-            var borderRadius = _computedStyle.BorderRadius ?? 0;
+            var borderRadius = _computedStyle.BorderRadius;
 
             if (borderRadius > 0)
             {
@@ -231,7 +231,7 @@ public partial class Panel
             };
 
             var rect = new SKRect(0, 0, ComputedRect.Width, ComputedRect.Height);
-            var borderRadius = _computedStyle.BorderRadius ?? 0;
+            var borderRadius = _computedStyle.BorderRadius;
 
             if (borderRadius > 0)
             {

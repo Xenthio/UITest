@@ -69,6 +69,11 @@ public class TranspileRazorTask : Task
                 try
                 {
                     var inputPath = razorFile.ItemSpec;
+                    // Ensure we have an absolute path for #line directives
+                    if (!Path.IsPathRooted(inputPath))
+                    {
+                        inputPath = Path.GetFullPath(inputPath);
+                    }
                     var filename = Path.GetFileName(inputPath);
                     var relativePath = razorFile.GetMetadata("RelativeDir") ?? string.Empty;
 
