@@ -3,8 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-# UITest Generated Files
-**/UITest/Generated/
+# Avalazor Generated Files
+**/Avalazor/Generated/
+**/*.razor.g.cs
+**/*.scss.stamp
+**/*.razor.stamp
 
 # User-specific files
 *.rsuser
