@@ -1,6 +1,6 @@
 #!/bin/bash
-# Script to download or build Facebook Yoga native library
-# Attempts to download prebuilt binaries first, falls back to building from source
+# Script to build Facebook Yoga native library from source
+# Requires CMake and C++ compiler (GCC or Clang)
 
 set -e
 
@@ -15,79 +15,20 @@ ARCH=$(uname -m)
 echo "Platform: $PLATFORM"
 echo "Architecture: $ARCH"
 echo ""
+echo "NOTE: This script builds Yoga from source."
+echo "Required: CMake 3.15+ and C++ compiler (GCC/Clang)"
+echo ""
 
 # Get script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Attempt to download prebuilt binary from NPM package
-echo "Attempting to download prebuilt library from NPM package..."
-
-# Create temp directory
-TEMP_DIR=$(mktemp -d)
-cd "$TEMP_DIR"
-
-# Try downloading yoga-layout package
-if curl -L "https://registry.npmjs.org/yoga-layout/-/yoga-layout-3.1.0.tgz" -o yoga-layout.tgz 2>/dev/null; then
-    echo "Downloaded NPM package, extracting..."
-    tar -xzf yoga-layout.tgz 2>/dev/null || true
-    
-    # Look for prebuilt library based on platform
-    case "$PLATFORM" in
-        Linux*)
-            LIB_PATH="package/build/Release/libyoga.so"
-            TARGET="libyoga.so"
-            ;;
-        Darwin*)
-            LIB_PATH="package/build/Release/libyoga.dylib"
-            TARGET="libyoga.dylib"
-            ;;
-        *)
-            LIB_PATH=""
-            ;;
-    esac
-    
-    if [ -n "$LIB_PATH" ] && [ -f "$LIB_PATH" ]; then
-        echo "Found prebuilt library!"
-        cp "$LIB_PATH" "$SCRIPT_DIR/$TARGET"
-        cd "$SCRIPT_DIR"
-        rm -rf "$TEMP_DIR"
-        echo "Successfully installed prebuilt $TARGET!"
-        exit 0
-    fi
-fi
-
-echo "Prebuilt binaries not available for $PLATFORM."
-echo "Building from source..."
-echo ""
-
-cd "$TEMP_DIR"
-
-# Download Yoga source
-echo "Downloading Yoga source..."
-YOGA_VERSION="3.1.0"
-curl -L "https://github.com/facebook/yoga/archive/refs/tags/v${YOGA_VERSION}.tar.gz" -o yoga.tar.gz
-tar -xzf yoga.tar.gz
-cd "yoga-${YOGA_VERSION}"
-
-# Build with CMake
-echo "Building Yoga..."
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
-cmake --build . --config Release --target yogacore
-
+# Determine target library name
 case "$PLATFORM" in
     Linux*)
-        LIBRARY="libyogacore.so"
         TARGET="libyoga.so"
         ;;
     Darwin*)
-        LIBRARY="libyogacore.dylib"
         TARGET="libyoga.dylib"
-        ;;
-    MINGW*|MSYS*|CYGWIN*)
-        LIBRARY="yogacore.dll"
-        TARGET="yoga.dll"
         ;;
     *)
         echo "Unsupported platform: $PLATFORM"
@@ -95,19 +36,84 @@ case "$PLATFORM" in
         ;;
 esac
 
-# Find and copy the library
-BUILT_LIB=$(find . -name "$LIBRARY" | head -n 1)
-if [ -z "$BUILT_LIB" ]; then
-    echo "Error: Could not find built library $LIBRARY"
+# Create temp directory
+TEMP_DIR=$(mktemp -d)
+cd "$TEMP_DIR"
+
+# Download Yoga source
+echo "Downloading Yoga v3.1.0 source..."
+curl -L "https://github.com/facebook/yoga/archive/refs/tags/v3.1.0.tar.gz" -o yoga.tar.gz
+
+# Extract
+echo "Extracting..."
+tar -xzf yoga.tar.gz
+
+# Build
+echo "Building with CMake..."
+cd yoga-3.1.0
+mkdir -p build
+cd build
+
+cmake .. -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
+if [ $? -ne 0 ]; then
+    echo "CMake configuration failed."
+    echo "Make sure CMake and a C++ compiler are installed."
     exit 1
 fi
 
-cp "$BUILT_LIB" "$SCRIPT_DIR/$TARGET"
+cmake --build . --config Release -- -j$(nproc 2>/dev/null || echo 4)
+if [ $? -ne 0 ]; then
+    echo "Build failed."
+    exit 1
+fi
 
-echo "Success! Native library built and copied to: $SCRIPT_DIR/$TARGET"
+# Find and copy the library
+echo "Searching for built library..."
+LIB_FOUND=false
+
+# Search common locations
+for location in \
+    "yoga/libyoga.so" \
+    "yoga/libyogacore.so" \
+    "yoga/libyoga.dylib" \
+    "yoga/libyogacore.dylib" \
+    "lib/libyoga.so" \
+    "lib/libyogacore.so" \
+    "lib/libyoga.dylib" \
+    "lib/libyogacore.dylib" \
+    "libyoga.so" \
+    "libyogacore.so" \
+    "libyoga.dylib" \
+    "libyogacore.dylib"
+do
+    if [ -f "$location" ]; then
+        echo "Found at: $location"
+        cp "$location" "$SCRIPT_DIR/$TARGET"
+        LIB_FOUND=true
+        break
+    fi
+done
+
+if [ "$LIB_FOUND" = false ]; then
+    echo ""
+    echo "WARNING: Could not find shared library"
+    echo "Yoga v3.1.0 may have built as static library instead."
+    echo ""
+    echo "Found .a files:"
+    find . -name "*.a" | head -5
+    echo ""
+    echo "Suggested solutions:"
+    echo "1. Modify Yoga's CMakeLists.txt to use SHARED instead of STATIC"
+    echo "2. Use an older Yoga version with better shared library support"
+    echo "3. Extract library from React Native installation"
+    echo ""
+    exit 1
+fi
 
 # Cleanup
 cd "$SCRIPT_DIR"
 rm -rf "$TEMP_DIR"
 
-echo "Done!"
+echo ""
+echo "Successfully built and installed $TARGET!"
+echo "Location: $SCRIPT_DIR/$TARGET"
