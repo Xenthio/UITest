@@ -422,5 +422,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Misc
 /src/Avalazor.UI/Native/yoga-3.1.0
 src/Avalazor.UI/Native/yoga.tar.gz
+*.DS_Store
