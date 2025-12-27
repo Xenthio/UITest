@@ -18,7 +18,7 @@ Set-Location yoga-3.1.0
 New-Item -ItemType Directory -Force -Path "build" | Out-Null
 Set-Location build
 
-cmake .. -G "Visual Studio 17 2022" -A x64
+cmake .. -G "Visual Studio 18 2026" -A x64
 if ($LASTEXITCODE -ne 0) {
     Write-Host "CMake configuration failed. Make sure Visual Studio 2022 with C++ tools is installed." -ForegroundColor Red
     exit 1
@@ -37,7 +37,7 @@ Copy-Item "Release\yoga.dll" "..\..\yoga.dll" -Force
 # Cleanup
 Write-Host "Cleaning up..." -ForegroundColor Yellow
 Set-Location ..\..
-Remove-Item -Recurse -Force "yoga-3.1.0"
-Remove-Item "yoga.tar.gz"
+# Remove-Item -Recurse -Force "yoga-3.1.0"
+# Remove-Item "yoga.tar.gz"
 
 Write-Host "Build complete! yoga.dll is ready." -ForegroundColor Green

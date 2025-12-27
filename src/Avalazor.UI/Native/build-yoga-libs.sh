@@ -63,6 +63,6 @@ echo "Success! Native library built and copied to: $SCRIPT_DIR/$TARGET"
 
 # Cleanup
 cd /
-rm -rf "$BUILD_DIR"
+# rm -rf "$BUILD_DIR"
 
 echo "Done!"
