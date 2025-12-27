@@ -15,9 +15,6 @@
     <!-- CSS parsing -->
     <PackageReference Include="ExCSS" Version="4.2.3" />
     
-    <!-- Flexbox layout engine (Yoga - modern .NET 8 bindings) -->
-    <PackageReference Include="antokhio.YogaSharp" Version="1.1.3" />
-    
     <!-- Windowing -->
     <PackageReference Include="Silk.NET.Windowing" Version="2.21.0" />
     <PackageReference Include="Silk.NET.Input" Version="2.21.0" />
@@ -26,6 +23,22 @@
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Copy native Yoga library to output directory -->
+  <ItemGroup>
+    <None Include="Native\libyoga.so" Condition="Exists('Native\libyoga.so')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libyoga.so</Link>
+    </None>
+    <None Include="Native\libyoga.dylib" Condition="Exists('Native\libyoga.dylib')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libyoga.dylib</Link>
+    </None>
+    <None Include="Native\yoga.dll" Condition="Exists('Native\yoga.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>yoga.dll</Link>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
