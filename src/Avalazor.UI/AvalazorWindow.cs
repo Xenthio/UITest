@@ -68,8 +68,8 @@ public class AvalazorWindow : IDisposable
         // Compute styles if needed
         ComputeStyles(_rootPanel);
 
-        // Perform layout
-        PerformLayout(_rootPanel, _window.Size.X, _window.Size.Y);
+        // Perform layout using Yoga
+        YogaLayoutEngine.Layout(_rootPanel, _window.Size.X, _window.Size.Y);
 
         // Paint the UI
         _rootPanel.Paint(canvas);
@@ -94,19 +94,7 @@ public class AvalazorWindow : IDisposable
         }
     }
 
-    private void PerformLayout(Panel panel, float availableWidth, float availableHeight)
-    {
-        // TODO: Integrate Yoga for proper flexbox layout
-        // For now, simple absolute positioning
-        panel.ComputedRect = new SKRect(0, 0, availableWidth, availableHeight);
 
-        float y = 0;
-        foreach (var child in panel.Children)
-        {
-            child.ComputedRect = new SKRect(0, y, availableWidth, 50);
-            y += 50;
-        }
-    }
 
     private void OnResize(Vector2D<int> size)
     {

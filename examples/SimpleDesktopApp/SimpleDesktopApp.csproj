@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Avalazor.Core\Avalazor.Core.csproj" />
-    <ProjectReference Include="..\..\src\Avalazor.Runtime\Avalazor.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\Avalazor.UI\Avalazor.UI.csproj" />
     <!-- Build-time only reference - ensures Avalazor.Build is compiled before this project -->
     <ProjectReference Include="..\..\src\Avalazor.Build\Avalazor.Build.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
