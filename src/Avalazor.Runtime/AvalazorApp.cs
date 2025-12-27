@@ -1,6 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Markup.Xaml;
+using Avalonia.Themes.Fluent;
 using System;
 
 namespace Avalazor.Runtime;
@@ -19,7 +19,8 @@ internal class AvalazorApp : Application
 
     public override void Initialize()
     {
-        AvaloniaXamlLoader.Load(this);
+        // Set up a basic theme so controls render properly
+        Styles.Add(new FluentTheme());
     }
 
     public override void OnFrameworkInitializationCompleted()
