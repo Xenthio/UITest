@@ -2,17 +2,11 @@
 
 This directory contains the native Yoga layout engine library required by Avalazor.UI.
 
-## Building the Native Library
+## Automated Setup (Recommended)
 
-Avalazor uses Facebook's Yoga layout engine via P/Invoke for maximum performance flexbox layout. You need to build the native library once before using Avalazor.
+Avalazor uses Facebook's Yoga layout engine via P/Invoke for maximum performance flexbox layout. The build scripts automatically download prebuilt binaries or build from source.
 
-### Prerequisites
-
-- **CMake** (version 3.13 or higher)
-- **C++ compiler** (GCC, Clang, or MSVC)
-- **curl** and **tar** (usually pre-installed on Unix systems)
-
-### Build Instructions
+### Quick Start
 
 #### Linux / macOS
 
@@ -22,68 +16,86 @@ chmod +x build-yoga-libs.sh
 ./build-yoga-libs.sh
 ```
 
-This will:
-1. Download Yoga source from GitHub
-2. Build the native library using CMake
-3. Copy the resulting library to this directory:
-   - Linux: `libyoga.so`
-   - macOS: `libyoga.dylib`
+The script will:
+1. **First attempt**: Download prebuilt library from NPM package (fast!)
+2. **Fallback**: Build from source if prebuilt not available
 
 #### Windows
-
-**Option 1: Using PowerShell script (recommended)**
-
-Requires Visual Studio 2022 with C++ tools and CMake:
 
 ```powershell
 cd src/Avalazor.UI/Native
 .\build-yoga-libs.ps1
 ```
 
-This will automatically download, build, and copy `yoga.dll`.
+The script will:
+1. **First attempt**: Download prebuilt `yoga.dll` from NPM package (fast!)
+2. **Fallback**: Build from source using Visual Studio (requires VS 2022 + C++ tools + CMake)
 
-**Option 2: Using WSL**
+## What Happens
 
-If you have Windows Subsystem for Linux installed:
+### Prebuilt Binary Download (Default)
 
-```bash
-# Inside WSL
-cd /mnt/c/path/to/UITest/src/Avalazor.UI/Native
-chmod +x build-yoga-libs.sh
-./build-yoga-libs.sh
-# Rename libyoga.so to yoga.dll for Windows use
-```
+The scripts first try to download prebuilt binaries from the `yoga-layout` NPM package:
+- ✅ **No compilation required**
+- ✅ **Fast - completes in seconds**
+- ✅ **No build tools needed**
+- ✅ **Works on all platforms**
 
-### Prebuilt Binaries (Alternative)
+### Build from Source (Fallback)
 
-If you have trouble building from source, you can obtain prebuilt binaries:
+If prebuilt binaries aren't available, the scripts automatically fall back to building from source.
 
-1. **From React Native** - React Native includes prebuilt Yoga binaries in their npm packages
-2. **From Yoga releases** - Check [facebook/yoga releases](https://github.com/facebook/yoga/releases)
-3. **Build in Docker** - Use a Docker container to build if you don't have the toolchain
+**Requirements for building from source:**
+- **CMake** (version 3.13 or higher)
+- **C++ compiler**:
+  - Linux: GCC or Clang
+  - macOS: Xcode Command Line Tools
+  - Windows: Visual Studio 2022 with C++ tools
+- **curl** and **tar** (usually pre-installed)
 
-### Verifying the Build
+## Manual Download (Alternative)
 
-After building, you should have one of these files in this directory:
+If automatic download fails, you can manually obtain prebuilt binaries:
+
+1. **From NPM Package** (recommended):
+   ```bash
+   npm pack yoga-layout@3.1.0
+   # Extract yoga.dll / libyoga.so / libyoga.dylib from package
+   ```
+
+2. **From React Native** - Extract from React Native Windows/Android releases
+
+3. **Build in Docker** - Use a Docker container if you don't have the toolchain
+
+## Verification
+
+After running the script, you should have one of these files in this directory:
 - `libyoga.so` (Linux)
 - `libyoga.dylib` (macOS)
 - `yoga.dll` (Windows)
 
 The library will be automatically copied to the output directory during build.
 
-### Troubleshooting
+## Troubleshooting
 
 **"yoga library not found" error:**
 - Ensure the native library is in this directory
 - Check that the filename matches your platform (`.so`, `.dylib`, or `.dll`)
 - On Linux, you may need to add the library path to `LD_LIBRARY_PATH`
 
-**Build failures:**
+**Download failures:**
+- Check your internet connection
+- Try running the script again (temporary network issues)
+- Use manual download method as alternative
+
+**Build from source failures:**
 - Ensure CMake 3.13+ is installed: `cmake --version`
-- Ensure you have a C++ compiler installed
+- Windows: Ensure Visual Studio 2022 with C++ tools is installed
 - Try building with verbose output: `cmake --build . --verbose`
 
-### Architecture
+**NOTE**: Yoga v3.1.0's CMake configuration has limitations. The prebuilt binary download method is strongly recommended for Windows.
+
+## Architecture
 
 Avalazor uses s&box's approach:
 - Native Yoga C++ library (Facebook's official implementation)

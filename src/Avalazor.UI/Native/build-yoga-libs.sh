@@ -1,18 +1,66 @@
 #!/bin/bash
-# Build script for Facebook Yoga native library
-# This script downloads and builds the Yoga layout engine from source
+# Script to download or build Facebook Yoga native library
+# Attempts to download prebuilt binaries first, falls back to building from source
 
 set -e
 
-echo "Building Facebook Yoga native library..."
+echo "Avalazor Yoga Native Library Setup"
+echo "===================================="
+echo ""
 
 # Determine platform
 PLATFORM=$(uname -s)
 ARCH=$(uname -m)
 
-# Create temporary build directory
-BUILD_DIR=$(mktemp -d)
-cd "$BUILD_DIR"
+echo "Platform: $PLATFORM"
+echo "Architecture: $ARCH"
+echo ""
+
+# Get script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Attempt to download prebuilt binary from NPM package
+echo "Attempting to download prebuilt library from NPM package..."
+
+# Create temp directory
+TEMP_DIR=$(mktemp -d)
+cd "$TEMP_DIR"
+
+# Try downloading yoga-layout package
+if curl -L "https://registry.npmjs.org/yoga-layout/-/yoga-layout-3.1.0.tgz" -o yoga-layout.tgz 2>/dev/null; then
+    echo "Downloaded NPM package, extracting..."
+    tar -xzf yoga-layout.tgz 2>/dev/null || true
+    
+    # Look for prebuilt library based on platform
+    case "$PLATFORM" in
+        Linux*)
+            LIB_PATH="package/build/Release/libyoga.so"
+            TARGET="libyoga.so"
+            ;;
+        Darwin*)
+            LIB_PATH="package/build/Release/libyoga.dylib"
+            TARGET="libyoga.dylib"
+            ;;
+        *)
+            LIB_PATH=""
+            ;;
+    esac
+    
+    if [ -n "$LIB_PATH" ] && [ -f "$LIB_PATH" ]; then
+        echo "Found prebuilt library!"
+        cp "$LIB_PATH" "$SCRIPT_DIR/$TARGET"
+        cd "$SCRIPT_DIR"
+        rm -rf "$TEMP_DIR"
+        echo "Successfully installed prebuilt $TARGET!"
+        exit 0
+    fi
+fi
+
+echo "Prebuilt binaries not available for $PLATFORM."
+echo "Building from source..."
+echo ""
+
+cd "$TEMP_DIR"
 
 # Download Yoga source
 echo "Downloading Yoga source..."
@@ -27,9 +75,6 @@ mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
 cmake --build . --config Release --target yogacore
-
-# Copy the built library to the Native directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 case "$PLATFORM" in
     Linux*)
@@ -62,7 +107,7 @@ cp "$BUILT_LIB" "$SCRIPT_DIR/$TARGET"
 echo "Success! Native library built and copied to: $SCRIPT_DIR/$TARGET"
 
 # Cleanup
-cd /
-# rm -rf "$BUILD_DIR"
+cd "$SCRIPT_DIR"
+rm -rf "$TEMP_DIR"
 
 echo "Done!"
