@@ -269,9 +269,60 @@ public partial class Panel
         }
     }
 
+    /// <summary>
+    /// Called when mouse is pressed down on this panel
+    /// </summary>
+    public virtual void OnMouseDown(MouseEventArgs e)
+    {
+        // Override in derived classes
+    }
+
+    /// <summary>
+    /// Called when mouse is released on this panel
+    /// </summary>
+    public virtual void OnMouseUp(MouseEventArgs e)
+    {
+        // Override in derived classes
+    }
+
+    /// <summary>
+    /// Called when mouse enters this panel
+    /// </summary>
+    public virtual void OnMouseEnter(MouseEventArgs e)
+    {
+        // Override in derived classes
+    }
+
+    /// <summary>
+    /// Called when mouse leaves this panel
+    /// </summary>
+    public virtual void OnMouseLeave(MouseEventArgs e)
+    {
+        // Override in derived classes
+    }
+
+    /// <summary>
+    /// Check if point is inside this panel
+    /// </summary>
+    public bool ContainsPoint(float x, float y)
+    {
+        return ComputedRect.Contains(x, y);
+    }
+
     public override string ToString()
     {
         var classes = Classes.Count > 0 ? $".{string.Join(".", Classes)}" : "";
         return $"<{Tag}{classes}>";
     }
+}
+
+/// <summary>
+/// Mouse event arguments
+/// </summary>
+public class MouseEventArgs
+{
+    public float X { get; set; }
+    public float Y { get; set; }
+    public int Button { get; set; } // 0=left, 1=right, 2=middle
+    public bool Handled { get; set; }
 }

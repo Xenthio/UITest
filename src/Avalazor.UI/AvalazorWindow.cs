@@ -18,6 +18,7 @@ public class AvalazorWindow : IDisposable
     private GRGlInterface? _grGlInterface;
     private Panel? _rootPanel;
     private readonly StyleEngine _styleEngine = new();
+    private readonly YogaLayoutEngine _yogaLayout = new();
     private uint _framebuffer;
     private uint _texture;
     private uint _renderbuffer;
@@ -46,6 +47,8 @@ public class AvalazorWindow : IDisposable
         _window.Render += OnRender;
         _window.Resize += OnResize;
         _window.Closing += OnClosing;
+        _window.MouseDown += OnMouseDown;
+        _window.MouseUp += OnMouseUp;
     }
 
     public void Run()
@@ -154,46 +157,8 @@ public class AvalazorWindow : IDisposable
 
     private void PerformLayout(Panel panel, float width, float height)
     {
-        // Simple layout algorithm (Yoga integration will be added later)
-        // Set root panel to fill available space
-        panel.ComputedRect = new SKRect(0, 0, width, height);
-
-        // Layout children recursively
-        LayoutChildren(panel, width);
-    }
-    
-    private float LayoutChildren(Panel panel, float availableWidth)
-    {
-        float y = panel.ComputedStyle?.PaddingTop ?? 0;
-        float x = panel.ComputedStyle?.PaddingLeft ?? 0;
-        float contentWidth = availableWidth - (panel.ComputedStyle?.PaddingLeft ?? 0) - (panel.ComputedStyle?.PaddingRight ?? 0);
-        
-        foreach (var child in panel.Children)
-        {
-            // Get style-based dimensions
-            var style = child.ComputedStyle;
-            var childHeight = style?.Height ?? 30; // Auto height
-            var childWidth = style?.Width ?? contentWidth;
-            
-            // Add margin
-            y += style?.MarginTop ?? 0;
-            
-            // Position the child
-            child.ComputedRect = new SKRect(x, y, x + childWidth, y + childHeight);
-            
-            // Layout child's children
-            if (child.Children.Count > 0)
-            {
-                var actualHeight = LayoutChildren(child, childWidth);
-                // Update height based on content
-                child.ComputedRect = new SKRect(x, y, x + childWidth, y + Math.Max(childHeight, actualHeight));
-            }
-            
-            // Move to next position
-            y += child.ComputedRect.Height + (style?.MarginBottom ?? 0);
-        }
-        
-        return y + (panel.ComputedStyle?.PaddingBottom ?? 0);
+        // Use Yoga flexbox layout engine
+        _yogaLayout.CalculateLayout(panel, width, height);
     }
 
 
@@ -232,8 +197,61 @@ public class AvalazorWindow : IDisposable
         // Request redraw - Silk.NET handles this automatically
     }
 
+    private void OnMouseDown(Silk.NET.Input.IMouse mouse, Silk.NET.Input.MouseButton button)
+    {
+        if (_rootPanel == null) return;
+
+        var pos = mouse.Position;
+        var e = new MouseEventArgs
+        {
+            X = pos.X,
+            Y = pos.Y,
+            Button = (int)button
+        };
+
+        // Find panel at position and fire event
+        HitTest(_rootPanel, e.X, e.Y)?.OnMouseDown(e);
+    }
+
+    private void OnMouseUp(Silk.NET.Input.IMouse mouse, Silk.NET.Input.MouseButton button)
+    {
+        if (_rootPanel == null) return;
+
+        var pos = mouse.Position;
+        var e = new MouseEventArgs
+        {
+            X = pos.X,
+            Y = pos.Y,
+            Button = (int)button
+        };
+
+        // Find panel at position and fire event
+        HitTest(_rootPanel, e.X, e.Y)?.OnMouseUp(e);
+    }
+
+    private Panel? HitTest(Panel panel, float x, float y)
+    {
+        // Check children first (front to back)
+        for (int i = panel.Children.Count - 1; i >= 0; i--)
+        {
+            var child = panel.Children[i];
+            var hit = HitTest(child, x, y);
+            if (hit != null) return hit;
+        }
+
+        // Check this panel
+        if (panel.ContainsPoint(x, y))
+        {
+            return panel;
+        }
+
+        return null;
+    }
+
     public void Dispose()
     {
+        _yogaLayout?.Dispose();
+        
         _surface?.Dispose();
         
         if (_gl != null)

@@ -21,6 +21,7 @@ namespace Avalazor.UI.Yoga
     {
         public IntPtr Handle;
         public static YGConfigRef Null => new YGConfigRef { Handle = IntPtr.Zero };
+        public bool IsNull => Handle == IntPtr.Zero;
     }
 
     #endregion
