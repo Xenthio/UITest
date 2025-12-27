@@ -15,6 +15,7 @@ namespace SimpleDesktopApp
     using Microsoft.AspNetCore.Components;
     #line 6 "XGUIThemeShowcase.razor"
     using Avalazor.UI;
+    using Microsoft.AspNetCore.Components.Rendering;
     #line 8 "XGUIThemeShowcase.razor"
            [StyleSheet("/themes/Avalazor.Defaults.scss")]
     #line 9 "XGUIThemeShowcase.razor"

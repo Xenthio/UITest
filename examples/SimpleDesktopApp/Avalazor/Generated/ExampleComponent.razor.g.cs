@@ -13,6 +13,7 @@ namespace SimpleDesktopApp
     using Microsoft.AspNetCore.Components;
     #line 5 "ExampleComponent.razor"
     using Avalazor.UI;
+    using Microsoft.AspNetCore.Components.Rendering;
     #line 7 "ExampleComponent.razor"
            [StyleSheet("ExampleComponent.scss")]
     public partial class ExampleComponent : UIComponent

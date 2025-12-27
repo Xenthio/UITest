@@ -82,6 +82,22 @@ public static class RazorProcessor
             $"public partial class {expectedClassName} :"
         );
         
+        // Add using directive for Microsoft.AspNetCore.Components.Rendering namespace
+        // This is needed for the extension methods (AddLocation, OpenElement overloads)
+        if (!generatedCode.Contains("using Microsoft.AspNetCore.Components.Rendering;"))
+        {
+            // Find the last using statement and insert after it
+            var lastUsingIndex = generatedCode.LastIndexOf("using ");
+            if (lastUsingIndex >= 0)
+            {
+                var nextNewline = generatedCode.IndexOf('\n', lastUsingIndex);
+                if (nextNewline >= 0)
+                {
+                    generatedCode = generatedCode.Insert(nextNewline + 1, "    using Microsoft.AspNetCore.Components.Rendering;\n");
+                }
+            }
+        }
+        
         return generatedCode;
     }
 

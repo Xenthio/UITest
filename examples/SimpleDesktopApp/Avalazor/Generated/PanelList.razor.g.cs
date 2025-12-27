@@ -13,6 +13,7 @@ namespace SimpleDesktopApp
     using System.Collections.Generic;
     #line 5 "PanelList.razor"
     using Avalazor.UI;
+    using Microsoft.AspNetCore.Components.Rendering;
     #line 7 "PanelList.razor"
            [StyleSheet("themes/default.scss")]
     public partial class PanelList : UIComponent
