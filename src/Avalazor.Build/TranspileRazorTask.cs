@@ -45,6 +45,12 @@ public class TranspileRazorTask : Task
     {
         try
         {
+            // Early validation to provide better error messages
+            if (RazorFiles == null || RazorFiles.Length == 0)
+            {
+                return true; // Nothing to do
+            }
+
             Log.LogMessage(MessageImportance.High, $"Transpiling {RazorFiles.Length} Razor file(s)...");
 
             if (string.IsNullOrEmpty(OutputPath))
