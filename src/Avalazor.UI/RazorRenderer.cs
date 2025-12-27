@@ -75,7 +75,16 @@ public class RazorRenderer : Renderer
         var frames = GetCurrentRenderTreeFrames(diff.ComponentId);
         if (frames.Count == 0) return;
 
-        var panel = ProcessFrames(frames, 0, frames.Count);
+        Console.WriteLine($"Processing component {diff.ComponentId} with {frames.Count} frames");
+        
+        // Skip the component wrapper frame if present and process the actual content
+        int startIndex = 0;
+        if (frames.Count > 0 && frames.Array[0].FrameType == RenderTreeFrameType.Component)
+        {
+            startIndex = 1;
+        }
+
+        var panel = ProcessFrames(frames, startIndex, frames.Count - startIndex);
         
         if (_rootPanel == null)
         {
@@ -92,9 +101,11 @@ public class RazorRenderer : Renderer
         // Apply default styling to make panels visible
         rootPanel.Style = "background-color: white; padding: 10px;";
 
-        for (int i = start; i < start + count; i++)
+        int endIndex = start + count;
+        for (int i = start; i < endIndex && i < frames.Count; i++)
         {
             var frame = frames.Array[i];
+            Console.WriteLine($"Frame {i}: Type={frame.FrameType}, Element={frame.ElementName}, Text={frame.TextContent?.Substring(0, Math.Min(50, frame.TextContent?.Length ?? 0))}");
 
             switch (frame.FrameType)
             {
@@ -117,6 +128,12 @@ public class RazorRenderer : Renderer
 
                 case RenderTreeFrameType.Component:
                     // Handle child components (future enhancement)
+                    Console.WriteLine($"Skipping component frame at index {i}");
+                    break;
+                    
+                case RenderTreeFrameType.Region:
+                    // Process region content
+                    Console.WriteLine($"Processing region at index {i}");
                     break;
             }
         }
