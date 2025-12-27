@@ -19,6 +19,8 @@ public class RazorRenderer : Renderer
     {
     }
 
+    public override Dispatcher Dispatcher => Dispatcher.CreateDefault();
+
     public async Task<Panel> RenderComponent<T>() where T : IComponent
     {
         var componentId = AssignRootComponentId(typeof(T));
