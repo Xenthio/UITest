@@ -86,35 +86,35 @@ namespace Avalazor.UI
             YogaNative.YGNodeStyleSetDisplay(node, YGDisplay.Flex);
 
             // Flex direction
-            if (style.FlexDirection == "row")
+            if (style.FlexDirection == FlexDirection.Row)
                 YogaNative.YGNodeStyleSetFlexDirection(node, YGFlexDirection.Row);
-            else if (style.FlexDirection == "column")
+            else if (style.FlexDirection == FlexDirection.Column)
                 YogaNative.YGNodeStyleSetFlexDirection(node, YGFlexDirection.Column);
-            else if (style.FlexDirection == "row-reverse")
+            else if (style.FlexDirection == FlexDirection.RowReverse)
                 YogaNative.YGNodeStyleSetFlexDirection(node, YGFlexDirection.RowReverse);
-            else if (style.FlexDirection == "column-reverse")
+            else if (style.FlexDirection == FlexDirection.ColumnReverse)
                 YogaNative.YGNodeStyleSetFlexDirection(node, YGFlexDirection.ColumnReverse);
 
             // Justify content
-            if (style.JustifyContent == "flex-start")
+            if (style.JustifyContent == JustifyContent.FlexStart)
                 YogaNative.YGNodeStyleSetJustifyContent(node, YGJustify.FlexStart);
-            else if (style.JustifyContent == "center")
+            else if (style.JustifyContent == JustifyContent.Center)
                 YogaNative.YGNodeStyleSetJustifyContent(node, YGJustify.Center);
-            else if (style.JustifyContent == "flex-end")
+            else if (style.JustifyContent == JustifyContent.FlexEnd)
                 YogaNative.YGNodeStyleSetJustifyContent(node, YGJustify.FlexEnd);
-            else if (style.JustifyContent == "space-between")
+            else if (style.JustifyContent == JustifyContent.SpaceBetween)
                 YogaNative.YGNodeStyleSetJustifyContent(node, YGJustify.SpaceBetween);
-            else if (style.JustifyContent == "space-around")
+            else if (style.JustifyContent == JustifyContent.SpaceAround)
                 YogaNative.YGNodeStyleSetJustifyContent(node, YGJustify.SpaceAround);
 
             // Align items
-            if (style.AlignItems == "flex-start")
+            if (style.AlignItems == AlignItems.FlexStart)
                 YogaNative.YGNodeStyleSetAlignItems(node, YGAlign.FlexStart);
-            else if (style.AlignItems == "center")
+            else if (style.AlignItems == AlignItems.Center)
                 YogaNative.YGNodeStyleSetAlignItems(node, YGAlign.Center);
-            else if (style.AlignItems == "flex-end")
+            else if (style.AlignItems == AlignItems.FlexEnd)
                 YogaNative.YGNodeStyleSetAlignItems(node, YGAlign.FlexEnd);
-            else if (style.AlignItems == "stretch")
+            else if (style.AlignItems == AlignItems.Stretch)
                 YogaNative.YGNodeStyleSetAlignItems(node, YGAlign.Stretch);
 
             // Dimensions
@@ -139,30 +139,28 @@ namespace Avalazor.UI
                 YogaNative.YGNodeStyleSetMaxHeight(node, style.MaxHeight.Value);
 
             // Flex properties
-            if (style.FlexGrow.HasValue)
-                YogaNative.YGNodeStyleSetFlexGrow(node, style.FlexGrow.Value);
-            if (style.FlexShrink.HasValue)
-                YogaNative.YGNodeStyleSetFlexShrink(node, style.FlexShrink.Value);
+            YogaNative.YGNodeStyleSetFlexGrow(node, style.FlexGrow);
+            YogaNative.YGNodeStyleSetFlexShrink(node, style.FlexShrink);
 
             // Padding
-            if (style.PaddingTop.HasValue)
-                YogaNative.YGNodeStyleSetPadding(node, YGEdge.Top, style.PaddingTop.Value);
-            if (style.PaddingRight.HasValue)
-                YogaNative.YGNodeStyleSetPadding(node, YGEdge.Right, style.PaddingRight.Value);
-            if (style.PaddingBottom.HasValue)
-                YogaNative.YGNodeStyleSetPadding(node, YGEdge.Bottom, style.PaddingBottom.Value);
-            if (style.PaddingLeft.HasValue)
-                YogaNative.YGNodeStyleSetPadding(node, YGEdge.Left, style.PaddingLeft.Value);
+            if (style.PaddingTop > 0)
+                YogaNative.YGNodeStyleSetPadding(node, YGEdge.Top, style.PaddingTop);
+            if (style.PaddingRight > 0)
+                YogaNative.YGNodeStyleSetPadding(node, YGEdge.Right, style.PaddingRight);
+            if (style.PaddingBottom > 0)
+                YogaNative.YGNodeStyleSetPadding(node, YGEdge.Bottom, style.PaddingBottom);
+            if (style.PaddingLeft > 0)
+                YogaNative.YGNodeStyleSetPadding(node, YGEdge.Left, style.PaddingLeft);
 
             // Margin
-            if (style.MarginTop.HasValue)
-                YogaNative.YGNodeStyleSetMargin(node, YGEdge.Top, style.MarginTop.Value);
-            if (style.MarginRight.HasValue)
-                YogaNative.YGNodeStyleSetMargin(node, YGEdge.Right, style.MarginRight.Value);
-            if (style.MarginBottom.HasValue)
-                YogaNative.YGNodeStyleSetMargin(node, YGEdge.Bottom, style.MarginBottom.Value);
-            if (style.MarginLeft.HasValue)
-                YogaNative.YGNodeStyleSetMargin(node, YGEdge.Left, style.MarginLeft.Value);
+            if (style.MarginTop != 0)
+                YogaNative.YGNodeStyleSetMargin(node, YGEdge.Top, style.MarginTop);
+            if (style.MarginRight != 0)
+                YogaNative.YGNodeStyleSetMargin(node, YGEdge.Right, style.MarginRight);
+            if (style.MarginBottom != 0)
+                YogaNative.YGNodeStyleSetMargin(node, YGEdge.Bottom, style.MarginBottom);
+            if (style.MarginLeft != 0)
+                YogaNative.YGNodeStyleSetMargin(node, YGEdge.Left, style.MarginLeft);
         }
 
         private void ApplyLayoutToPanels(Panel panel, YGNodeRef node, float parentX, float parentY)

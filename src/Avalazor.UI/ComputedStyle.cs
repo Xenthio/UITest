@@ -9,6 +9,7 @@ namespace Avalazor.UI;
 public class ComputedStyle
 {
     // Layout
+    public string? Display { get; set; }
     public float? Width { get; set; }
     public float? Height { get; set; }
     public float? MinWidth { get; set; }

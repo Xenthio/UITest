@@ -47,8 +47,6 @@ public class AvalazorWindow : IDisposable
         _window.Render += OnRender;
         _window.Resize += OnResize;
         _window.Closing += OnClosing;
-        _window.MouseDown += OnMouseDown;
-        _window.MouseUp += OnMouseUp;
     }
 
     public void Run()
