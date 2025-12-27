@@ -21,8 +21,8 @@ public class ComputedStyle
     public FlexDirection FlexDirection { get; set; } = FlexDirection.Column;
     public float FlexGrow { get; set; }
     public float FlexShrink { get; set; } = 1;
-    public AlignItems AlignItems { get; set; }
-    public JustifyContent JustifyContent { get; set; }
+    public AlignItems AlignItems { get; set; } = AlignItems.Stretch;
+    public JustifyContent JustifyContent { get; set; } = JustifyContent.FlexStart;
 
     // Spacing
     public float MarginTop { get; set; }
@@ -52,7 +52,7 @@ public class ComputedStyle
 
     // Text
     public string? FontFamily { get; set; }
-    public float FontSize { get; set; } = 14;
+    public float FontSize { get; set; } = 14f;  // Default 14px
     public FontWeight FontWeight { get; set; } = FontWeight.Normal;
 }
 

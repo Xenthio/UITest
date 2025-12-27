@@ -152,8 +152,59 @@ public class StyleEngine
                 case "font-size":
                     style.FontSize = ParseLength(value) ?? 14;
                     break;
+                case "padding":
+                    // Shorthand for all four sides
+                    var paddingValue = ParseLength(value) ?? 0;
+                    style.PaddingTop = paddingValue;
+                    style.PaddingRight = paddingValue;
+                    style.PaddingBottom = paddingValue;
+                    style.PaddingLeft = paddingValue;
+                    break;
+                case "margin":
+                    // Shorthand for all four sides
+                    var marginValue = ParseLength(value) ?? 0;
+                    style.MarginTop = marginValue;
+                    style.MarginRight = marginValue;
+                    style.MarginBottom = marginValue;
+                    style.MarginLeft = marginValue;
+                    break;
+                case "display":
+                    style.Display = value;
+                    break;
+                case "justify-content":
+                    style.JustifyContent = ParseJustifyContent(value);
+                    break;
+                case "align-items":
+                    style.AlignItems = ParseAlignItems(value);
+                    break;
             }
         }
+    }
+
+    private JustifyContent ParseJustifyContent(string value)
+    {
+        return value?.ToLowerInvariant() switch
+        {
+            "flex-start" => JustifyContent.FlexStart,
+            "flex-end" => JustifyContent.FlexEnd,
+            "center" => JustifyContent.Center,
+            "space-between" => JustifyContent.SpaceBetween,
+            "space-around" => JustifyContent.SpaceAround,
+            _ => JustifyContent.FlexStart
+        };
+    }
+
+    private AlignItems ParseAlignItems(string value)
+    {
+        return value?.ToLowerInvariant() switch
+        {
+            "flex-start" => AlignItems.FlexStart,
+            "flex-end" => AlignItems.FlexEnd,
+            "center" => AlignItems.Center,
+            "stretch" => AlignItems.Stretch,
+            "baseline" => AlignItems.Baseline,
+            _ => AlignItems.Stretch
+        };
     }
 
     private float? ParseLength(string value)
