@@ -57,21 +57,61 @@ public class StyleEngine
 
     private bool SelectorMatches(ISelector selector, Panel panel)
     {
-        var selectorText = selector.Text;
+        var selectorText = selector.Text.Trim();
 
-        // Simple tag matching
-        if (selectorText == panel.Tag || selectorText == "*")
+        // Handle descendant selectors (e.g., "header h1", ".intro p", "main .intro p")
+        if (selectorText.Contains(' '))
+        {
+            return MatchesDescendantSelector(selectorText, panel);
+        }
+
+        // Simple selector matching
+        return MatchesSimpleSelector(selectorText, panel);
+    }
+
+    private bool MatchesSimpleSelector(string selector, Panel panel)
+    {
+        // Universal selector
+        if (selector == "*")
+            return true;
+
+        // Tag matching
+        if (selector == panel.Tag)
             return true;
 
         // Class matching
-        if (selectorText.StartsWith("."))
+        if (selector.StartsWith("."))
         {
-            var className = selectorText.Substring(1);
+            var className = selector.Substring(1);
             return panel.HasClass(className);
         }
 
-        // TODO: Implement full CSS selector matching
         return false;
+    }
+
+    private bool MatchesDescendantSelector(string selector, Panel panel)
+    {
+        var parts = selector.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return false;
+
+        var currentPanel = panel;
+
+        // Match from right to left (child to ancestor)
+        for (int i = parts.Length - 1; i >= 0; i--)
+        {
+            if (!MatchesSimpleSelector(parts[i], currentPanel))
+                return false;
+
+            if (i > 0) // Not at the root yet
+            {
+                // Move up to parent
+                currentPanel = currentPanel.Parent;
+                if (currentPanel == null)
+                    return false; // Selector requires more ancestors than available
+            }
+        }
+
+        return true;
     }
 
     private void ApplyDeclarations(ComputedStyle style, StyleDeclaration declarations)
