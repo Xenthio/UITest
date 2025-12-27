@@ -78,9 +78,10 @@ public class TranspileRazorTask : Task
                     var razorContent = File.ReadAllText(inputPath);
 
                     // Generate C# code
+                    // Use absolute path so #line directives reference the correct file location
                     var csharpCode = RazorProcessor.GenerateFromSource(
                         razorContent,
-                        Path.Combine(relativePath, filename),
+                        inputPath,
                         RootNamespace,
                         UseFolderNamespacing
                     );

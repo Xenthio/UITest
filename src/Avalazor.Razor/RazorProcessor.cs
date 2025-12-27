@@ -39,8 +39,7 @@ public static class RazorProcessor
         RazorCodeDocument code = engine.Process(source, FileKinds.Component, new List<RazorSourceDocument>(), new List<TagHelperDescriptor>());
         code.SetCodeGenerationOptions(RazorCodeGenerationOptions.Create(o =>
         {
-            // Suppress line directives to avoid file not found errors during compilation
-            o.SuppressMetadataSourceChecksumAttributes = true;
+            // Keep default options for proper debugging support
             o.SuppressPrimaryMethodBody = false;
             o.SuppressNullabilityEnforcement = true;
         }));
@@ -103,21 +102,6 @@ public static class RazorProcessor
                 }
             }
         }
-        
-        // Remove #line directives to avoid file not found errors during compilation
-        // These directives reference the original .razor files which may not be accessible during build
-        generatedCode = System.Text.RegularExpressions.Regex.Replace(
-            generatedCode,
-            @"#line \d+ "".*?""[\r\n]+",
-            ""
-        );
-        
-        // Also remove #nullable directives that may be problematic
-        generatedCode = System.Text.RegularExpressions.Regex.Replace(
-            generatedCode,
-            @"#nullable (restore|enable|disable)[\r\n]+",
-            ""
-        );
         
         return generatedCode;
     }
