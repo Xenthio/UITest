@@ -31,21 +31,27 @@ This will:
 
 #### Windows
 
-On Windows, you can use WSL to run the build script, or build manually:
+**Option 1: Using PowerShell script (recommended)**
+
+Requires Visual Studio 2022 with C++ tools and CMake:
 
 ```powershell
-# Download Yoga source
-curl -L "https://github.com/facebook/yoga/archive/refs/tags/v3.1.0.tar.gz" -o yoga.tar.gz
-tar -xzf yoga.tar.gz
-cd yoga-3.1.0
+cd src/Avalazor.UI/Native
+.\build-yoga-libs.ps1
+```
 
-# Build with CMake
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+This will automatically download, build, and copy `yoga.dll`.
 
-# Copy yoga.dll (or yogacore.dll) to src/Avalazor.UI/Native/yoga.dll
+**Option 2: Using WSL**
+
+If you have Windows Subsystem for Linux installed:
+
+```bash
+# Inside WSL
+cd /mnt/c/path/to/UITest/src/Avalazor.UI/Native
+chmod +x build-yoga-libs.sh
+./build-yoga-libs.sh
+# Rename libyoga.so to yoga.dll for Windows use
 ```
 
 ### Prebuilt Binaries (Alternative)
