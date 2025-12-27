@@ -25,8 +25,8 @@ cd "yoga-${YOGA_VERSION}"
 echo "Building Yoga..."
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=OFF
+cmake --build . --config Release --target yogacore
 
 # Copy the built library to the Native directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
