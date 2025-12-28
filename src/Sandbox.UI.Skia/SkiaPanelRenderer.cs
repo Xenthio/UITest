@@ -10,7 +10,9 @@ public class SkiaPanelRenderer : IPanelRenderer
 {
     private SKCanvas? _canvas;
     
-    // Cache typefaces to avoid recreation each frame (which can cause font rendering issues on resize)
+    // Cache typefaces to avoid recreation each frame (which can cause font rendering issues on resize).
+    // This cache is bounded by the finite number of font family/style combinations used by the application.
+    // Typefaces are long-lived resources and should not be frequently created/destroyed.
     private static readonly Dictionary<(string family, SKFontStyle style), SKTypeface> _typefaceCache = new();
 
     public Rect Screen { get; private set; }
@@ -248,6 +250,8 @@ public class SkiaPanelRenderer : IPanelRenderer
             TextSize = fontSize,
             IsAntialias = true,
             SubpixelText = true,
+            // Note: LcdRenderText is not used as it can cause rendering issues when
+            // the background changes or when rendering to offscreen textures
             Typeface = typeface
         };
 
