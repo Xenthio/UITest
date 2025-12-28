@@ -165,13 +165,13 @@ public class AvalazorWindow : IDisposable
             _gl.Viewport(0, 0, (uint)size.X, (uint)size.Y);
         }
 
-        // Mark as needing layout and recreate render target
+        // Mark as needing layout
         _needsLayout = true;
-        RecreateRenderTarget(size.X, size.Y);
 
         // Force immediate render to prevent stretched frame appearance
         // This ensures the new size is rendered immediately instead of
         // stretching the old frame until the next render cycle
+        // OnRender will handle recreating the render target
         OnRender(0);
     }
 
