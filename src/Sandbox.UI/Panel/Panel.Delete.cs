@@ -16,13 +16,7 @@ public partial class Panel
         IsDeleting = true;
 
         // Delete all children first
-        if (_children != null)
-        {
-            foreach (var child in _children.ToArray())
-            {
-                child.Delete(immediate);
-            }
-        }
+        DeleteChildren(immediate);
 
         // Remove from parent
         if (Parent != null)
