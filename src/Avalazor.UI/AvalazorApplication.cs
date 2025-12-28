@@ -18,15 +18,22 @@ public static class AvalazorApplication
     }
 
     /// <summary>
-    /// Run a Panel-derived component as the root of the application.
-    /// In s&box-style architecture, Razor components inherit from Panel directly.
+    /// Run a Panel-derived Razor component as the root of the application.
+    /// This properly processes the Razor render tree to create child panels.
     /// </summary>
     public static void RunPanel<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : Panel, new()
     {
         try
         {
-            // Create the panel (which is the compiled Razor component)
+            // Set up DI for Blazor components
+            var services = new ServiceCollection();
+            services.AddLogging();
+            var serviceProvider = services.BuildServiceProvider();
+
+            // Create the panel and use RazorRenderer to build its render tree
             var panel = new T();
+            var renderer = new PanelRazorRenderer(serviceProvider);
+            renderer.BuildPanelRenderTree(panel);
             
             // Wrap in RootPanel
             var rootPanel = new RootPanel();
