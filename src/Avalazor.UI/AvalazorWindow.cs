@@ -181,6 +181,9 @@ public class AvalazorWindow : IDisposable
         if (_gl == null || _grContext == null) return;
         if (width <= 0 || height <= 0) return;
 
+        // Flush any pending GPU commands before disposing resources
+        _grContext.Flush();
+
         // Clean up old resources
         _surface?.Dispose();
         _surface = null;
@@ -203,6 +206,9 @@ public class AvalazorWindow : IDisposable
 
         // Create new render target
         CreateRenderTarget(width, height);
+        
+        // Reset context so Skia doesn't assume cached state about old framebuffer
+        _grContext.ResetContext();
     }
 
     private void OnClosing()
