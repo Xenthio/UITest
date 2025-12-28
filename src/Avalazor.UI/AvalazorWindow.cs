@@ -2,12 +2,14 @@ using Silk.NET.Windowing;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using SkiaSharp;
+using Sandbox.UI;
+using Sandbox.UI.Skia;
 
 namespace Avalazor.UI;
 
 /// <summary>
 /// Main application window using Silk.NET for cross-platform windowing
-/// Phase 3: Proper GPU-accelerated rendering with OpenGL backend
+/// Uses Sandbox.UI for panel system and Sandbox.UI.Skia for rendering
 /// </summary>
 public class AvalazorWindow : IDisposable
 {
@@ -16,23 +18,18 @@ public class AvalazorWindow : IDisposable
     private SKSurface? _surface;
     private GRContext? _grContext;
     private GRGlInterface? _grGlInterface;
-    private Panel? _rootPanel;
-    private readonly StyleEngine _styleEngine = new();
+    private RootPanel? _rootPanel;
+    private SkiaPanelRenderer? _renderer;
     private uint _framebuffer;
     private uint _texture;
     private uint _renderbuffer;
 
-    public Panel? RootPanel
+    public RootPanel? RootPanel
     {
         get => _rootPanel;
         set
         {
             _rootPanel = value;
-            // Set StyleEngine on root panel so it cascades to children
-            if (_rootPanel != null)
-            {
-                _rootPanel.SetStyleEngine(_styleEngine);
-            }
             Invalidate();
         }
     }
@@ -58,12 +55,6 @@ public class AvalazorWindow : IDisposable
         _window.Run();
     }
 
-    public void LoadStylesheet(string name, string css)
-    {
-        _styleEngine.AddStylesheet(name, css);
-        Invalidate();
-    }
-
     private void OnLoad()
     {
         // Initialize OpenGL
@@ -80,6 +71,7 @@ public class AvalazorWindow : IDisposable
         }
 
         _grContext = GRContext.CreateGl(_grGlInterface);
+        _renderer = new SkiaPanelRenderer();
 
         // Create render target
         CreateRenderTarget(_window.Size.X, _window.Size.Y);
@@ -111,7 +103,7 @@ public class AvalazorWindow : IDisposable
 
     private void OnRender(double deltaTime)
     {
-        if (_gl == null || _surface == null || _rootPanel == null || _grContext == null) return;
+        if (_gl == null || _surface == null || _rootPanel == null || _grContext == null || _renderer == null) return;
 
         // Clear screen
         _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -120,26 +112,14 @@ public class AvalazorWindow : IDisposable
         var canvas = _surface.Canvas;
         canvas.Clear(new SKColor(240, 240, 240)); // Light gray background
 
-        // Create layout cascade for styling and layout
-        var cascade = new LayoutCascade();
-        cascade.StyleEngine = _styleEngine;
-        cascade.AvailableWidth = _window.Size.X;
-        cascade.AvailableHeight = _window.Size.Y;
+        // Set panel bounds to window size
+        _rootPanel.PanelBounds = new Rect(0, 0, _window.Size.X, _window.Size.Y);
 
-        // PreLayout: Compute styles and setup Yoga (s&box pattern)
-        _rootPanel.PreLayout(cascade);
+        // Layout using Sandbox.UI's layout system
+        _rootPanel.Layout();
 
-        Console.WriteLine($"OnRender: PreLayout complete, calling CalculateLayout");
-        // Calculate Yoga layout - CRITICAL: This actually runs the layout calculation!
-        _rootPanel.YogaNode?.CalculateLayout(_window.Size.X, _window.Size.Y);
-
-        Console.WriteLine($"OnRender: CalculateLayout complete, calling FinalLayout");
-        // FinalLayout: Calculate final positions from Yoga (s&box pattern)
-        _rootPanel.FinalLayout(cascade);
-
-        Console.WriteLine($"OnRender: FinalLayout complete, calling Paint");
-        // Paint the UI
-        _rootPanel.Paint(canvas);
+        // Render using SkiaPanelRenderer
+        _renderer.Render(canvas, _rootPanel);
 
         canvas.Flush();
         _grContext.Flush();
@@ -187,57 +167,6 @@ public class AvalazorWindow : IDisposable
     private void Invalidate()
     {
         // Request redraw - Silk.NET handles this automatically
-    }
-
-    private void OnMouseDown(Silk.NET.Input.IMouse mouse, Silk.NET.Input.MouseButton button)
-    {
-        if (_rootPanel == null) return;
-
-        var pos = mouse.Position;
-        var e = new MouseEventArgs
-        {
-            X = pos.X,
-            Y = pos.Y,
-            Button = (int)button
-        };
-
-        // Find panel at position and fire event
-        HitTest(_rootPanel, e.X, e.Y)?.OnMouseDown(e);
-    }
-
-    private void OnMouseUp(Silk.NET.Input.IMouse mouse, Silk.NET.Input.MouseButton button)
-    {
-        if (_rootPanel == null) return;
-
-        var pos = mouse.Position;
-        var e = new MouseEventArgs
-        {
-            X = pos.X,
-            Y = pos.Y,
-            Button = (int)button
-        };
-
-        // Find panel at position and fire event
-        HitTest(_rootPanel, e.X, e.Y)?.OnMouseUp(e);
-    }
-
-    private Panel? HitTest(Panel panel, float x, float y)
-    {
-        // Check children first (front to back)
-        for (int i = panel.Children.Count - 1; i >= 0; i--)
-        {
-            var child = panel.Children[i];
-            var hit = HitTest(child, x, y);
-            if (hit != null) return hit;
-        }
-
-        // Check this panel
-        if (panel.ContainsPoint(x, y))
-        {
-            return panel;
-        }
-
-        return null;
     }
 
     public void Dispose()

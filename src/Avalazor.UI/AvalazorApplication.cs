@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Sandbox.UI;
 
 namespace Avalazor.UI;
 
@@ -9,16 +10,11 @@ namespace Avalazor.UI;
 /// </summary>
 public static class AvalazorApplication
 {
-    public static void Run(Panel rootPanel, int width = 1280, int height = 720, string title = "Avalazor Application")
+    public static void Run(RootPanel rootPanel, int width = 1280, int height = 720, string title = "Avalazor Application")
     {
         using var window = new AvalazorWindow(width, height, title);
         window.RootPanel = rootPanel;
         window.Run();
-    }
-
-    public static void Run<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : Panel, new()
-    {
-        Run(new T(), width, height, title);
     }
 
     /// <summary>
@@ -39,7 +35,7 @@ public static class AvalazorApplication
 
             Console.WriteLine($"Root panel created: {rootPanel != null}");
             Console.WriteLine($"Root panel type: {rootPanel?.GetType().Name}");
-            Console.WriteLine($"Root panel children: {rootPanel?.Children.Count ?? 0}");
+            Console.WriteLine($"Root panel children: {rootPanel?.ChildrenCount ?? 0}");
             
             if (rootPanel != null)
             {
@@ -64,7 +60,7 @@ public static class AvalazorApplication
     {
         var indent = new string(' ', depth * 2);
         var text = panel is Label label ? $" Text='{label.Text}'" : "";
-        Console.WriteLine($"{indent}{panel.GetType().Name} (Tag={panel.Tag}, Children={panel.Children.Count}){text}");
+        Console.WriteLine($"{indent}{panel.GetType().Name} (ElementName={panel.ElementName}, Children={panel.ChildrenCount}){text}");
         foreach (var child in panel.Children)
         {
             PrintPanelTree(child, depth + 1);
