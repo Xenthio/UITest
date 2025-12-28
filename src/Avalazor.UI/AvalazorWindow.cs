@@ -163,20 +163,16 @@ public class AvalazorWindow : IDisposable
         if (_gl != null)
         {
             _gl.Viewport(0, 0, (uint)size.X, (uint)size.Y);
-            
-            // Clear the default framebuffer immediately to prevent stretched appearance
-            // Without this, the old content gets stretched by the OS until new content is rendered
-            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         }
 
         // Mark as needing layout
         _needsLayout = true;
 
-        // Force immediate render to prevent stretched frame appearance
-        // This ensures the new size is rendered immediately instead of
-        // stretching the old frame until the next render cycle
-        // OnRender will handle recreating the render target
+        // Double render workaround for Silk.NET resize issues:
+        // First render updates/recreates framebuffers for new size
+        // Second render actually draws the content at the new size
+        // This prevents stretched frames during window resize
+        OnRender(0);
         OnRender(0);
     }
 
