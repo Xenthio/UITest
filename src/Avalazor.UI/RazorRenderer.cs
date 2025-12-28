@@ -323,6 +323,7 @@ public class RazorRenderer : Renderer
         if (element.HasAttribute("style"))
         {
             panel.Style = element.GetAttribute("style");
+            Console.WriteLine($"Set inline style on {element.TagName}: {panel.Style}");
         }
 
         // Process child nodes

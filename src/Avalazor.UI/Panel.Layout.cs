@@ -28,6 +28,7 @@ public partial class Panel
         // Compute styles for this panel
         if (_styleEngine != null)
         {
+            Console.WriteLine($"PreLayout: Computing styles for {Tag} with inline style: '{Style}'");
             _computedStyle = _styleEngine.ComputeStyle(this);
             
             // Debug logging
@@ -35,6 +36,14 @@ public partial class Panel
             {
                 Console.WriteLine($"PreLayout: {Tag} (classes: {string.Join(", ", Classes)}) has background: {_computedStyle.BackgroundColor}");
             }
+            else
+            {
+                Console.WriteLine($"PreLayout: {Tag} has NO background color computed");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"PreLayout: {Tag} has NO StyleEngine!");
         }
 
         // Update visibility
