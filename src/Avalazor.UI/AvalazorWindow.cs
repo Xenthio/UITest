@@ -28,6 +28,11 @@ public class AvalazorWindow : IDisposable
         set
         {
             _rootPanel = value;
+            // Set StyleEngine on root panel so it cascades to children
+            if (_rootPanel != null)
+            {
+                _rootPanel.SetStyleEngine(_styleEngine);
+            }
             Invalidate();
         }
     }
@@ -123,6 +128,9 @@ public class AvalazorWindow : IDisposable
 
         // PreLayout: Compute styles and setup Yoga (s&box pattern)
         _rootPanel.PreLayout(cascade);
+
+        // Calculate Yoga layout - CRITICAL: This actually runs the layout calculation!
+        _rootPanel.YogaNode?.CalculateLayout(_window.Size.X, _window.Size.Y);
 
         // FinalLayout: Calculate final positions from Yoga (s&box pattern)
         _rootPanel.FinalLayout(cascade);
