@@ -65,7 +65,7 @@ public partial class Panel
         }
         
         // Summary log
-        Console.WriteLine($"PreLayout COMPLETE: {Tag}, Background={_computedStyle?.BackgroundColor != null}, Box.Rect=({Box.Rect.X},{Box.Rect.Y},{Box.Rect.Width},{Box.Rect.Height})");
+        Console.WriteLine($"PreLayout COMPLETE: {Tag}, Background={_computedStyle?.BackgroundColor != null}, Box.Rect=({Box.Rect.Left},{Box.Rect.Top},{Box.Rect.Width},{Box.Rect.Height})");
     }
 
     /// <summary>
