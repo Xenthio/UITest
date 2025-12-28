@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>BL0006;CS0649;CS0414</NoWarn>
+    <RootNamespace>Sandbox.UI</RootNamespace>
+    <AssemblyName>Sandbox.UI</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Yoga layout library - managed wrapper -->
+    <!-- No direct rendering dependencies - this is renderer-agnostic -->
+  </ItemGroup>
+
+</Project>
