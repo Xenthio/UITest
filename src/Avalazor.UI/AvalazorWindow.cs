@@ -129,12 +129,15 @@ public class AvalazorWindow : IDisposable
         // PreLayout: Compute styles and setup Yoga (s&box pattern)
         _rootPanel.PreLayout(cascade);
 
+        Console.WriteLine($"OnRender: PreLayout complete, calling CalculateLayout");
         // Calculate Yoga layout - CRITICAL: This actually runs the layout calculation!
         _rootPanel.YogaNode?.CalculateLayout(_window.Size.X, _window.Size.Y);
 
+        Console.WriteLine($"OnRender: CalculateLayout complete, calling FinalLayout");
         // FinalLayout: Calculate final positions from Yoga (s&box pattern)
         _rootPanel.FinalLayout(cascade);
 
+        Console.WriteLine($"OnRender: FinalLayout complete, calling Paint");
         // Paint the UI
         _rootPanel.Paint(canvas);
 

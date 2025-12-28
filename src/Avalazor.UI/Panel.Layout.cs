@@ -17,6 +17,8 @@ public partial class Panel
     /// </summary>
     internal virtual void PreLayout(LayoutCascade cascade)
     {
+        Console.WriteLine($"PreLayout ENTRY: {Tag}, YogaNode={YogaNode != null}, needsPreLayout={needsPreLayout}");
+        
         if (YogaNode == null)
             return;
 
