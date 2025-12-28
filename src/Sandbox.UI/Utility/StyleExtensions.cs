@@ -14,6 +14,8 @@ internal static class StyleExtensions
 
 	/// <summary>
 	/// Puts a filename into the format /path/filename.ext (from path\FileName.EXT)
+	/// Note: On Windows, absolute paths with drive letters (e.g., C:\path) are preserved
+	/// and NOT given a leading slash.
 	/// </summary>
 	public static string NormalizeFilename( this string str, bool enforceInitialSlash, bool enforceLowerCase )
 	{
@@ -24,7 +26,10 @@ internal static class StyleExtensions
 
 		str = str.Replace( '\\', '/' );
 
-		if ( enforceInitialSlash && !str.StartsWith( '/' ) )
+		// Don't add leading slash if this is a Windows absolute path (has drive letter like C:/)
+		bool isWindowsAbsolutePath = str.Length >= 2 && char.IsLetter( str[0] ) && str[1] == ':';
+
+		if ( enforceInitialSlash && !str.StartsWith( '/' ) && !isWindowsAbsolutePath )
 			str = str.Insert( 0, "/" );
 
 		return str;
