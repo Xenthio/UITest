@@ -142,7 +142,12 @@ public class StyleEngine
                     style.MaxHeight = ParseLength(value);
                     break;
                 case "background-color":
-                    style.BackgroundColor = ParseColor(value);
+                    var bgColor = ParseColor(value);
+                    if (bgColor.HasValue)
+                    {
+                        Console.WriteLine($"StyleEngine: Parsed background-color '{value}' -> {bgColor}");
+                    }
+                    style.BackgroundColor = bgColor;
                     break;
                 case "color":
                     style.Color = ParseColor(value);

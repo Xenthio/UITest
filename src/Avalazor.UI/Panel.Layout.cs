@@ -29,6 +29,12 @@ public partial class Panel
         if (_styleEngine != null)
         {
             _computedStyle = _styleEngine.ComputeStyle(this);
+            
+            // Debug logging
+            if (_computedStyle?.BackgroundColor != null)
+            {
+                Console.WriteLine($"PreLayout: {Tag} (classes: {string.Join(", ", Classes)}) has background: {_computedStyle.BackgroundColor}");
+            }
         }
 
         // Update visibility

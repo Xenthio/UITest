@@ -78,6 +78,8 @@ public partial class Panel
     {
         if (_computedStyle?.BackgroundColor != null)
         {
+            Console.WriteLine($"PaintBackground: {Tag} rendering {_computedStyle.BackgroundColor} at (0, 0, {Box.Rect.Width}, {Box.Rect.Height})");
+            
             using var paint = new SKPaint
             {
                 Color = _computedStyle.BackgroundColor.Value,
