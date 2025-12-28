@@ -66,6 +66,9 @@ public class Styles
     public int? ZIndex { get; set; }
     public PointerEvents? PointerEvents { get; set; }
 
+    // Background gradient (for linear-gradient, radial-gradient)
+    public GradientInfo? BackgroundGradient { get; set; }
+
     // Text (cascading)
     public Color? Color { get; set; }
     public Length? FontSize { get; set; }
@@ -147,6 +150,7 @@ public class Styles
         if (other.Overflow.HasValue) Overflow = other.Overflow;
         if (other.Opacity.HasValue) Opacity = other.Opacity;
         if (other.BackgroundColor.HasValue) BackgroundColor = other.BackgroundColor;
+        if (other.BackgroundGradient.HasValue) BackgroundGradient = other.BackgroundGradient;
         if (other.ZIndex.HasValue) ZIndex = other.ZIndex;
         if (other.PointerEvents.HasValue) PointerEvents = other.PointerEvents;
 
@@ -216,6 +220,7 @@ public class Styles
         Overflow = other.Overflow;
         Opacity = other.Opacity;
         BackgroundColor = other.BackgroundColor;
+        BackgroundGradient = other.BackgroundGradient;
         ZIndex = other.ZIndex;
         PointerEvents = other.PointerEvents;
 
@@ -316,7 +321,7 @@ public class Styles
             case "overflow": return SetOverflow(value);
             case "opacity": return SetFloat(value, v => Opacity = v);
             case "background-color": BackgroundColor = UI.Color.Parse(value); return BackgroundColor.HasValue;
-            case "background": BackgroundColor = UI.Color.Parse(value); return BackgroundColor.HasValue;
+            case "background": return SetBackground(value);
             case "z-index": return SetInt(value, v => ZIndex = v);
             case "pointer-events": return SetPointerEvents(value);
 
@@ -676,6 +681,378 @@ public class Styles
             ColumnGap = Length.Parse(parts[1]);
             return true;
         }
+        return false;
+    }
+
+    /// <summary>
+    /// Parse background property - supports solid colors and gradients
+    /// Ported from s&box's Styles.Set.cs SetBackground method
+    /// </summary>
+    private bool SetBackground(string value)
+    {
+        value = value.Trim();
+        
+        // Check for linear-gradient
+        if (value.StartsWith("linear-gradient(", StringComparison.OrdinalIgnoreCase))
+        {
+            var contentStart = "linear-gradient(".Length;
+            var contentEnd = value.LastIndexOf(')');
+            if (contentEnd > contentStart)
+            {
+                var gradient = value.Substring(contentStart, contentEnd - contentStart);
+                BackgroundGradient = ParseLinearGradient(gradient);
+                BackgroundColor = null; // Clear solid color when using gradient
+                return BackgroundGradient.HasValue;
+            }
+        }
+
+        // Check for radial-gradient
+        if (value.StartsWith("radial-gradient(", StringComparison.OrdinalIgnoreCase))
+        {
+            var contentStart = "radial-gradient(".Length;
+            var contentEnd = value.LastIndexOf(')');
+            if (contentEnd > contentStart)
+            {
+                var gradient = value.Substring(contentStart, contentEnd - contentStart);
+                BackgroundGradient = ParseRadialGradient(gradient);
+                BackgroundColor = null;
+                return BackgroundGradient.HasValue;
+            }
+        }
+
+        // Try parsing as a solid color
+        BackgroundColor = UI.Color.Parse(value);
+        BackgroundGradient = null; // Clear gradient when using solid color
+        return BackgroundColor.HasValue;
+    }
+
+    /// <summary>
+    /// Extract content inside parentheses for a given function name
+    /// Ported from s&box's Styles.Set.cs
+    /// </summary>
+    private bool GetTokenValueUnderParenthesis(Parse p, string tokenName, out string result)
+    {
+        if (p.Is(tokenName, 0, true))
+        {
+            p.Pointer += tokenName.Length;
+            p = p.SkipWhitespaceAndNewlines();
+
+            if (p.Current != '(')
+            {
+                result = "";
+                return false;
+            }
+
+            p.Pointer++;
+
+            int stack = 1;
+            var wordStart = p;
+
+            while (!p.IsEnd && stack > 0)
+            {
+                p.Pointer++;
+                if (p.Current == '(') stack++;
+                if (p.Current == ')') stack--;
+            }
+
+            if (p.IsEnd)
+            {
+                result = "";
+                return false;
+            }
+
+            result = wordStart.Read(p.Pointer - wordStart.Pointer);
+            return true;
+        }
+        result = "";
+        return false;
+    }
+
+    /// <summary>
+    /// Parse linear-gradient() syntax
+    /// Ported from s&box's gradient parsing
+    /// </summary>
+    private GradientInfo? ParseLinearGradient(string token)
+    {
+        var info = new GradientInfo
+        {
+            GradientType = GradientInfo.GradientTypes.Linear,
+            Angle = 180f * (MathF.PI / 180f) // Default: top to bottom (180deg in radians)
+        };
+
+        var p = new Parse(token);
+        p = p.SkipWhitespaceAndNewlines();
+
+        // Try to parse angle first
+        var restoreP = p;
+        var angleStr = p.ReadSentence();
+        if (TryParseAngle(angleStr, out float angle))
+        {
+            info.Angle = angle;
+            if (p.Current == ',')
+                p.Pointer++;
+        }
+        else
+        {
+            p = restoreP;
+        }
+
+        // Parse color stops
+        var colorOffsets = ParseGradientColorStops(p.ReadRemaining());
+        if (colorOffsets.Count == 0)
+            return null;
+
+        info.ColorOffsets = System.Collections.Immutable.ImmutableArray.CreateRange(colorOffsets);
+        return info;
+    }
+
+    /// <summary>
+    /// Parse radial-gradient() syntax
+    /// </summary>
+    private GradientInfo? ParseRadialGradient(string token)
+    {
+        var info = new GradientInfo
+        {
+            GradientType = GradientInfo.GradientTypes.Radial,
+            OffsetX = Length.Percent(50),
+            OffsetY = Length.Percent(50),
+            SizeMode = GradientInfo.RadialSizeMode.FarthestCorner
+        };
+
+        var p = new Parse(token);
+        p = p.SkipWhitespaceAndNewlines();
+
+        // Parse color stops (simplified - skip shape/size parsing for now)
+        var colorOffsets = ParseGradientColorStops(p.ReadRemaining());
+        if (colorOffsets.Count == 0)
+            return null;
+
+        info.ColorOffsets = System.Collections.Immutable.ImmutableArray.CreateRange(colorOffsets);
+        return info;
+    }
+
+    /// <summary>
+    /// Parse gradient color stops from CSS gradient syntax
+    /// Ported from s&box's Styles.GradientGenerator.cs ParseGradient method
+    /// </summary>
+    private List<GradientInfo.GradientColorOffset> ParseGradientColorStops(string token)
+    {
+        var colorOffsets = new List<GradientInfo.GradientColorOffset>();
+
+        var p = new Parse(token);
+
+        while (!p.IsEnd)
+        {
+            p = p.SkipWhitespaceAndNewlines();
+
+            // Read up to a comma or end
+            var w = p.ReadSentence();
+            if (string.IsNullOrWhiteSpace(w))
+                break;
+
+            w = w.Trim();
+            
+            // Split the sentence into color and optional offset
+            // e.g., "#007acc 0%" -> color="#007acc", offset="0%"
+            // e.g., "red" -> color="red", offset=null
+            string colorPart;
+            string? offsetPart = null;
+            
+            // Handle different color formats
+            if (w.StartsWith("#"))
+            {
+                // Hex color - find the space after the hex
+                var spaceIdx = w.IndexOf(' ');
+                if (spaceIdx > 0)
+                {
+                    colorPart = w.Substring(0, spaceIdx);
+                    offsetPart = w.Substring(spaceIdx + 1).Trim();
+                }
+                else
+                {
+                    colorPart = w;
+                }
+            }
+            else if (w.StartsWith("rgb", StringComparison.OrdinalIgnoreCase) ||
+                     w.StartsWith("hsl", StringComparison.OrdinalIgnoreCase))
+            {
+                // Function color - find closing paren
+                var closeIdx = w.IndexOf(')');
+                if (closeIdx >= 0 && closeIdx + 1 < w.Length)
+                {
+                    colorPart = w.Substring(0, closeIdx + 1);
+                    offsetPart = w.Substring(closeIdx + 1).Trim();
+                }
+                else
+                {
+                    colorPart = w;
+                }
+            }
+            else
+            {
+                // Named color or other - find first space
+                var spaceIdx = w.IndexOf(' ');
+                if (spaceIdx > 0)
+                {
+                    colorPart = w.Substring(0, spaceIdx);
+                    offsetPart = w.Substring(spaceIdx + 1).Trim();
+                }
+                else
+                {
+                    colorPart = w;
+                }
+            }
+
+            // Parse the color
+            var c = UI.Color.Parse(colorPart);
+            if (!c.HasValue)
+                break;
+
+            // Parse optional offset
+            float? offset = null;
+            if (!string.IsNullOrEmpty(offsetPart))
+            {
+                if (offsetPart.EndsWith("%"))
+                {
+                    if (float.TryParse(offsetPart.AsSpan(0, offsetPart.Length - 1),
+                        System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out var pct))
+                    {
+                        offset = pct / 100f;
+                    }
+                }
+                else if (float.TryParse(offsetPart,
+                    System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var val))
+                {
+                    offset = val / 100f;
+                }
+            }
+
+            colorOffsets.Add(new GradientInfo.GradientColorOffset
+            {
+                color = c.Value,
+                offset = offset
+            });
+
+            if (p.Is(','))
+            {
+                p.Pointer++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        // Fill in missing offset values
+        if (colorOffsets.Count > 0)
+        {
+            // First color defaults to 0%
+            if (!colorOffsets[0].offset.HasValue)
+            {
+                var first = colorOffsets[0];
+                first.offset = 0f;
+                colorOffsets[0] = first;
+            }
+
+            // Last color defaults to 100%
+            if (colorOffsets.Count > 1 && !colorOffsets[^1].offset.HasValue)
+            {
+                var last = colorOffsets[^1];
+                last.offset = 1f;
+                colorOffsets[^1] = last;
+            }
+
+            // Interpolate missing middle values
+            for (int i = 1; i < colorOffsets.Count - 1; i++)
+            {
+                if (!colorOffsets[i].offset.HasValue)
+                {
+                    var item = colorOffsets[i];
+                    item.offset = (float)i / (colorOffsets.Count - 1);
+                    colorOffsets[i] = item;
+                }
+            }
+        }
+
+        return colorOffsets;
+    }
+
+    /// <summary>
+    /// Try to parse CSS angle value (deg, rad, turn, grad)
+    /// </summary>
+    private bool TryParseAngle(string value, out float outAngle)
+    {
+        outAngle = 0f;
+        value = value.Trim();
+
+        if (string.IsNullOrEmpty(value))
+            return false;
+
+        // Handle "to <direction>" syntax
+        if (value.StartsWith("to ", StringComparison.OrdinalIgnoreCase))
+        {
+            var direction = value.Substring(3).Trim().ToLowerInvariant();
+            outAngle = direction switch
+            {
+                "top" => 0f,
+                "right" => 90f,
+                "bottom" => 180f,
+                "left" => 270f,
+                "top right" or "right top" => 45f,
+                "bottom right" or "right bottom" => 135f,
+                "bottom left" or "left bottom" => 225f,
+                "top left" or "left top" => 315f,
+                _ => 180f
+            };
+            outAngle = outAngle * (MathF.PI / 180f); // Convert to radians
+            return true;
+        }
+
+        // Try parsing numeric angle with unit
+        if (value.EndsWith("deg", StringComparison.OrdinalIgnoreCase))
+        {
+            if (float.TryParse(value.AsSpan(0, value.Length - 3), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var deg))
+            {
+                outAngle = deg * (MathF.PI / 180f);
+                return true;
+            }
+        }
+        else if (value.EndsWith("rad", StringComparison.OrdinalIgnoreCase))
+        {
+            if (float.TryParse(value.AsSpan(0, value.Length - 3), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var rad))
+            {
+                outAngle = rad;
+                return true;
+            }
+        }
+        else if (value.EndsWith("turn", StringComparison.OrdinalIgnoreCase))
+        {
+            if (float.TryParse(value.AsSpan(0, value.Length - 4), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var turn))
+            {
+                outAngle = turn * 2f * MathF.PI;
+                return true;
+            }
+        }
+        else if (value.EndsWith("grad", StringComparison.OrdinalIgnoreCase))
+        {
+            if (float.TryParse(value.AsSpan(0, value.Length - 4), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var grad))
+            {
+                outAngle = grad * (MathF.PI / 200f);
+                return true;
+            }
+        }
+        else
+        {
+            // Try parsing as plain number (assume degrees)
+            if (float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var num))
+            {
+                outAngle = num * (MathF.PI / 180f);
+                return true;
+            }
+        }
+
         return false;
     }
 

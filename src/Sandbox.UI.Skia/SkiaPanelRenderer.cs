@@ -97,11 +97,24 @@ public class SkiaPanelRenderer : IPanelRenderer
 
         var rect = panel.Box.Rect;
         var skRect = ToSKRect(rect);
+        var opacity = panel.Opacity * state.RenderOpacity;
 
-        // Background color
-        if (style.BackgroundColor.HasValue && style.BackgroundColor.Value.a > 0)
+        // Border radius
+        var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
+        var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
+        var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
+        var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
+        var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0;
+        var avgRadius = hasRadius ? (radiusTL + radiusTR + radiusBL + radiusBR) / 4f : 0f;
+
+        // Background gradient takes priority over solid color
+        if (style.BackgroundGradient.HasValue && style.BackgroundGradient.Value.IsValid)
         {
-            var opacity = panel.Opacity * state.RenderOpacity;
+            DrawGradientBackground(canvas, skRect, style.BackgroundGradient.Value, opacity, hasRadius, avgRadius);
+        }
+        // Background color
+        else if (style.BackgroundColor.HasValue && style.BackgroundColor.Value.a > 0)
+        {
             var color = ToSKColor(style.BackgroundColor.Value, opacity);
 
             using var paint = new SKPaint
@@ -111,16 +124,8 @@ public class SkiaPanelRenderer : IPanelRenderer
                 IsAntialias = true
             };
 
-            // Border radius
-            var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
-            var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
-            var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
-            var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
-
-            if (radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0)
+            if (hasRadius)
             {
-                // Use average radius for now (SKRoundRect supports per-corner but more complex)
-                var avgRadius = (radiusTL + radiusTR + radiusBL + radiusBR) / 4f;
                 canvas.DrawRoundRect(skRect, avgRadius, avgRadius, paint);
             }
             else
@@ -131,6 +136,110 @@ public class SkiaPanelRenderer : IPanelRenderer
 
         // Border
         DrawBorder(canvas, panel, ref state);
+    }
+
+    private void DrawGradientBackground(SKCanvas canvas, SKRect rect, GradientInfo gradient, float opacity, bool hasRadius, float avgRadius)
+    {
+        SKShader? shader = null;
+
+        if (gradient.GradientType == GradientInfo.GradientTypes.Linear)
+        {
+            shader = CreateLinearGradientShader(rect, gradient, opacity);
+        }
+        else if (gradient.GradientType == GradientInfo.GradientTypes.Radial)
+        {
+            shader = CreateRadialGradientShader(rect, gradient, opacity);
+        }
+
+        if (shader == null) return;
+
+        using var paint = new SKPaint
+        {
+            Shader = shader,
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        };
+
+        if (hasRadius)
+        {
+            canvas.DrawRoundRect(rect, avgRadius, avgRadius, paint);
+        }
+        else
+        {
+            canvas.DrawRect(rect, paint);
+        }
+
+        shader.Dispose();
+    }
+
+    private SKShader? CreateLinearGradientShader(SKRect rect, GradientInfo gradient, float opacity)
+    {
+        var colorOffsets = gradient.ColorOffsets;
+        if (colorOffsets.IsDefaultOrEmpty || colorOffsets.Length < 2)
+            return null;
+
+        // Calculate start and end points based on angle
+        // CSS angles: 0deg = to top, 90deg = to right, 180deg = to bottom (default)
+        var angle = gradient.Angle;
+        var centerX = rect.MidX;
+        var centerY = rect.MidY;
+        var halfWidth = rect.Width / 2f;
+        var halfHeight = rect.Height / 2f;
+
+        // Calculate the length needed to cover the entire rect at this angle
+        var cos = MathF.Cos(angle);
+        var sin = MathF.Sin(angle);
+        var length = MathF.Abs(halfWidth * sin) + MathF.Abs(halfHeight * cos);
+
+        var startX = centerX - sin * length;
+        var startY = centerY - cos * length;
+        var endX = centerX + sin * length;
+        var endY = centerY + cos * length;
+
+        var colors = new SKColor[colorOffsets.Length];
+        var positions = new float[colorOffsets.Length];
+
+        for (int i = 0; i < colorOffsets.Length; i++)
+        {
+            colors[i] = ToSKColor(colorOffsets[i].color, opacity);
+            positions[i] = colorOffsets[i].offset ?? (float)i / (colorOffsets.Length - 1);
+        }
+
+        return SKShader.CreateLinearGradient(
+            new SKPoint(startX, startY),
+            new SKPoint(endX, endY),
+            colors,
+            positions,
+            SKShaderTileMode.Clamp
+        );
+    }
+
+    private SKShader? CreateRadialGradientShader(SKRect rect, GradientInfo gradient, float opacity)
+    {
+        var colorOffsets = gradient.ColorOffsets;
+        if (colorOffsets.IsDefaultOrEmpty || colorOffsets.Length < 2)
+            return null;
+
+        var centerX = rect.Left + rect.Width * (gradient.OffsetX.GetPixels(1f) / 100f);
+        var centerY = rect.Top + rect.Height * (gradient.OffsetY.GetPixels(1f) / 100f);
+        var radius = MathF.Max(rect.Width, rect.Height) / 2f;
+
+        var colors = new SKColor[colorOffsets.Length];
+        var positions = new float[colorOffsets.Length];
+
+        for (int i = 0; i < colorOffsets.Length; i++)
+        {
+            colors[i] = ToSKColor(colorOffsets[i].color, opacity);
+            positions[i] = colorOffsets[i].offset ?? (float)i / (colorOffsets.Length - 1);
+        }
+
+        return SKShader.CreateRadialGradient(
+            new SKPoint(centerX, centerY),
+            radius,
+            colors,
+            positions,
+            SKShaderTileMode.Clamp
+        );
     }
 
     private void DrawBorder(SKCanvas canvas, Panel panel, ref RenderState state)

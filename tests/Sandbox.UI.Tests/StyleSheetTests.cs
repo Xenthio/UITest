@@ -272,6 +272,93 @@ public class StyleSheetTests
         Assert.NotNull(attr);
         Assert.Equal("/test/path/TestPanel.razor", attr.FilePath);
     }
+
+    [Fact]
+    public void Styles_Set_ParsesLinearGradient()
+    {
+        var styles = new Styles();
+        var result = styles.Set("background", "linear-gradient(135deg, #007acc 0%, #005a9e 100%)");
+
+        Assert.True(result);
+        Assert.NotNull(styles.BackgroundGradient);
+        Assert.True(styles.BackgroundGradient.Value.IsValid);
+        Assert.Equal(GradientInfo.GradientTypes.Linear, styles.BackgroundGradient.Value.GradientType);
+        Assert.Equal(2, styles.BackgroundGradient.Value.ColorOffsets.Length);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesLinearGradientWithoutAngle()
+    {
+        var styles = new Styles();
+        var result = styles.Set("background", "linear-gradient(#ff0000, #0000ff)");
+
+        Assert.True(result);
+        Assert.NotNull(styles.BackgroundGradient);
+        Assert.True(styles.BackgroundGradient.Value.IsValid);
+        Assert.Equal(2, styles.BackgroundGradient.Value.ColorOffsets.Length);
+        // First color should be red
+        Assert.Equal(1f, styles.BackgroundGradient.Value.ColorOffsets[0].color.r);
+        Assert.Equal(0f, styles.BackgroundGradient.Value.ColorOffsets[0].color.g);
+        // Second color should be blue
+        Assert.Equal(0f, styles.BackgroundGradient.Value.ColorOffsets[1].color.r);
+        Assert.Equal(0f, styles.BackgroundGradient.Value.ColorOffsets[1].color.g);
+        Assert.Equal(1f, styles.BackgroundGradient.Value.ColorOffsets[1].color.b);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesLinearGradientWithToDirection()
+    {
+        var styles = new Styles();
+        var result = styles.Set("background", "linear-gradient(to right, red, blue)");
+
+        Assert.True(result);
+        Assert.NotNull(styles.BackgroundGradient);
+        Assert.True(styles.BackgroundGradient.Value.IsValid);
+        // "to right" should be 90 degrees = PI/2 radians
+        Assert.True(Math.Abs(styles.BackgroundGradient.Value.Angle - (MathF.PI / 2f)) < 0.01f);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesRadialGradient()
+    {
+        var styles = new Styles();
+        var result = styles.Set("background", "radial-gradient(#ff0000, #0000ff)");
+
+        Assert.True(result);
+        Assert.NotNull(styles.BackgroundGradient);
+        Assert.True(styles.BackgroundGradient.Value.IsValid);
+        Assert.Equal(GradientInfo.GradientTypes.Radial, styles.BackgroundGradient.Value.GradientType);
+    }
+
+    [Fact]
+    public void Styles_Set_BackgroundColor_ClearsGradient()
+    {
+        var styles = new Styles();
+        
+        // First set a gradient
+        styles.Set("background", "linear-gradient(#ff0000, #0000ff)");
+        Assert.NotNull(styles.BackgroundGradient);
+        
+        // Then set a solid color
+        styles.Set("background", "#00ff00");
+        Assert.Null(styles.BackgroundGradient);
+        Assert.NotNull(styles.BackgroundColor);
+        Assert.Equal(0f, styles.BackgroundColor.Value.r);
+        Assert.Equal(1f, styles.BackgroundColor.Value.g);
+        Assert.Equal(0f, styles.BackgroundColor.Value.b);
+    }
+
+    [Fact]
+    public void StyleSheet_FromString_ParsesGradientRule()
+    {
+        var css = ".button { background: linear-gradient(135deg, #007acc 0%, #005a9e 100%); }";
+        var sheet = StyleSheet.FromString(css);
+
+        Assert.NotNull(sheet);
+        Assert.Single(sheet.Nodes);
+        Assert.NotNull(sheet.Nodes[0].Styles.BackgroundGradient);
+        Assert.True(sheet.Nodes[0].Styles.BackgroundGradient.Value.IsValid);
+    }
 }
 
 /// <summary>
