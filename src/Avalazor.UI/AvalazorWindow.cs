@@ -25,6 +25,7 @@ public class AvalazorWindow : IDisposable
     private uint _renderbuffer;
     private bool _needsLayout = true;
     private Vector2D<int> _lastSize;
+    private bool _disposed = false;
 
     public RootPanel? RootPanel
     {
@@ -203,7 +204,10 @@ public class AvalazorWindow : IDisposable
 
     private void OnClosing()
     {
-        Dispose();
+        // Clean up only our internal resources here, not the window itself.
+        // The window will be disposed naturally outside the render loop
+        // by the using statement in AvalazorApplication.Run().
+        CleanupResources();
     }
 
     private void Invalidate()
@@ -211,9 +215,12 @@ public class AvalazorWindow : IDisposable
         // Request redraw - Silk.NET handles this automatically
     }
 
-    public void Dispose()
+    private void CleanupResources()
     {
+        if (_disposed) return;
+        
         _surface?.Dispose();
+        _surface = null;
         
         if (_gl != null)
         {
@@ -223,8 +230,22 @@ public class AvalazorWindow : IDisposable
         }
 
         _grContext?.Dispose();
+        _grContext = null;
         _grGlInterface?.Dispose();
+        _grGlInterface = null;
         _gl?.Dispose();
+        _gl = null;
+        
+        _disposed = true;
+    }
+
+    public void Dispose()
+    {
+        // Clean up our resources if not already done
+        CleanupResources();
+        
+        // Dispose the window - this should only be called outside the render loop
+        // (e.g., from the using statement in AvalazorApplication.Run())
         _window?.Dispose();
     }
 }
