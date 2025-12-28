@@ -1,6 +1,6 @@
 # Fazor - Desktop Blazor/Razor Framework with XGUI Themes
 
-**Fazor** (Avalonia + Razor) is a desktop implementation of a Blazor/Razor-like system for building cross-platform desktop applications (Windows, macOS, Linux) using only C# and Razor syntax with SCSS styling support - **no AXAML required**!
+**Fazor** is a desktop implementation of a Blazor/Razor-like system for building cross-platform desktop applications (Windows, macOS, Linux) using only C# and Razor syntax with SCSS styling support - **no AXAML required**!
 
 **Now featuring XGUI-3 themes** - Use authentic UI themes that mimic Windows 95, XP, 7, 11, Half-Life 2, Garry's Mod, and more!
 
@@ -12,7 +12,7 @@
 - **SCSS Styling**: Full SCSS support with variables, nesting, and mixins
 - **XGUI Theme System**: Complete themes ported from XGUI-3 - use them as-is or create your own
 - **Cross-Platform**: Runs on Windows, macOS, and Linux
-- **Zero Avalonia Boilerplate**: All Avalonia setup is hidden - you only work with Razor
+- **Zero Boilerplate**: Minimal setup required - you only work with Razor
 
 ## 🚀 Quick Start
 
@@ -103,7 +103,7 @@ MyFazorApp/
 - ❌ No App.axaml.cs
 - ❌ No MainWindow.axaml  
 - ❌ No MainWindow.axaml.cs
-- ❌ No Avalonia boilerplate
+- ❌ No framework boilerplate
 
 ## 🎨 Styling with SCSS
 
@@ -243,8 +243,8 @@ See `themes/XGUI/README.md` for detailed theme documentation.
    - Base component classes
    - StyleSheet attribute system
 
-4. **Fazor.Runtime** - Avalonia integration (hidden from user)
-   - Handles all Avalonia bootstrapping internally
+4. **Fazor.Runtime** - Runtime infrastructure (hidden from user)
+   - Handles all framework bootstrapping internally
    - Provides simple `FazorApplication.Run<T>()` API
 
 5. **Fazor.Build** - MSBuild integration
@@ -329,12 +329,12 @@ Simply reference `Fazor.Razor` and IntelliSense works automatically. No need for
 **Credit:**
 This IntelliSense implementation is ported from [s&box](https://github.com/Facepunch/sbox-public) (MIT licensed), which discovered that embedding the Razor Language Server components was necessary for full IDE support.
 
-## 🆚 Comparison with Traditional Avalonia
+## 🆚 Comparison with Traditional Desktop UI Frameworks
 
-| Feature | Traditional Avalonia | Fazor |
+| Feature | Traditional XAML-based | Fazor |
 |---------|---------------------|----------|
-| UI Markup | AXAML | Razor |
-| Code-Behind | .axaml.cs files | Inline @code blocks |
+| UI Markup | AXAML/XAML | Razor |
+| Code-Behind | .axaml.cs/.xaml.cs files | Inline @code blocks |
 | Styling | XAML styles | SCSS |
 | Boilerplate | Lots (App.axaml, etc.) | None |
 | Learning Curve | XAML + C# | Just C# + Razor |
@@ -368,7 +368,7 @@ using Fazor.Runtime;
 FazorApplication.Run<MainApp>(args);
 ```
 
-That's it! Avalonia is completely hidden.
+That's it! All framework complexity is completely hidden.
 
 ### Component Lifecycle
 
@@ -401,7 +401,6 @@ Based on the s&box Razor system by Facepunch Studios (MIT licensed):
 
 - **s&box** by Facepunch Studios - Original Razor transpilation system
 - **XGUI-3** by Xenthio - Theme system and reference implementation
-- **Avalonia** - Cross-platform UI framework
 - **Microsoft** - AspNetCore.Razor.Language and Components
 
 ### XGUI Themes
@@ -412,4 +411,3 @@ The themes in `themes/XGUI/` are ported from [XGUI-3](https://github.com/Xenthio
 
 - [s&box Public Repository](https://github.com/Facepunch/sbox-public)
 - [XGUI-3](https://github.com/Xenthio/XGUI-3)
-- [Avalonia UI](https://avaloniaui.net/)
