@@ -237,9 +237,7 @@ public class AvalazorWindow : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
-        
-        // Clean up our resources
+        // Clean up our resources if not already done
         CleanupResources();
         
         // Dispose the window - this should only be called outside the render loop
