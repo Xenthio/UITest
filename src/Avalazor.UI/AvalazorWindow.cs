@@ -178,6 +178,9 @@ public class AvalazorWindow : IDisposable
         if (_gl == null || _grContext == null) return;
         if (width <= 0 || height <= 0) return;
 
+        // Flush the GRContext before disposing resources to ensure all pending GPU commands are completed
+        _grContext.Flush();
+        
         // Clean up old resources
         _surface?.Dispose();
         _surface = null;
@@ -197,6 +200,9 @@ public class AvalazorWindow : IDisposable
             _gl.DeleteRenderbuffer(_renderbuffer);
             _renderbuffer = 0;
         }
+
+        // Reset the GRContext state to clear any cached GPU resource references
+        _grContext.ResetContext();
 
         // Create new render target
         CreateRenderTarget(width, height);
