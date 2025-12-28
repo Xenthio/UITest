@@ -7,6 +7,7 @@ namespace Sandbox.UI;
 public partial class Panel
 {
     private string? _previousPropertyClass;
+    private Dictionary<string, string>? _attributes;
 
     /// <summary>
     /// String value for the panel. Can be used to store simple string data.
@@ -51,7 +52,50 @@ public partial class Panel
             return;
         }
 
-        // For other properties, derived classes can handle them
+        // Store as attribute for derived classes to access
+        SetAttribute(name, value);
+    }
+
+    /// <summary>
+    /// Set an attribute on the panel. Used for custom HTML-like attributes.
+    /// </summary>
+    /// <param name="name">Attribute name</param>
+    /// <param name="value">Attribute value</param>
+    public void SetAttribute(string name, string value)
+    {
+        _attributes ??= new Dictionary<string, string>();
+        _attributes[name.ToLower()] = value;
+    }
+
+    /// <summary>
+    /// Get an attribute value from the panel.
+    /// </summary>
+    /// <param name="name">Attribute name</param>
+    /// <returns>Attribute value, or null if not found</returns>
+    public string? GetAttribute(string name)
+    {
+        if (_attributes == null) return null;
+        _attributes.TryGetValue(name.ToLower(), out var value);
+        return value;
+    }
+
+    /// <summary>
+    /// Check if the panel has an attribute.
+    /// </summary>
+    /// <param name="name">Attribute name</param>
+    /// <returns>True if the attribute exists</returns>
+    public bool HasAttribute(string name)
+    {
+        return _attributes?.ContainsKey(name.ToLower()) ?? false;
+    }
+
+    /// <summary>
+    /// Remove an attribute from the panel.
+    /// </summary>
+    /// <param name="name">Attribute name</param>
+    public void RemoveAttribute(string name)
+    {
+        _attributes?.Remove(name.ToLower());
     }
 
     /// <summary>
