@@ -79,4 +79,20 @@ public partial class Panel
         else
             RemoveClass(classname);
     }
+
+    /// <summary>
+    /// Returns true if this panel has all of the given classes.
+    /// </summary>
+    public bool HasClasses(string[] classes)
+    {
+        if (classes == null || classes.Length == 0) return true;
+        if (_classes == null) return false;
+
+        foreach (var classname in classes)
+        {
+            if (!_classes.Contains(classname))
+                return false;
+        }
+        return true;
+    }
 }

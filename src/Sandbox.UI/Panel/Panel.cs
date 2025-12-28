@@ -4,7 +4,7 @@ namespace Sandbox.UI;
 /// A simple User Interface panel. Can be styled with CSS.
 /// Based on s&box's Panel from engine/Sandbox.Engine/Systems/UI/Panel/Panel.cs
 /// </summary>
-public partial class Panel : IDisposable
+public partial class Panel : IDisposable, IStyleTarget
 {
     /// <summary>
     /// The element name. This is typically the type name lowercased.
@@ -15,6 +15,28 @@ public partial class Panel : IDisposable
     /// HTML-like id for CSS selectors
     /// </summary>
     public string? Id { get; set; }
+
+    /// <summary>
+    /// A collection of stylesheets applied to this panel directly.
+    /// </summary>
+    public StyleSheetCollection StyleSheet;
+
+    /// <summary>
+    /// All stylesheets from this panel and its ancestors.
+    /// </summary>
+    public IEnumerable<StyleSheet> AllStyleSheets
+    {
+        get
+        {
+            foreach (var p in AncestorsAndSelf)
+            {
+                if (p.StyleSheet.List == null) continue;
+
+                foreach (var sheet in p.StyleSheet.List)
+                    yield return sheet;
+            }
+        }
+    }
 
     /// <summary>
     /// Pseudo-class flags for styling (hover, active, etc.)
@@ -90,6 +112,7 @@ public partial class Panel : IDisposable
     {
         YogaNode = new YogaWrapper(this);
         Style = new PanelStyle(this);
+        StyleSheet = new StyleSheetCollection(this);
 
         ElementName = GetType().Name.ToLower();
         Switch(PseudoClass.Empty, true);
