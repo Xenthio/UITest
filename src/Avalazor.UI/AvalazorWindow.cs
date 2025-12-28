@@ -220,6 +220,7 @@ public class AvalazorWindow : IDisposable
         if (_disposed) return;
         
         _surface?.Dispose();
+        _surface = null;
         
         if (_gl != null)
         {
@@ -229,8 +230,11 @@ public class AvalazorWindow : IDisposable
         }
 
         _grContext?.Dispose();
+        _grContext = null;
         _grGlInterface?.Dispose();
+        _grGlInterface = null;
         _gl?.Dispose();
+        _gl = null;
         
         _disposed = true;
     }
