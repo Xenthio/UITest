@@ -5,6 +5,11 @@ namespace Sandbox.UI;
 /// </summary>
 public struct Rect
 {
+    /// <summary>
+    /// A zero-sized rect at origin.
+    /// </summary>
+    public static readonly Rect Zero = new(0, 0, 0, 0);
+
     public float Left;
     public float Top;
     public float Width;

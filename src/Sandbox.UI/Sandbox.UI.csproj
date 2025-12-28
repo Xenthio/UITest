@@ -11,8 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Yoga layout library - managed wrapper -->
-    <!-- No direct rendering dependencies - this is renderer-agnostic -->
+    <!-- Razor/Blazor support for RenderTreeBuilder extensions -->
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.0" />
   </ItemGroup>
 
   <!-- Copy native Yoga library to output directory -->

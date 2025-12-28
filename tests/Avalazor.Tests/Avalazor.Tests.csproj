@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/Avalazor.UI/Avalazor.UI.csproj" />
-    <ProjectReference Include="../../src/Avalazor.Runtime/Avalazor.Runtime.csproj" />
+    <ProjectReference Include="../../src/Sandbox.UI/Sandbox.UI.csproj" />
   </ItemGroup>
 
 </Project>

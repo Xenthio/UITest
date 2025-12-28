@@ -1,6 +1,6 @@
 using System;
 
-namespace Avalazor.UI;
+namespace Sandbox.UI;
 
 /// <summary>
 /// Attribute to automatically apply a stylesheet to a component.

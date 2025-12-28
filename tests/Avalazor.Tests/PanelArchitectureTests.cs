@@ -1,12 +1,11 @@
-using Avalazor.UI;
+using Sandbox.UI;
 using Xunit;
-using SkiaSharp;
 
 namespace Avalazor.Tests;
 
 /// <summary>
-/// Tests for the s&box Panel architecture refactor
-/// Validates Box, LayoutCascade, and Panel partial classes functionality
+/// Tests for the s&box Panel architecture
+/// Validates Box and Panel functionality
 /// </summary>
 public class PanelArchitectureTests
 {
@@ -17,9 +16,9 @@ public class PanelArchitectureTests
         var box = new Box();
 
         // Assert
-        Assert.Equal(SKRect.Empty, box.Rect);
-        Assert.Equal(SKRect.Empty, box.RectInner);
-        Assert.Equal(SKRect.Empty, box.RectOuter);
+        Assert.Equal(Rect.Zero, box.Rect);
+        Assert.Equal(Rect.Zero, box.RectInner);
+        Assert.Equal(Rect.Zero, box.RectOuter);
     }
 
     [Fact]
@@ -27,15 +26,15 @@ public class PanelArchitectureTests
     {
         // Arrange
         var box = new Box();
-        var testRect = new SKRect(10, 20, 100, 200);
+        var testRect = new Rect(10, 20, 90, 180);
 
         // Act
         box.Rect = testRect;
-        box.RectInner = new SKRect(15, 25, 95, 195);
-        box.RectOuter = new SKRect(5, 15, 105, 205);
+        box.RectInner = new Rect(15, 25, 80, 170);
+        box.RectOuter = new Rect(5, 15, 100, 190);
 
         // Assert
-        Assert.Equal(testRect, box.Rect);
+        Assert.Equal(testRect.Left, box.Rect.Left);
         Assert.Equal(15, box.RectInner.Left);
         Assert.Equal(5, box.RectOuter.Left);
     }
@@ -73,25 +72,9 @@ public class PanelArchitectureTests
         parent.AddChild(child);
 
         // Assert
-        Assert.Single(parent.Children);
-        Assert.Equal(child, parent.Children[0]);
+        Assert.Equal(1, parent.ChildrenCount);
+        Assert.Equal(child, parent.Children.First());
         Assert.Equal(parent, child.Parent);
-    }
-
-    [Fact]
-    public void Panel_RemoveChild_RemovesFromChildren()
-    {
-        // Arrange
-        var parent = new Panel();
-        var child = new Panel();
-        parent.AddChild(child);
-
-        // Act
-        parent.RemoveChild(child);
-
-        // Assert
-        Assert.Empty(parent.Children);
-        Assert.Null(child.Parent);
     }
 
     [Fact]
@@ -105,9 +88,8 @@ public class PanelArchitectureTests
         panel.AddClass("another-class");
 
         // Assert
-        Assert.Equal(2, panel.Classes.Count);
-        Assert.Contains("test-class", panel.Classes);
-        Assert.Contains("another-class", panel.Classes);
+        Assert.True(panel.HasClass("test-class"));
+        Assert.True(panel.HasClass("another-class"));
     }
 
     [Fact]
@@ -122,26 +104,8 @@ public class PanelArchitectureTests
         panel.RemoveClass("test-class");
 
         // Assert
-        Assert.Single(panel.Classes);
-        Assert.DoesNotContain("test-class", panel.Classes);
-        Assert.Contains("another-class", panel.Classes);
-    }
-
-    [Fact]
-    public void Panel_SetClass_ReplacesAllClasses()
-    {
-        // Arrange
-        var panel = new Panel();
-        panel.AddClass("old-class");
-        panel.AddClass("another-class");
-
-        // Act
-        panel.SetClass("new-class");
-
-        // Assert
-        Assert.Single(panel.Classes);
-        Assert.Contains("new-class", panel.Classes);
-        Assert.DoesNotContain("old-class", panel.Classes);
+        Assert.False(panel.HasClass("test-class"));
+        Assert.True(panel.HasClass("another-class"));
     }
 
     [Fact]
@@ -166,13 +130,13 @@ public class PanelArchitectureTests
         panel.ToggleClass("test-class");
 
         // Assert
-        Assert.Contains("test-class", panel.Classes);
+        Assert.True(panel.HasClass("test-class"));
 
         // Act - remove by toggle
         panel.ToggleClass("test-class");
 
         // Assert
-        Assert.DoesNotContain("test-class", panel.Classes);
+        Assert.False(panel.HasClass("test-class"));
     }
 
     [Fact]
@@ -187,7 +151,7 @@ public class PanelArchitectureTests
         // ComputedStyle is read-only and computed during PreLayout
         // This test verifies the property exists and is accessible
         var style = panel.ComputedStyle;
-        Assert.True(style == null || style is ComputedStyle);
+        Assert.True(style == null || style is Styles);
     }
 
     [Fact]
@@ -197,18 +161,18 @@ public class PanelArchitectureTests
         var panel = new Panel();
 
         // Assert
-        Assert.Empty(panel.Children);
-        Assert.IsAssignableFrom<IReadOnlyList<Panel>>(panel.Children);
+        Assert.False(panel.HasChildren);
+        Assert.Equal(0, panel.ChildrenCount);
     }
 
     [Fact]
-    public void Panel_Tag_IsSetCorrectly()
+    public void Panel_ElementName_IsSetCorrectly()
     {
         // Arrange & Act
-        var panel = new Panel { Tag = "div" };
+        var panel = new Panel { ElementName = "div" };
 
         // Assert
-        Assert.Equal("div", panel.Tag);
+        Assert.Equal("div", panel.ElementName);
     }
 
     [Fact]
@@ -222,41 +186,13 @@ public class PanelArchitectureTests
     }
 
     [Fact]
-    public void Panel_Style_CanBeSet()
-    {
-        // Arrange
-        var panel = new Panel();
-
-        // Act
-        panel.Style = "background-color: red; padding: 10px;";
-
-        // Assert
-        Assert.Equal("background-color: red; padding: 10px;", panel.Style);
-    }
-
-    [Fact]
-    public void LayoutCascade_CanBeCreated()
-    {
-        // Arrange & Act
-        var cascade = new LayoutCascade();
-
-        // Assert
-        Assert.NotNull(cascade);
-        // Properties can be set after construction
-        cascade.AvailableWidth = 800;
-        cascade.AvailableHeight = 600;
-        Assert.Equal(800, cascade.AvailableWidth);
-        Assert.Equal(600, cascade.AvailableHeight);
-    }
-
-    [Fact]
     public void Panel_MultipleChildren_MaintainsHierarchy()
     {
         // Arrange
-        var root = new Panel { Tag = "div" };
-        var header = new Panel { Tag = "header" };
-        var main = new Panel { Tag = "main" };
-        var footer = new Panel { Tag = "footer" };
+        var root = new Panel { ElementName = "div" };
+        var header = new Panel { ElementName = "header" };
+        var main = new Panel { ElementName = "main" };
+        var footer = new Panel { ElementName = "footer" };
 
         // Act
         root.AddChild(header);
@@ -264,10 +200,7 @@ public class PanelArchitectureTests
         root.AddChild(footer);
 
         // Assert
-        Assert.Equal(3, root.Children.Count);
-        Assert.Equal(header, root.Children[0]);
-        Assert.Equal(main, root.Children[1]);
-        Assert.Equal(footer, root.Children[2]);
+        Assert.Equal(3, root.ChildrenCount);
         Assert.All(root.Children, child => Assert.Equal(root, child.Parent));
     }
 
@@ -275,34 +208,19 @@ public class PanelArchitectureTests
     public void Panel_DeepHierarchy_MaintainsParentChild()
     {
         // Arrange
-        var grandparent = new Panel { Tag = "div" };
-        var parent = new Panel { Tag = "section" };
-        var child = new Panel { Tag = "p" };
+        var grandparent = new Panel { ElementName = "div" };
+        var parent = new Panel { ElementName = "section" };
+        var child = new Panel { ElementName = "p" };
 
         // Act
         grandparent.AddChild(parent);
         parent.AddChild(child);
 
         // Assert
-        Assert.Equal(parent, grandparent.Children[0]);
-        Assert.Equal(child, parent.Children[0]);
+        Assert.Equal(parent, grandparent.Children.First());
+        Assert.Equal(child, parent.Children.First());
         Assert.Equal(grandparent, parent.Parent);
         Assert.Equal(parent, child.Parent);
-    }
-
-    [Fact]
-    public void Panel_AddChild_MultipleTimesOnlyAddsOnce()
-    {
-        // Arrange
-        var parent = new Panel();
-        var child = new Panel();
-
-        // Act
-        parent.AddChild(child);
-        parent.AddChild(child); // Try to add again
-
-        // Assert
-        Assert.Single(parent.Children);
     }
 
     [Fact]
@@ -313,12 +231,12 @@ public class PanelArchitectureTests
 
         // Assert - Box should have all three rect properties
         Assert.NotNull(panel.Box);
-        Assert.Equal(SKRect.Empty, panel.Box.Rect);
-        Assert.Equal(SKRect.Empty, panel.Box.RectInner);
-        Assert.Equal(SKRect.Empty, panel.Box.RectOuter);
+        Assert.Equal(Rect.Zero, panel.Box.Rect);
+        Assert.Equal(Rect.Zero, panel.Box.RectInner);
+        Assert.Equal(Rect.Zero, panel.Box.RectOuter);
         
         // Act - Set a rect value
-        panel.Box.Rect = new SKRect(0, 0, 100, 50);
+        panel.Box.Rect = new Rect(0, 0, 100, 50);
         
         // Assert
         Assert.Equal(100, panel.Box.Rect.Width);

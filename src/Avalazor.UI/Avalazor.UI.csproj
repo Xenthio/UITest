@@ -31,7 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Avalazor.Core\Avalazor.Core.csproj" />
     <ProjectReference Include="..\Sandbox.UI\Sandbox.UI.csproj" />
     <ProjectReference Include="..\Sandbox.UI.Skia\Sandbox.UI.Skia.csproj" />
   </ItemGroup>

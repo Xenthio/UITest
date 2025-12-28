@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
 namespace Microsoft.AspNetCore.Components.Rendering;
@@ -9,12 +10,12 @@ namespace Microsoft.AspNetCore.Components.Rendering;
 public static class RenderTreeBuilderExtensions
 {
     /// <summary>
-    /// Add location information for debugging (s&box compatibility - noop in Avalazor)
+    /// Add location information for debugging (s&box compatibility - noop)
     /// </summary>
     public static void AddLocation(this RenderTreeBuilder builder, string filename, int line, int column)
     {
         // In s&box, this adds source location information for debugging
-        // In Avalazor/Blazor, we don't need this - it's a no-op
+        // This is a no-op for compatibility
     }
 
     /// <summary>

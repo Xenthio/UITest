@@ -18,7 +18,38 @@ public static class AvalazorApplication
     }
 
     /// <summary>
-    /// Run a Razor component as the root of the application
+    /// Run a Panel-derived component as the root of the application.
+    /// In s&box-style architecture, Razor components inherit from Panel directly.
+    /// </summary>
+    public static void RunPanel<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : Panel, new()
+    {
+        try
+        {
+            // Create the panel (which is the compiled Razor component)
+            var panel = new T();
+            
+            // Wrap in RootPanel
+            var rootPanel = new RootPanel();
+            rootPanel.AddChild(panel);
+
+            Console.WriteLine($"Root panel created: {rootPanel != null}");
+            Console.WriteLine($"Component type: {panel.GetType().Name}");
+            Console.WriteLine($"Root panel children: {rootPanel.ChildrenCount}");
+            
+            PrintPanelTree(rootPanel, 0);
+
+            Run(rootPanel, width, height, title);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in RunPanel: {ex}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Run a Blazor IComponent as the root of the application (legacy support).
+    /// For new code, prefer RunPanel with Panel-derived Razor components.
     /// </summary>
     public static void RunComponent<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : IComponent
     {

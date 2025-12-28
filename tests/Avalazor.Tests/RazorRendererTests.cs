@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Avalazor.UI;
+using Sandbox.UI;
 using Xunit;
 
 namespace Avalazor.Tests;
@@ -43,7 +44,7 @@ public class RazorRendererTests
         // Assert
         Assert.NotNull(panel);
         // The panel should have been created from the div element
-        Assert.True(panel.Children.Count > 0 || panel.Tag == "div");
+        Assert.True(panel.ChildrenCount > 0 || panel.ElementName == "div");
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public class RazorRendererTests
         Assert.NotNull(panel);
         
         // Should have multiple child elements
-        int childCount = panel.Children.Count;
+        int childCount = panel.ChildrenCount;
         Assert.True(childCount >= 2, $"Should have at least 2 children, but got {childCount}");
     }
 

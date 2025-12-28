@@ -1,9 +1,8 @@
 @namespace SimpleDesktopApp
 @using System
 @using System.Collections.Generic
+@using Sandbox.UI
 @using Microsoft.AspNetCore.Components
-@using Avalazor.UI
-@inherits UIComponent
 @attribute [StyleSheet("ExampleComponent.scss")]
 
 <div class="example-component">
@@ -21,11 +20,5 @@
     private void HandleClick()
     {
         clickCount++;
-        StateHasChanged();
-    }
-
-    protected override int BuildHash()
-    {
-        return HashCode.Combine(clickCount);
     }
 }

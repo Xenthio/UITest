@@ -1,8 +1,6 @@
 @namespace SimpleDesktopApp
 @using System
-@using Microsoft.AspNetCore.Components
-@using Avalazor.UI
-@inherits UIComponent
+@using Sandbox.UI
 
 <div style="display: flex; flex-direction: column; width: 800px; height: 600px; padding: 20px; background-color: #f0f0f0;">
     <div style="width: 100%; height: 100px; background-color: #4CAF50; margin-bottom: 10px;"></div>
@@ -13,8 +11,9 @@
 </div>
 
 @code {
-    protected override void OnInitialized()
+    protected override void OnAfterTreeRender(bool firstTime)
     {
-        Console.WriteLine("FlexboxTest initialized!");
+        if (firstTime)
+            Console.WriteLine("FlexboxTest initialized!");
     }
 }
