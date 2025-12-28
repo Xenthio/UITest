@@ -66,7 +66,7 @@ namespace Avalazor.UI.Controls
             };
 
             var borderRadius = ComputedStyle?.BorderRadius ?? 4f;
-            canvas.DrawRoundRect(ComputedRect, borderRadius, borderRadius, bgPaint);
+            canvas.DrawRoundRect(new SKRect(0, 0, Box.Rect.Width, Box.Rect.Height), borderRadius, borderRadius, bgPaint);
 
             // Draw button border if specified
             var borderWidth = ComputedStyle?.BorderWidth ?? 0f;
@@ -79,7 +79,7 @@ namespace Avalazor.UI.Controls
                     Style = SKPaintStyle.Stroke,
                     StrokeWidth = borderWidth
                 };
-                canvas.DrawRoundRect(ComputedRect, borderRadius, borderRadius, borderPaint);
+                canvas.DrawRoundRect(new SKRect(0, 0, Box.Rect.Width, Box.Rect.Height), borderRadius, borderRadius, borderPaint);
             }
 
             // Draw button text
@@ -102,8 +102,8 @@ namespace Avalazor.UI.Controls
                 var textBounds = new SKRect();
                 textPaint.MeasureText(Text, ref textBounds);
                 
-                var textX = ComputedRect.MidX;
-                var textY = ComputedRect.MidY - textBounds.MidY;
+                var textX = Box.Rect.Width / 2;
+                var textY = Box.Rect.Height / 2 - textBounds.MidY;
 
                 canvas.DrawText(Text, textX, textY, textPaint);
             }

@@ -20,4 +20,9 @@ public class LayoutCascade
     /// Available height for layout
     /// </summary>
     public float AvailableHeight { get; set; }
+
+    /// <summary>
+    /// StyleEngine for computing styles
+    /// </summary>
+    public StyleEngine StyleEngine { get; set; }
 }

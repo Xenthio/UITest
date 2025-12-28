@@ -99,13 +99,13 @@ public partial class Panel
         };
 
         // Dimensions
-        if (_computedStyle.Width > 0)
-            YogaNode.SetWidth(new YGValue { Value = _computedStyle.Width, Unit = YGUnit.Point });
+        if (_computedStyle.Width.HasValue && _computedStyle.Width.Value > 0)
+            YogaNode.SetWidth(new YGValue { Value = _computedStyle.Width.Value, Unit = YGUnit.Point });
         else
             YogaNode.SetWidth(new YGValue { Unit = YGUnit.Auto });
 
-        if (_computedStyle.Height > 0)
-            YogaNode.SetHeight(new YGValue { Value = _computedStyle.Height, Unit = YGUnit.Point });
+        if (_computedStyle.Height.HasValue && _computedStyle.Height.Value > 0)
+            YogaNode.SetHeight(new YGValue { Value = _computedStyle.Height.Value, Unit = YGUnit.Point });
         else
             YogaNode.SetHeight(new YGValue { Unit = YGUnit.Auto });
 

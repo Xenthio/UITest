@@ -18,7 +18,6 @@ public class AvalazorWindow : IDisposable
     private GRGlInterface? _grGlInterface;
     private Panel? _rootPanel;
     private readonly StyleEngine _styleEngine = new();
-    private readonly YogaLayoutEngine _yogaLayout = new();
     private uint _framebuffer;
     private uint _texture;
     private uint _renderbuffer;
@@ -116,11 +115,17 @@ public class AvalazorWindow : IDisposable
         var canvas = _surface.Canvas;
         canvas.Clear(new SKColor(240, 240, 240)); // Light gray background
 
-        // Compute styles if needed
-        ComputeStyles(_rootPanel);
+        // Create layout cascade for styling and layout
+        var cascade = new LayoutCascade();
+        cascade.StyleEngine = _styleEngine;
+        cascade.AvailableWidth = _window.Size.X;
+        cascade.AvailableHeight = _window.Size.Y;
 
-        // Perform layout (Yoga integration will be added later)
-        PerformLayout(_rootPanel, _window.Size.X, _window.Size.Y);
+        // PreLayout: Compute styles and setup Yoga (s&box pattern)
+        _rootPanel.PreLayout(cascade);
+
+        // FinalLayout: Calculate final positions from Yoga (s&box pattern)
+        _rootPanel.FinalLayout(cascade);
 
         // Paint the UI
         _rootPanel.Paint(canvas);
@@ -137,28 +142,6 @@ public class AvalazorWindow : IDisposable
             ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
         _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }
-
-    private void ComputeStyles(Panel panel)
-    {
-        // Recursively compute styles for panel tree
-        panel.GetType().GetField("_computedStyle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?
-            .SetValue(panel, _styleEngine.ComputeStyle(panel));
-
-        panel.GetType().GetField("_needsStyleCompute", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?
-            .SetValue(panel, false);
-
-        foreach (var child in panel.Children)
-        {
-            ComputeStyles(child);
-        }
-    }
-
-    private void PerformLayout(Panel panel, float width, float height)
-    {
-        // Use Yoga flexbox layout engine
-        _yogaLayout.CalculateLayout(panel, width, height);
-    }
-
 
     private void OnResize(Vector2D<int> size)
     {
@@ -248,8 +231,6 @@ public class AvalazorWindow : IDisposable
 
     public void Dispose()
     {
-        _yogaLayout?.Dispose();
-        
         _surface?.Dispose();
         
         if (_gl != null)
