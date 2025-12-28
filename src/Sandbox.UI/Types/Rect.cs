@@ -1,4 +1,4 @@
-namespace Sandbox;
+namespace Sandbox.UI;
 
 /// <summary>
 /// Renderer-agnostic rectangle. Matches s&box's Rect.

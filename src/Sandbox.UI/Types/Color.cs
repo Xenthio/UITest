@@ -1,4 +1,4 @@
-namespace Sandbox;
+namespace Sandbox.UI;
 
 /// <summary>
 /// Renderer-agnostic color. Matches s&box's Color.

@@ -1,4 +1,4 @@
-namespace Sandbox;
+namespace Sandbox.UI;
 
 /// <summary>
 /// Renderer-agnostic 2D vector. Matches s&box's Vector2.

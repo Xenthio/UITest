@@ -1,4 +1,4 @@
-namespace Sandbox;
+namespace Sandbox.UI;
 
 /// <summary>
 /// Margin/padding values for each edge
