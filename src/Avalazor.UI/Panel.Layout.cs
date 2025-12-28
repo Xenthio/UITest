@@ -63,6 +63,9 @@ public partial class Panel
                 _children[i].PreLayout(cascade);
             }
         }
+        
+        // Summary log
+        Console.WriteLine($"PreLayout COMPLETE: {Tag}, Background={_computedStyle?.BackgroundColor != null}, Box.Rect=({Box.Rect.X},{Box.Rect.Y},{Box.Rect.Width},{Box.Rect.Height})");
     }
 
     /// <summary>

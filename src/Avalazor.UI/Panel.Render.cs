@@ -36,6 +36,8 @@ public partial class Panel
     /// </summary>
     protected virtual void OnPaint(SKCanvas canvas)
     {
+        Console.WriteLine($"OnPaint: {Tag}, Background={ComputedStyle?.BackgroundColor}, Box=({Box.Rect.Width}x{Box.Rect.Height})");
+        
         // Base implementation paints background, border, etc.
         PaintBackground(canvas);
         PaintBorder(canvas);
