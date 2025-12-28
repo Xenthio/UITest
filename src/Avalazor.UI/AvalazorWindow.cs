@@ -49,7 +49,7 @@ public class AvalazorWindow : IDisposable
 
         _window.Load += OnLoad;
         _window.Render += OnRender;
-        _window.Resize += OnResize;
+        _window.FramebufferResize += OnFramebufferResize;
         _window.Closing += OnClosing;
     }
 
@@ -76,8 +76,8 @@ public class AvalazorWindow : IDisposable
         _grContext = GRContext.CreateGl(_grGlInterface);
         _renderer = new SkiaPanelRenderer();
 
-        // Create render target
-        CreateRenderTarget(_window.Size.X, _window.Size.Y);
+        // Create render target - use FramebufferSize for actual pixel dimensions
+        CreateRenderTarget(_window.FramebufferSize.X, _window.FramebufferSize.Y);
     }
 
     private unsafe void CreateRenderTarget(int width, int height)
@@ -108,7 +108,7 @@ public class AvalazorWindow : IDisposable
     {
         if (_gl == null || _surface == null || _rootPanel == null || _grContext == null || _renderer == null) return;
 
-        var currentSize = _window.Size;
+        var currentSize = _window.FramebufferSize;
         
         // Check if size changed (handles resize mid-frame)
         bool sizeChanged = _lastSize.X != currentSize.X || _lastSize.Y != currentSize.Y;
@@ -158,7 +158,7 @@ public class AvalazorWindow : IDisposable
         _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }
 
-    private void OnResize(Vector2D<int> size)
+    private void OnFramebufferResize(Vector2D<int> size)
     {
         if (_gl != null)
         {
