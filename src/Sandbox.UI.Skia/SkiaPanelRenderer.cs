@@ -220,8 +220,9 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (colorOffsets.IsDefaultOrEmpty || colorOffsets.Length < 2)
             return null;
 
-        var centerX = rect.Left + rect.Width * (gradient.OffsetX.GetPixels(1f) / 100f);
-        var centerY = rect.Top + rect.Height * (gradient.OffsetY.GetPixels(1f) / 100f);
+        // GetPixels handles the percentage conversion correctly
+        var centerX = rect.Left + gradient.OffsetX.GetPixels(rect.Width);
+        var centerY = rect.Top + gradient.OffsetY.GetPixels(rect.Height);
         var radius = MathF.Max(rect.Width, rect.Height) / 2f;
 
         var colors = new SKColor[colorOffsets.Length];

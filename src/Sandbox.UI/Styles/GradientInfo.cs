@@ -19,12 +19,8 @@ public struct GradientInfo
 
     public void CopyFrom(GradientInfo other)
     {
-        ColorOffsets = ImmutableArray<GradientColorOffset>.Empty;
-
-        if (!other.ColorOffsets.IsDefaultOrEmpty)
-        {
-            ColorOffsets = ColorOffsets.AddRange(other.ColorOffsets);
-        }
+        // Copy color offsets directly - ImmutableArray assignment is efficient
+        ColorOffsets = other.ColorOffsets;
 
         Angle = other.Angle;
         SizeMode = other.SizeMode;

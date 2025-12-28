@@ -727,48 +727,6 @@ public class Styles
     }
 
     /// <summary>
-    /// Extract content inside parentheses for a given function name
-    /// Ported from s&box's Styles.Set.cs
-    /// </summary>
-    private bool GetTokenValueUnderParenthesis(Parse p, string tokenName, out string result)
-    {
-        if (p.Is(tokenName, 0, true))
-        {
-            p.Pointer += tokenName.Length;
-            p = p.SkipWhitespaceAndNewlines();
-
-            if (p.Current != '(')
-            {
-                result = "";
-                return false;
-            }
-
-            p.Pointer++;
-
-            int stack = 1;
-            var wordStart = p;
-
-            while (!p.IsEnd && stack > 0)
-            {
-                p.Pointer++;
-                if (p.Current == '(') stack++;
-                if (p.Current == ')') stack--;
-            }
-
-            if (p.IsEnd)
-            {
-                result = "";
-                return false;
-            }
-
-            result = wordStart.Read(p.Pointer - wordStart.Pointer);
-            return true;
-        }
-        result = "";
-        return false;
-    }
-
-    /// <summary>
     /// Parse linear-gradient() syntax
     /// Ported from s&box's gradient parsing
     /// </summary>
@@ -925,7 +883,9 @@ public class Styles
                     System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var val))
                 {
-                    offset = val / 100f;
+                    // Plain numeric values are treated as direct offsets (0.0-1.0 range)
+                    // If value > 1, assume it's a percentage without the % sign
+                    offset = val > 1f ? val / 100f : val;
                 }
             }
 
