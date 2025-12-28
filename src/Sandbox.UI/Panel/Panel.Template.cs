@@ -34,9 +34,6 @@ public partial class Panel
             return false;
         }
 
-        // Get the source file location from SourceLocationAttribute
-        var sourceFile = GetSourceFileForType(type);
-
         // Clear old sheets and load new ones
         ClearLoadedTemplateStylesheets();
         _loadedTemplateStylesheets = new List<string>();
@@ -44,8 +41,8 @@ public partial class Panel
         foreach (var attr in attrs)
         {
             var path = attr.Name;
-            var fullPath = GetFullPath(path, sourceFile);
-            if (LoadStyleSheetFromPath(fullPath, false))
+            var fullPath = ResolveStyleSheetPath(path, type);
+            if (fullPath != null && LoadStyleSheetFromPath(fullPath, false))
             {
                 _loadedTemplateStylesheets.Add(fullPath);
             }
@@ -61,13 +58,10 @@ public partial class Panel
     private bool LoadStyleSheetAuto()
     {
         var type = GetType();
-        var sourceFile = GetSourceFileForType(type);
-
-        if (sourceFile == null)
-            return false;
-
-        var fullPath = GetFullPath(null, sourceFile);
-        if (LoadStyleSheetFromPath(fullPath, true))
+        
+        // Try to find a stylesheet with the same name as the type
+        var fullPath = ResolveStyleSheetPath(type.Name + ".scss", type);
+        if (fullPath != null && LoadStyleSheetFromPath(fullPath, true))
         {
             _loadedTemplateStylesheets ??= new List<string>();
             _loadedTemplateStylesheets.Add(fullPath);
@@ -108,101 +102,70 @@ public partial class Panel
     }
 
     /// <summary>
-    /// Get the source file path for a type (if available)
+    /// Resolves a stylesheet path to an actual file path.
+    /// Searches in: output directory, relative to assembly, relative to executable.
     /// </summary>
-    private string? GetSourceFileForType(Type type)
+    private string? ResolveStyleSheetPath(string path, Type type)
     {
-        // Try to get from SourceLocationAttribute if it exists
-        var sourceAttr = type.GetCustomAttribute<SourceLocationAttribute>();
-        if (sourceAttr != null)
-            return sourceAttr.FilePath;
+        if (string.IsNullOrWhiteSpace(path))
+            return null;
 
-        // Fallback: try to find it based on assembly location and type name
-        var assembly = type.Assembly;
-        var assemblyLocation = assembly.Location;
-        if (!string.IsNullOrEmpty(assemblyLocation))
+        // Normalize path separators
+        path = path.Replace('\\', '/');
+        
+        // Remove leading slash for relative resolution
+        var relativePath = path.TrimStart('/');
+
+        // Get the base directories to search
+        var searchPaths = GetStyleSheetSearchPaths(type);
+
+        foreach (var basePath in searchPaths)
         {
-            var dir = System.IO.Path.GetDirectoryName(assemblyLocation);
-            var possiblePath = System.IO.Path.Combine(dir ?? "", type.Name + ".razor");
-            if (System.IO.File.Exists(possiblePath))
-                return possiblePath;
+            if (string.IsNullOrEmpty(basePath))
+                continue;
+
+            var fullPath = System.IO.Path.Combine(basePath, relativePath);
+            fullPath = System.IO.Path.GetFullPath(fullPath);
+            
+            if (System.IO.File.Exists(fullPath))
+                return fullPath;
         }
 
-        return null;
+        // If nothing found, return the path as-is (will show error when loading)
+        return relativePath;
     }
 
     /// <summary>
-    /// Find the project root directory by looking for common project files
+    /// Gets a list of directories to search for stylesheets.
     /// </summary>
-    private string? FindProjectRoot(string startDir)
+    private IEnumerable<string> GetStyleSheetSearchPaths(Type type)
     {
-        var dir = startDir;
-        while (!string.IsNullOrEmpty(dir))
+        // 1. Assembly location (where DLLs and output files are)
+        var assemblyLocation = type.Assembly.Location;
+        if (!string.IsNullOrEmpty(assemblyLocation))
         {
-            // Look for common project indicators
-            if (System.IO.Directory.GetFiles(dir, "*.csproj").Length > 0 ||
-                System.IO.Directory.GetFiles(dir, "*.sln").Length > 0)
-            {
-                return dir;
-            }
-            
-            var parent = System.IO.Path.GetDirectoryName(dir);
-            if (parent == dir) break;
-            dir = parent;
-        }
-        return null;
-    }
-
-    private string GetFullPath(string? path, string? sourceFile)
-    {
-        if (string.IsNullOrWhiteSpace(path) && sourceFile != null)
-        {
-            // Auto-detect: replace .razor extension with .scss
-            var basePath = System.IO.Path.ChangeExtension(sourceFile, null);
-            return basePath + ".scss";
-        }
-        
-        // Explicit path provided
-        if (!string.IsNullOrWhiteSpace(path))
-        {
-            // Handle absolute paths (starting with /)
-            if (path.StartsWith('/') || path.StartsWith('\\'))
-            {
-                // Find project root and resolve from there
-                if (!string.IsNullOrEmpty(sourceFile))
-                {
-                    var sourceDir = System.IO.Path.GetDirectoryName(sourceFile);
-                    if (!string.IsNullOrEmpty(sourceDir))
-                    {
-                        var projectRoot = FindProjectRoot(sourceDir);
-                        if (!string.IsNullOrEmpty(projectRoot))
-                        {
-                            var fullPath = System.IO.Path.Combine(projectRoot, path.TrimStart('/', '\\'));
-                            if (System.IO.File.Exists(fullPath))
-                                return fullPath;
-                        }
-                    }
-                }
-                
-                // Fall back to the path as-is (trimmed)
-                return path.TrimStart('/', '\\');
-            }
-            
-            // Relative path - combine with source file directory
-            if (!string.IsNullOrEmpty(sourceFile))
-            {
-                var sourceDir = System.IO.Path.GetDirectoryName(sourceFile);
-                if (!string.IsNullOrEmpty(sourceDir))
-                {
-                    var fullPath = System.IO.Path.Combine(sourceDir, path);
-                    if (System.IO.File.Exists(fullPath))
-                        return fullPath;
-                }
-            }
-            
-            return path;
+            var assemblyDir = System.IO.Path.GetDirectoryName(assemblyLocation);
+            if (!string.IsNullOrEmpty(assemblyDir))
+                yield return assemblyDir;
         }
 
-        return path ?? "";
+        // 2. Current directory (where the app is running from)
+        yield return System.IO.Directory.GetCurrentDirectory();
+
+        // 3. AppContext.BaseDirectory (runtime base directory)
+        yield return AppContext.BaseDirectory;
+
+        // 4. Entry assembly location
+        var entryAssembly = System.Reflection.Assembly.GetEntryAssembly();
+        if (entryAssembly != null)
+        {
+            var entryLocation = entryAssembly.Location;
+            if (!string.IsNullOrEmpty(entryLocation))
+            {
+                var entryDir = System.IO.Path.GetDirectoryName(entryLocation);
+                if (!string.IsNullOrEmpty(entryDir))
+                    yield return entryDir;
+            }
+        }
     }
 }
