@@ -21,8 +21,6 @@ public class AvalazorWindow : IDisposable
     private RootPanel? _rootPanel;
     private SkiaPanelRenderer? _renderer;
     private uint _framebuffer;
-    private uint _texture;
-    private uint _renderbuffer;
     private bool _needsLayout = true;
     private Vector2D<int> _lastSize;
 
@@ -77,6 +75,7 @@ public class AvalazorWindow : IDisposable
         _renderer = new SkiaPanelRenderer();
 
         // Create render target - use FramebufferSize for actual pixel dimensions
+        // Render directly to default framebuffer (FBO 0) to avoid stretching during resize
         CreateRenderTarget(_window.FramebufferSize.X, _window.FramebufferSize.Y);
     }
 
@@ -84,24 +83,13 @@ public class AvalazorWindow : IDisposable
     {
         if (_gl == null || _grContext == null) return;
 
-        // Create FBO for rendering
-        _framebuffer = _gl.GenFramebuffer();
-        _gl.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer);
+        // Render directly to the default framebuffer (FBO 0) to avoid stretching during resize
+        // The default framebuffer is managed by the windowing system and automatically resizes
+        _framebuffer = 0; // Use default framebuffer instead of creating custom FBO
 
-        // Create backing texture
-        _texture = _gl.GenTexture();
-        _gl.BindTexture(TextureTarget.Texture2D, _texture);
-        _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-        _gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _texture, 0);
-
-        // Create Skia render target
+        // Create Skia render target pointing to the default framebuffer
         var info = new GRBackendRenderTarget(width, height, 0, 8, new GRGlFramebufferInfo(_framebuffer, (uint)InternalFormat.Rgba8));
         _surface = SKSurface.Create(_grContext, info, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
-
-        // Unbind
-        _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }
 
     private void OnRender(double deltaTime)
@@ -124,7 +112,7 @@ public class AvalazorWindow : IDisposable
         // Clear screen
         _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-        // Render to Skia surface
+        // Render to Skia surface (which targets the default framebuffer directly)
         var canvas = _surface.Canvas;
         canvas.Clear(new SKColor(240, 240, 240)); // Light gray background
 
@@ -147,15 +135,8 @@ public class AvalazorWindow : IDisposable
 
         canvas.Flush();
         _grContext.Flush();
-
-        // Blit to screen
-        _gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _framebuffer);
-        _gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-        _gl.BlitFramebuffer(
-            0, 0, currentSize.X, currentSize.Y,
-            0, 0, currentSize.X, currentSize.Y,
-            ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
-        _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        
+        // No blit needed - we rendered directly to default framebuffer
     }
 
     private void OnFramebufferResize(Vector2D<int> size)
@@ -184,27 +165,13 @@ public class AvalazorWindow : IDisposable
         // Flush any pending GPU commands before disposing resources
         _grContext.Flush();
 
-        // Clean up old resources
+        // Clean up old surface
         _surface?.Dispose();
         _surface = null;
 
-        if (_framebuffer != 0)
-        {
-            _gl.DeleteFramebuffer(_framebuffer);
-            _framebuffer = 0;
-        }
-        if (_texture != 0)
-        {
-            _gl.DeleteTexture(_texture);
-            _texture = 0;
-        }
-        if (_renderbuffer != 0)
-        {
-            _gl.DeleteRenderbuffer(_renderbuffer);
-            _renderbuffer = 0;
-        }
-
-        // Create new render target
+        // No need to delete framebuffer/texture/renderbuffer as we're using the default framebuffer (FBO 0)
+        
+        // Create new render target for the default framebuffer
         CreateRenderTarget(width, height);
         
         // Reset context so Skia doesn't assume cached state about old framebuffer
@@ -225,12 +192,7 @@ public class AvalazorWindow : IDisposable
     {
         _surface?.Dispose();
         
-        if (_gl != null)
-        {
-            if (_framebuffer != 0) _gl.DeleteFramebuffer(_framebuffer);
-            if (_texture != 0) _gl.DeleteTexture(_texture);
-            if (_renderbuffer != 0) _gl.DeleteRenderbuffer(_renderbuffer);
-        }
+        // No custom framebuffer/texture/renderbuffer to delete - using default framebuffer
 
         _grContext?.Dispose();
         _grGlInterface?.Dispose();
