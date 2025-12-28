@@ -1,15 +1,16 @@
 @namespace SimpleDesktopApp
 @using System
 @using Sandbox.UI
-
-<div style="display: flex; flex-direction: column; width: 800px; height: 600px; padding: 20px; background-color: #f0f0f0;">
-    <div style="width: 100%; height: 100px; background-color: #4CAF50; margin-bottom: 10px;"></div>
-    <div style="width: 100%; height: 100px; background-color: #2196F3; margin-bottom: 10px;"></div>
-    <div style="width: 100%; height: 100px; background-color: #FF9800; margin-bottom: 10px;"></div>
-    <div style="width: 100%; height: 100px; background-color: #E91E63; margin-bottom: 10px;"></div>
-    <div style="width: 100%; height: 100px; background-color: #9C27B0;"></div>
-</div>
-
+<root>
+    <div style="display: flex; flex-direction: column; width: 800px; height: 600px; padding: 20px; background-color: #f0f0f0;">
+        <div style="width: 100%; height: 100px; background-color: #4CAF50; margin-bottom: 10px;">Iam a flexbox</div>
+        <div style="width: 100%; height: 100px; background-color: #2196F3; margin-bottom: 10px;"></div>
+        <div style="width: 100%; height: 100px; background-color: #FF9800; margin-bottom: 10px;"></div>
+        <div style="width: 100%; height: 100px; background-color: #E91E63; margin-bottom: 10px;"></div>
+        <div style="width: 100%; height: 100px; background-color: #9C27B0;"></div>
+    </div>
+    <div>This is a simple flexbox layout example using inline styles.</div>
+</root>
 @code {
     protected override void OnAfterTreeRender(bool firstTime)
     {
