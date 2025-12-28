@@ -1,0 +1,252 @@
+using Sandbox.UI;
+using Xunit;
+
+namespace Sandbox.UI.Tests;
+
+/// <summary>
+/// Tests for the StyleSheet CSS parsing and selector matching system
+/// </summary>
+public class StyleSheetTests
+{
+    [Fact]
+    public void StyleSheet_FromString_ParsesSimpleRule()
+    {
+        var css = ".button { width: 100px; height: 50px; }";
+        var sheet = StyleSheet.FromString(css);
+
+        Assert.NotNull(sheet);
+        Assert.Single(sheet.Nodes);
+        Assert.Equal(100, sheet.Nodes[0].Styles.Width?.Value);
+        Assert.Equal(50, sheet.Nodes[0].Styles.Height?.Value);
+    }
+
+    [Fact]
+    public void StyleSheet_FromString_ParsesMultipleRules()
+    {
+        var css = @"
+            .button { width: 100px; }
+            .label { height: 20px; }
+        ";
+        var sheet = StyleSheet.FromString(css);
+
+        Assert.NotNull(sheet);
+        Assert.Equal(2, sheet.Nodes.Count);
+    }
+
+    [Fact]
+    public void StyleSheet_FromString_ParsesVariables()
+    {
+        var css = @"
+            $primary-color: #ff0000;
+            .button { background-color: $primary-color; }
+        ";
+        var sheet = StyleSheet.FromString(css);
+
+        Assert.NotNull(sheet);
+        Assert.Single(sheet.Nodes);
+        // The variable should be replaced
+        Assert.Equal(1f, sheet.Nodes[0].Styles.BackgroundColor?.r);
+        Assert.Equal(0f, sheet.Nodes[0].Styles.BackgroundColor?.g);
+        Assert.Equal(0f, sheet.Nodes[0].Styles.BackgroundColor?.b);
+    }
+
+    [Fact]
+    public void StyleSheet_FromString_ParsesNestedRules()
+    {
+        var css = @"
+            .button {
+                width: 100px;
+                &:hover {
+                    width: 120px;
+                }
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+
+        Assert.NotNull(sheet);
+        Assert.Equal(2, sheet.Nodes.Count);
+    }
+
+    [Fact]
+    public void StyleSelector_MatchesClass()
+    {
+        var css = ".button { width: 100px; }";
+        var sheet = StyleSheet.FromString(css);
+
+        var panel = new Panel();
+        panel.AddClass("button");
+
+        var matchedSelector = sheet.Nodes[0].Test(panel);
+        Assert.NotNull(matchedSelector);
+    }
+
+    [Fact]
+    public void StyleSelector_DoesNotMatchWrongClass()
+    {
+        var css = ".button { width: 100px; }";
+        var sheet = StyleSheet.FromString(css);
+
+        var panel = new Panel();
+        panel.AddClass("label");
+
+        var matchedSelector = sheet.Nodes[0].Test(panel);
+        Assert.Null(matchedSelector);
+    }
+
+    [Fact]
+    public void StyleSelector_MatchesId()
+    {
+        var css = "#main { width: 100px; }";
+        var sheet = StyleSheet.FromString(css);
+
+        var panel = new Panel { Id = "main" };
+
+        var matchedSelector = sheet.Nodes[0].Test(panel);
+        Assert.NotNull(matchedSelector);
+    }
+
+    [Fact]
+    public void StyleSelector_MatchesElementName()
+    {
+        var css = "panel { width: 100px; }";
+        var sheet = StyleSheet.FromString(css);
+
+        var panel = new Panel();
+        // ElementName defaults to type name lowercased
+
+        var matchedSelector = sheet.Nodes[0].Test(panel);
+        Assert.NotNull(matchedSelector);
+    }
+
+    [Fact]
+    public void StyleSelector_MatchesPseudoClass()
+    {
+        var css = ".button:hover { width: 120px; }";
+        var sheet = StyleSheet.FromString(css);
+
+        var panel = new Panel();
+        panel.AddClass("button");
+        panel.Switch(PseudoClass.Hover, true);
+
+        var matchedSelector = sheet.Nodes[0].Test(panel);
+        Assert.NotNull(matchedSelector);
+    }
+
+    [Fact]
+    public void StyleSelector_DoesNotMatchWithoutPseudoClass()
+    {
+        var css = ".button:hover { width: 120px; }";
+        var sheet = StyleSheet.FromString(css);
+
+        var panel = new Panel();
+        panel.AddClass("button");
+        // Not hovered
+
+        var matchedSelector = sheet.Nodes[0].Test(panel);
+        Assert.Null(matchedSelector);
+    }
+
+    [Fact]
+    public void StyleSelector_Specificity_IdBeatsClass()
+    {
+        var css = @"
+            .button { width: 100px; }
+            #main { width: 200px; }
+        ";
+        var sheet = StyleSheet.FromString(css);
+
+        // ID selector should have higher score
+        var classSelector = sheet.Nodes[0].Selectors[0];
+        var idSelector = sheet.Nodes[1].Selectors[0];
+
+        Assert.True(idSelector.Score > classSelector.Score);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesPixelValue()
+    {
+        var styles = new Styles();
+        var result = styles.Set("width", "100px");
+
+        Assert.True(result);
+        Assert.Equal(100, styles.Width?.Value);
+        Assert.Equal(LengthUnit.Pixels, styles.Width?.Unit);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesPercentValue()
+    {
+        var styles = new Styles();
+        var result = styles.Set("width", "50%");
+
+        Assert.True(result);
+        Assert.Equal(50, styles.Width?.Value);
+        Assert.Equal(LengthUnit.Percentage, styles.Width?.Unit);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesColorHex()
+    {
+        var styles = new Styles();
+        var result = styles.Set("color", "#ff0000");
+
+        Assert.True(result);
+        Assert.Equal(1f, styles.Color?.r);
+        Assert.Equal(0f, styles.Color?.g);
+        Assert.Equal(0f, styles.Color?.b);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesColorName()
+    {
+        var styles = new Styles();
+        var result = styles.Set("color", "red");
+
+        Assert.True(result);
+        Assert.Equal(Color.Red, styles.Color);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesFlexDirection()
+    {
+        var styles = new Styles();
+        var result = styles.Set("flex-direction", "column");
+
+        Assert.True(result);
+        Assert.Equal(FlexDirection.Column, styles.FlexDirection);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesPadding()
+    {
+        var styles = new Styles();
+        var result = styles.Set("padding", "10px");
+
+        Assert.True(result);
+        Assert.Equal(10, styles.PaddingTop?.Value);
+        Assert.Equal(10, styles.PaddingRight?.Value);
+        Assert.Equal(10, styles.PaddingBottom?.Value);
+        Assert.Equal(10, styles.PaddingLeft?.Value);
+    }
+
+    [Fact]
+    public void Color_Parse_HandlesShortHex()
+    {
+        var result = Color.Parse("#f00");
+
+        Assert.NotNull(result);
+        Assert.Equal(1f, result.Value.r);
+        Assert.Equal(0f, result.Value.g);
+        Assert.Equal(0f, result.Value.b);
+    }
+
+    [Fact]
+    public void StyleSheetCollection_Parse_AppliesStyles()
+    {
+        var panel = new Panel();
+        panel.StyleSheet.Parse(".panel { width: 100px; }");
+
+        // The stylesheet should be added to the collection
+        Assert.True(panel.AllStyleSheets.Any());
+    }
+}

@@ -124,7 +124,7 @@ public struct Length
         // If we didn't find any number characters after initial processing
         if (unitStart == 0)
         {
-            // Special case: check if it starts with a letter (might be auto, etc.)
+            // No number found - return null (keywords like auto/contain/cover handled above)
             return null;
         }
 

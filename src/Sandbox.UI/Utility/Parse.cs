@@ -67,7 +67,7 @@ internal ref struct Parse
 
 	public string Read( int chars )
 	{
-		if ( chars <= 0 ) throw new System.Exception( $"Tried to read {chars} chars" );
+		if ( chars <= 0 ) throw new System.Exception( $"Invalid character count {chars}. Must be greater than 0." );
 
 		var result = Text.Substring( Pointer, chars );
 		Pointer += chars;
@@ -77,7 +77,7 @@ internal ref struct Parse
 	public string ReadRemaining( bool acceptNone = false )
 	{
 		if ( IsEnd && acceptNone ) return string.Empty;
-		if ( IsEnd ) throw new System.Exception( $"Tried to ReadRemaining but we're at the end" );
+		if ( IsEnd ) throw new System.Exception( $"Cannot read remaining text: already at end of input." );
 
 		var result = Text.Substring( Pointer );
 		Pointer = Length;

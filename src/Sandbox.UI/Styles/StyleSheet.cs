@@ -172,7 +172,11 @@ public class StyleSheet
 		if ( !str.Contains( '$' ) ) return str; // fast exit
 
 		if ( Variables == null )
-			throw new Exception( "Couldn't replace variables -- none set?" );
+		{
+			// No variables defined - return unchanged with warning
+			Console.WriteLine( $"Warning: CSS contains variable reference but no variables defined: {str}" );
+			return str;
+		}
 
 		var pairs = Variables.Where( x => str.Contains( x.Key ) ).ToArray();
 
@@ -183,9 +187,10 @@ public class StyleSheet
 			replaced = true;
 		}
 
-		if ( !replaced )
+		if ( !replaced && str.Contains( '$' ) )
 		{
-			throw new Exception( $"Unknown variable '{str}'" );
+			// String still contains $ but no matching variable found - log warning
+			Console.WriteLine( $"Warning: Unknown CSS variable in '{str}'" );
 		}
 
 		return str;

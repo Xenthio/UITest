@@ -50,7 +50,8 @@ internal static partial class StyleParser
 
 			if ( !style.Set( name, value ) )
 			{
-				throw new Exception( $"Unknown Property: {name} / {value} {p.FileAndLine}" );
+				// Log warning but don't throw - unknown properties should be ignored for graceful degradation
+				Console.WriteLine( $"Warning: Unknown CSS property '{name}' with value '{value}' {p.FileAndLine}" );
 			}
 
 			p = p.SkipWhitespaceAndNewlines();
