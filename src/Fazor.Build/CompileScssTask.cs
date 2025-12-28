@@ -3,9 +3,9 @@ using Microsoft.Build.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Avalazor.Scss;
+using Fazor.Scss;
 
-namespace Avalazor.Build;
+namespace Fazor.Build;
 
 /// <summary>
 /// MSBuild task to compile SCSS files to CSS

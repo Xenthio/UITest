@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
-using Avalazor.UI;
+using Fazor.UI;
 using Sandbox.UI;
 using Xunit;
 
-namespace Avalazor.Tests;
+namespace Fazor.Tests;
 
 /// <summary>
 /// Tests for RazorRenderer to ensure RenderTree processing works correctly

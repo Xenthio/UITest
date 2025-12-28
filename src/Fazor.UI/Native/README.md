@@ -1,10 +1,10 @@
 # Native Yoga Library
 
-This directory contains the native Yoga layout engine library required by Avalazor.UI.
+This directory contains the native Yoga layout engine library required by Fazor.UI.
 
 ## Setup
 
-Avalazor uses Facebook's Yoga layout engine via P/Invoke for maximum performance flexbox layout. You need to build the native library before running the project.
+Fazor uses Facebook's Yoga layout engine via P/Invoke for maximum performance flexbox layout. You need to build the native library before running the project.
 
 ### Quick Start: Build from Source ✅
 
@@ -12,14 +12,14 @@ The build scripts use a custom CMakeLists.txt (inspired by YogaSharp) that prope
 
 **Linux / macOS:**
 ```bash
-cd src/Avalazor.UI/Native
+cd src/Fazor.UI/Native
 chmod +x build-yoga-libs.sh
 ./build-yoga-libs.sh
 ```
 
 **Windows:**
 ```powershell
-cd src/Avalazor.UI/Native
+cd src/Fazor.UI/Native
 .\build-yoga-libs.ps1
 ```
 
@@ -92,7 +92,7 @@ This is why manual acquisition or building from source is required.
 
 ## Architecture
 
-Avalazor uses s&box's P/Invoke approach:
+Fazor uses s&box's P/Invoke approach:
 - Native Yoga C++ library (Facebook's official implementation v3.1.0)
 - Direct P/Invoke bindings in C# (`Yoga.cs`, `YogaWrapper.cs`, `YGNodeRef.cs`)
 - No managed wrapper dependencies
@@ -129,4 +129,4 @@ This is the same architecture used by s&box for their UI system.
 
 - Yoga GitHub: https://github.com/facebook/yoga
 - s&box Panel system reference
-- Avalazor documentation: See repository README
+- Fazor documentation: See repository README

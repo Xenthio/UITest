@@ -4,7 +4,7 @@ using AngleSharp.Html.Parser;
 using Sandbox.UI;
 using System.Reflection;
 
-namespace Avalazor.UI;
+namespace Fazor.UI;
 
 /// <summary>
 /// Renders the BuildRenderTree output of a Panel-derived Razor component into child panels.

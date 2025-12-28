@@ -1,6 +1,6 @@
-# Avalazor - Desktop Blazor/Razor Framework with XGUI Themes
+# Fazor - Desktop Blazor/Razor Framework with XGUI Themes
 
-**Avalazor** (Avalonia + Razor) is a desktop implementation of a Blazor/Razor-like system for building cross-platform desktop applications (Windows, macOS, Linux) using only C# and Razor syntax with SCSS styling support - **no AXAML required**!
+**Fazor** is a desktop implementation of a Blazor/Razor-like system for building cross-platform desktop applications (Windows, macOS, Linux) using only C# and Razor syntax with SCSS styling support - **no AXAML required**!
 
 **Now featuring XGUI-3 themes** - Use authentic UI themes that mimic Windows 95, XP, 7, 11, Half-Life 2, Garry's Mod, and more!
 
@@ -12,7 +12,7 @@
 - **SCSS Styling**: Full SCSS support with variables, nesting, and mixins
 - **XGUI Theme System**: Complete themes ported from XGUI-3 - use them as-is or create your own
 - **Cross-Platform**: Runs on Windows, macOS, and Linux
-- **Zero Avalonia Boilerplate**: All Avalonia setup is hidden - you only work with Razor
+- **Zero Boilerplate**: Minimal setup required - you only work with Razor
 
 ## 🚀 Quick Start
 
@@ -26,7 +26,7 @@ cd UITest
 
 2. Build the solution:
 ```bash
-dotnet build Avalazor.sln
+dotnet build Fazor.sln
 ```
 
 3. Run the example:
@@ -35,33 +35,33 @@ cd examples/SimpleDesktopApp
 dotnet run
 ```
 
-### Your First Avalazor App
+### Your First Fazor App
 
 1. Create a new console project:
 ```bash
-dotnet new console -n MyAvalazorApp
-cd MyAvalazorApp
+dotnet new console -n MyFazorApp
+cd MyFazorApp
 ```
 
-2. Add Avalazor references:
+2. Add Fazor references:
 ```xml
 <ItemGroup>
-  <ProjectReference Include="path/to/Avalazor.Core/Avalazor.Core.csproj" />
-  <ProjectReference Include="path/to/Avalazor.Runtime/Avalazor.Runtime.csproj" />
-  <ProjectReference Include="path/to/Avalazor.Build/Avalazor.Build.csproj" />
+  <ProjectReference Include="path/to/Fazor.Core/Fazor.Core.csproj" />
+  <ProjectReference Include="path/to/Fazor.Runtime/Fazor.Runtime.csproj" />
+  <ProjectReference Include="path/to/Fazor.Build/Fazor.Build.csproj" />
 </ItemGroup>
 
-<Import Project="path/to/Avalazor.Build/build/Avalazor.Build.targets" />
+<Import Project="path/to/Fazor.Build/build/Fazor.Build.targets" />
 ```
 
 3. Create `MainApp.razor`:
 ```razor
-@using Avalazor.UI
+@using Fazor.UI
 @inherits UIComponent
-@attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
+@attribute [StyleSheet("/themes/Fazor.Defaults.scss")]
 
 <div class="app">
-    <h1>Hello Avalazor!</h1>
+    <h1>Hello Fazor!</h1>
     <button @onclick="HandleClick">Clicks: @count</button>
 </div>
 
@@ -75,13 +75,13 @@ cd MyAvalazorApp
 }
 ```
 
-> **Note:** The `Avalazor.Defaults.scss` import provides s&box-compatible flexbox-by-default behavior, making XGUI themes work correctly.
+> **Note:** The `Fazor.Defaults.scss` import provides s&box-compatible flexbox-by-default behavior, making XGUI themes work correctly.
 
 4. Update `Program.cs`:
 ```csharp
-using Avalazor.Runtime;
+using Fazor.Runtime;
 
-AvalazorApplication.Run<MainApp>(args);
+FazorApplication.Run<MainApp>(args);
 ```
 
 5. Build and run - that's it! No AXAML files needed!
@@ -89,8 +89,8 @@ AvalazorApplication.Run<MainApp>(args);
 ## 📁 Project Structure
 
 ```
-MyAvalazorApp/
-├── Program.cs           # Just calls AvalazorApplication.Run<MainApp>()
+MyFazorApp/
+├── Program.cs           # Just calls FazorApplication.Run<MainApp>()
 ├── MainApp.razor        # Your root component
 ├── MainApp.scss         # Styling for your app
 └── Components/
@@ -103,11 +103,11 @@ MyAvalazorApp/
 - ❌ No App.axaml.cs
 - ❌ No MainWindow.axaml  
 - ❌ No MainWindow.axaml.cs
-- ❌ No Avalonia boilerplate
+- ❌ No framework boilerplate
 
 ## 🎨 Styling with SCSS
 
-Avalazor automatically compiles SCSS to CSS at build time:
+Fazor automatically compiles SCSS to CSS at build time:
 
 **MyComponent.scss:**
 ```scss
@@ -135,7 +135,7 @@ Associate the stylesheet with your component:
 
 ## 🎭 XGUI Themes
 
-Avalazor includes a complete port of **XGUI-3 themes** that accurately mimic various UI styles. These themes work as-is - no modifications needed!
+Fazor includes a complete port of **XGUI-3 themes** that accurately mimic various UI styles. These themes work as-is - no modifications needed!
 
 ### Available Themes
 
@@ -158,24 +158,24 @@ Avalazor includes a complete port of **XGUI-3 themes** that accurately mimic var
 
 ### Using XGUI Themes
 
-**Important:** XGUI themes require flexbox-by-default behavior. Always import `Avalazor.Defaults.scss` first:
+**Important:** XGUI themes require flexbox-by-default behavior. Always import `Fazor.Defaults.scss` first:
 
 ```razor
-@attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
+@attribute [StyleSheet("/themes/Fazor.Defaults.scss")]
 @attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
 ```
 
 Or in your SCSS file:
 
 ```scss
-@import "/themes/Avalazor.Defaults.scss";
+@import "/themes/Fazor.Defaults.scss";
 @import "/themes/XGUI/DefaultStyles/OliveGreen.scss";
 ```
 
 You can also add custom overrides:
 
 ```razor
-@attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
+@attribute [StyleSheet("/themes/Fazor.Defaults.scss")]
 @attribute [StyleSheet("/themes/XGUI/DefaultStyles/ComputerXP.scss")]
 @attribute [StyleSheet("MyCustomOverrides.scss")]
 ```
@@ -230,24 +230,24 @@ See `themes/XGUI/README.md` for detailed theme documentation.
 
 ### Core Libraries
 
-1. **Avalazor.Razor** - Razor file transpilation engine
+1. **Fazor.Razor** - Razor file transpilation engine
    - Converts `.razor` files to C# code
    - **Embeds Microsoft.AspNetCore.Razor.Language from s&box for full IntelliSense**
    - Provides component autocomplete, parameter validation, and directive support
 
-2. **Avalazor.Scss** - SCSS compilation engine  
+2. **Fazor.Scss** - SCSS compilation engine  
    - Compiles `.scss` files to CSS
    - Supports all SCSS features
 
-3. **Avalazor.Core** - Core UI framework
+3. **Fazor.Core** - Core UI framework
    - Base component classes
    - StyleSheet attribute system
 
-4. **Avalazor.Runtime** - Avalonia integration (hidden from user)
-   - Handles all Avalonia bootstrapping internally
-   - Provides simple `AvalazorApplication.Run<T>()` API
+4. **Fazor.Runtime** - Runtime infrastructure (hidden from user)
+   - Handles all framework bootstrapping internally
+   - Provides simple `FazorApplication.Run<T>()` API
 
-5. **Avalazor.Build** - MSBuild integration
+5. **Fazor.Build** - MSBuild integration
    - Automatic Razor transpilation
    - Automatic SCSS compilation
 
@@ -262,9 +262,9 @@ When you build your project:
 
 Example build output:
 ```
-Avalazor: Transpiling 3 Razor file(s)...
+Fazor: Transpiling 3 Razor file(s)...
 Successfully transpiled 3 Razor file(s)
-Avalazor: Compiling 3 SCSS file(s)...
+Fazor: Compiling 3 SCSS file(s)...
 Successfully compiled 3 SCSS file(s)
 ```
 
@@ -272,7 +272,7 @@ Successfully compiled 3 SCSS file(s)
 
 ### Interactive Component
 ```razor
-@using Avalazor.UI
+@using Fazor.UI
 @inherits UIComponent
 
 <div class="counter">
@@ -292,7 +292,7 @@ Successfully compiled 3 SCSS file(s)
 
 ### Component with Children
 ```razor
-@using Avalazor.UI
+@using Fazor.UI
 @inherits UIComponent
 
 <div class="panel">
@@ -313,7 +313,7 @@ Successfully compiled 3 SCSS file(s)
 
 ## 💡 IntelliSense & IDE Support
 
-Avalazor provides **full IntelliSense support** for Razor files in Visual Studio and compatible IDEs by embedding s&box's `Microsoft.AspNetCore.Razor.Language` implementation.
+Fazor provides **full IntelliSense support** for Razor files in Visual Studio and compatible IDEs by embedding s&box's `Microsoft.AspNetCore.Razor.Language` implementation.
 
 **What Works:**
 - ✅ **Component Autocomplete** - IntelliSense for custom Razor components
@@ -324,22 +324,22 @@ Avalazor provides **full IntelliSense support** for Razor files in Visual Studio
 - ✅ **Go to Definition** - Navigate to component definitions
 
 **No Configuration Required:**
-Simply reference `Avalazor.Razor` and IntelliSense works automatically. No need for special project SDKs or configuration files.
+Simply reference `Fazor.Razor` and IntelliSense works automatically. No need for special project SDKs or configuration files.
 
 **Credit:**
 This IntelliSense implementation is ported from [s&box](https://github.com/Facepunch/sbox-public) (MIT licensed), which discovered that embedding the Razor Language Server components was necessary for full IDE support.
 
-## 🆚 Comparison with Traditional Avalonia
+## 🆚 Comparison with Traditional Desktop UI Frameworks
 
-| Feature | Traditional Avalonia | Avalazor |
+| Feature | Traditional XAML-based | Fazor |
 |---------|---------------------|----------|
-| UI Markup | AXAML | Razor |
-| Code-Behind | .axaml.cs files | Inline @code blocks |
+| UI Markup | AXAML/XAML | Razor |
+| Code-Behind | .axaml.cs/.xaml.cs files | Inline @code blocks |
 | Styling | XAML styles | SCSS |
 | Boilerplate | Lots (App.axaml, etc.) | None |
 | Learning Curve | XAML + C# | Just C# + Razor |
 
-## 🎯 Why Avalazor?
+## 🎯 Why Fazor?
 
 **If you're familiar with Blazor/Razor:**
 - Use the same component model you know
@@ -361,14 +361,14 @@ This IntelliSense implementation is ported from [s&box](https://github.com/Facep
 
 ### Program Entry Point
 
-The simplest possible Avalazor app:
+The simplest possible Fazor app:
 ```csharp
-using Avalazor.Runtime;
+using Fazor.Runtime;
 
-AvalazorApplication.Run<MainApp>(args);
+FazorApplication.Run<MainApp>(args);
 ```
 
-That's it! Avalonia is completely hidden.
+That's it! All framework complexity is completely hidden.
 
 ### Component Lifecycle
 
@@ -401,7 +401,6 @@ Based on the s&box Razor system by Facepunch Studios (MIT licensed):
 
 - **s&box** by Facepunch Studios - Original Razor transpilation system
 - **XGUI-3** by Xenthio - Theme system and reference implementation
-- **Avalonia** - Cross-platform UI framework
 - **Microsoft** - AspNetCore.Razor.Language and Components
 
 ### XGUI Themes
@@ -412,4 +411,3 @@ The themes in `themes/XGUI/` are ported from [XGUI-3](https://github.com/Xenthio
 
 - [s&box Public Repository](https://github.com/Facepunch/sbox-public)
 - [XGUI-3](https://github.com/Xenthio/XGUI-3)
-- [Avalonia UI](https://avaloniaui.net/)

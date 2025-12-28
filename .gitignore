@@ -3,8 +3,8 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-# Avalazor Generated Files
-**/Avalazor/Generated/
+# Fazor Generated Files
+**/Fazor/Generated/
 **/*.razor.g.cs
 **/*.scss.stamp
 **/*.razor.stamp
@@ -424,6 +424,6 @@ FodyWeavers.xsd
 *.msp
 
 # Misc
-/src/Avalazor.UI/Native/yoga-3.1.0
-src/Avalazor.UI/Native/yoga.tar.gz
+/src/Fazor.UI/Native/yoga-3.1.0
+src/Fazor.UI/Native/yoga.tar.gz
 *.DS_Store

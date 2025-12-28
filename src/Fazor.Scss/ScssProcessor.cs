@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Avalazor.Scss;
+namespace Fazor.Scss;
 
 /// <summary>
 /// SCSS to CSS compilation processor

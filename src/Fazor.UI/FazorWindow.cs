@@ -5,13 +5,13 @@ using SkiaSharp;
 using Sandbox.UI;
 using Sandbox.UI.Skia;
 
-namespace Avalazor.UI;
+namespace Fazor.UI;
 
 /// <summary>
 /// Main application window using Silk.NET for cross-platform windowing
 /// Uses Sandbox.UI for panel system and Sandbox.UI.Skia for rendering
 /// </summary>
-public class AvalazorWindow : IDisposable
+public class FazorWindow : IDisposable
 {
     private readonly IWindow _window;
     private GL? _gl;
@@ -38,7 +38,7 @@ public class AvalazorWindow : IDisposable
         }
     }
 
-    public AvalazorWindow(int width = 1280, int height = 720, string title = "Avalazor Application")
+    public FazorWindow(int width = 1280, int height = 720, string title = "Fazor Application")
     {
         var options = WindowOptions.Default;
         options.Size = new Vector2D<int>(width, height);
@@ -206,7 +206,7 @@ public class AvalazorWindow : IDisposable
     {
         // Clean up only our internal resources here, not the window itself.
         // The window will be disposed naturally outside the render loop
-        // by the using statement in AvalazorApplication.Run().
+        // by the using statement in FazorApplication.Run().
         CleanupResources();
     }
 
@@ -245,7 +245,7 @@ public class AvalazorWindow : IDisposable
         CleanupResources();
         
         // Dispose the window - this should only be called outside the render loop
-        // (e.g., from the using statement in AvalazorApplication.Run())
+        // (e.g., from the using statement in FazorApplication.Run())
         _window?.Dispose();
     }
 }

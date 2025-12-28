@@ -1,7 +1,7 @@
 using Sandbox.UI;
 using Xunit;
 
-namespace Avalazor.Tests;
+namespace Fazor.Tests;
 
 /// <summary>
 /// Tests for the s&box Panel architecture

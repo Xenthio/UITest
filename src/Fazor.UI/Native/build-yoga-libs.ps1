@@ -1,7 +1,7 @@
 # PowerShell script to build Yoga native library for Windows from source
 # Requires Visual Studio 2022 with C++ tools and CMake
 
-Write-Host "Avalazor Yoga Native Library Setup for Windows" -ForegroundColor Green
+Write-Host "Fazor Yoga Native Library Setup for Windows" -ForegroundColor Green
 Write-Host "===============================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Building Yoga as a shared library (DLL)..." -ForegroundColor Yellow

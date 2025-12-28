@@ -4,7 +4,7 @@
 
 set -e
 
-echo "Avalazor Yoga Native Library Setup"
+echo "Fazor Yoga Native Library Setup"
 echo "===================================="
 echo ""
 
