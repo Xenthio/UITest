@@ -139,7 +139,11 @@ public class Window : Panel
 
         if (firstTime)
         {
-            // Find window content
+            // Process root element attributes from Razor markup
+            // This allows automatic property binding from <root> element
+            ProcessRootElementAttributes();
+
+            // Find window content (look for first non-titlebar child or explicit window-content)
             foreach (var child in Children)
             {
                 if (child != null && child.HasClass("window-content"))
@@ -149,6 +153,27 @@ public class Window : Panel
                 }
             }
 
+            // If no explicit window-content found, wrap all children (except titlebar) in one
+            if (WindowContent == null && ChildrenCount > 0)
+            {
+                // Create content panel and move all current children into it
+                var contentPanel = new Panel(this, "window-content");
+                var childrenToMove = Children.ToList();
+                
+                foreach (var child in childrenToMove)
+                {
+                    if (child != TitleBar && child != null)
+                    {
+                        child.Parent = null;
+                        contentPanel.AddChild(child);
+                    }
+                }
+                
+                AddChild(contentPanel);
+                WindowContent = contentPanel;
+            }
+
+            // Create title bar after processing attributes
             CreateTitleBar();
 
             if (AutoFocus)
@@ -169,6 +194,83 @@ public class Window : Panel
         if (TitleBar != null && TitleBar.IsValid)
         {
             SetChildIndex(TitleBar, 0);
+        }
+    }
+
+    /// <summary>
+    /// Process attributes from the root element in Razor markup.
+    /// This allows declarative property binding like &lt;root title="Hello" hasminimise="true"&gt;
+    /// </summary>
+    private void ProcessRootElementAttributes()
+    {
+        // Check for 'title' attribute
+        var titleAttr = GetAttribute("title");
+        if (!string.IsNullOrEmpty(titleAttr))
+        {
+            Title = titleAttr;
+        }
+
+        // Check for window control flags
+        var hasMinimiseAttr = GetAttribute("hasminimise");
+        if (!string.IsNullOrEmpty(hasMinimiseAttr))
+        {
+            HasMinimise = hasMinimiseAttr == "true" || hasMinimiseAttr == "1";
+        }
+
+        var hasMaximiseAttr = GetAttribute("hasmaximise");
+        if (!string.IsNullOrEmpty(hasMaximiseAttr))
+        {
+            HasMaximise = hasMaximiseAttr == "true" || hasMaximiseAttr == "1";
+        }
+
+        var hasCloseAttr = GetAttribute("hasclose");
+        if (!string.IsNullOrEmpty(hasCloseAttr))
+        {
+            HasClose = hasCloseAttr == "true" || hasCloseAttr == "1";
+        }
+
+        var hasTitleBarAttr = GetAttribute("hastitlebar");
+        if (!string.IsNullOrEmpty(hasTitleBarAttr))
+        {
+            HasTitleBar = hasTitleBarAttr == "true" || hasTitleBarAttr == "1";
+        }
+
+        // Check for size and position attributes
+        var widthAttr = GetAttribute("width");
+        if (!string.IsNullOrEmpty(widthAttr) && float.TryParse(widthAttr, out float width))
+        {
+            Size = new Vector2(width, Size.y);
+        }
+
+        var heightAttr = GetAttribute("height");
+        if (!string.IsNullOrEmpty(heightAttr) && float.TryParse(heightAttr, out float height))
+        {
+            Size = new Vector2(Size.x, height);
+        }
+
+        var xAttr = GetAttribute("x");
+        if (!string.IsNullOrEmpty(xAttr) && float.TryParse(xAttr, out float x))
+        {
+            Position = new Vector2(x, Position.y);
+        }
+
+        var yAttr = GetAttribute("y");
+        if (!string.IsNullOrEmpty(yAttr) && float.TryParse(yAttr, out float y))
+        {
+            Position = new Vector2(Position.x, y);
+        }
+
+        // Check for draggable and resizable
+        var isDraggableAttr = GetAttribute("isdraggable");
+        if (!string.IsNullOrEmpty(isDraggableAttr))
+        {
+            IsDraggable = isDraggableAttr == "true" || isDraggableAttr == "1";
+        }
+
+        var isResizableAttr = GetAttribute("isresizable");
+        if (!string.IsNullOrEmpty(isResizableAttr))
+        {
+            IsResizable = isResizableAttr == "true" || isResizableAttr == "1";
         }
     }
 

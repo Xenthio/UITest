@@ -1,0 +1,59 @@
+@namespace SimpleDesktopApp
+@using System
+@using Sandbox.UI
+@attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
+@attribute [StyleSheet("ExampleWindow.scss")]
+@inherits Window
+
+<root title="Settings Window" hasminimise="true" hasmaximise="true" hasclose="true" width="500" height="400">
+    <div class="settings-content">
+        <h2>Example Automatic Window</h2>
+        <p>This window uses the automatic Razor pattern with @("@inherits Window")</p>
+        
+        <section class="demo-section">
+            <h3>Window Properties</h3>
+            <ul>
+                <li>Title: @Title</li>
+                <li>Has Minimize: @HasMinimise</li>
+                <li>Has Maximize: @HasMaximise</li>
+                <li>Has Close: @HasClose</li>
+            </ul>
+        </section>
+        
+        <section class="demo-section">
+            <h3>Interactive Controls</h3>
+            <button @onclick="@IncrementCounter">
+                Click Count: @clickCount
+            </button>
+            
+            <div class="checkbox @(isChecked ? "checked" : "")" @onclick="@(() => isChecked = !isChecked)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
+                </div>
+                <label>Enable Feature</label>
+            </div>
+        </section>
+    </div>
+</root>
+
+@code {
+    private int clickCount = 0;
+    private bool isChecked = false;
+    
+    private void IncrementCounter()
+    {
+        clickCount++;
+        StateHasChanged();
+    }
+    
+    protected override void OnAfterTreeRender(bool firstTime)
+    {
+        base.OnAfterTreeRender(firstTime);
+        
+        if (firstTime)
+        {
+            Console.WriteLine($"Automatic Window initialized: {Title}");
+            Console.WriteLine($"Window properties from root: HasMinimise={HasMinimise}, HasMaximise={HasMaximise}");
+        }
+    }
+}
