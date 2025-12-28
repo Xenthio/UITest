@@ -377,10 +377,11 @@ public class Styles
             p.Pointer++;
 
             bool wasSuccessful = Set(property, value);
-            if (!wasSuccessful)
-            {
-                Console.WriteLine($"{value} is not valid with {property} {p.FileAndLine}");
-            }
+            // Silently ignore unsupported properties - many CSS properties are not yet implemented
+            // if (!wasSuccessful)
+            // {
+            //     Console.WriteLine($"{value} is not valid with {property} {p.FileAndLine}");
+            // }
 
             var prop = new IStyleBlock.StyleProperty
             {

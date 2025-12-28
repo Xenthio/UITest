@@ -82,8 +82,10 @@ public class PanelStyle : Styles
         var matchingRules = new List<(StyleSelector selector, StyleBlock block)>();
 
         // Collect all matching rules from all stylesheets
+        int sheetCount = 0;
         foreach (var sheet in _panel.AllStyleSheets)
         {
+            sheetCount++;
             foreach (var block in sheet.Nodes)
             {
                 var selector = block.Test(_panel);
@@ -92,6 +94,12 @@ public class PanelStyle : Styles
                     matchingRules.Add((selector, block));
                 }
             }
+        }
+
+        // Debug: Log if no stylesheets or rules found for window elements
+        if (_panel.HasClass("window") && matchingRules.Count == 0)
+        {
+            System.Console.WriteLine($"Warning: Panel with class 'window' has {sheetCount} stylesheets but no matching rules. Panel: {_panel.GetType().Name}, Classes: {string.Join(", ", _panel.Classes)}");
         }
 
         // Sort by specificity (score)
