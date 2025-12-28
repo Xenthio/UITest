@@ -14,8 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Avalazor.Razor\Avalazor.Razor.csproj" />
-    <ProjectReference Include="..\Avalazor.Scss\Avalazor.Scss.csproj" />
+    <!-- Use PrivateAssets="all" to prevent transitive dependencies and enable isolated assembly loading (via .deps.json generation) which prevents assembly locking issues -->
+    <ProjectReference Include="..\Avalazor.Razor\Avalazor.Razor.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Avalazor.Scss\Avalazor.Scss.csproj" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
