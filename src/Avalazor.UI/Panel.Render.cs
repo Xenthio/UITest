@@ -9,6 +9,28 @@ namespace Avalazor.UI;
 public partial class Panel
 {
     /// <summary>
+    /// Indicates if this panel has custom content to render
+    /// Override in derived classes (e.g., Label returns true)
+    /// </summary>
+    public virtual bool HasContent => false;
+
+    /// <summary>
+    /// Called to draw the panel's background (s&box pattern)
+    /// </summary>
+    protected virtual void DrawBackground(SKCanvas canvas)
+    {
+        // Override in derived classes if needed
+    }
+
+    /// <summary>
+    /// Called to draw the panel's content (s&box pattern)
+    /// </summary>
+    protected virtual void DrawContent(SKCanvas canvas)
+    {
+        // Override in derived classes (e.g., Label draws text here)
+    }
+
+    /// <summary>
     /// Called when panel needs to paint itself
     /// Override to provide custom rendering
     /// </summary>
@@ -17,6 +39,12 @@ public partial class Panel
         // Base implementation paints background, border, etc.
         PaintBackground(canvas);
         PaintBorder(canvas);
+        
+        // Call custom content drawing if panel has content
+        if (HasContent)
+        {
+            DrawContent(canvas);
+        }
     }
 
     /// <summary>
@@ -26,6 +54,9 @@ public partial class Panel
     internal void Paint(SKCanvas canvas)
     {
         if (!IsVisible) return;
+
+        // Save canvas state
+        canvas.Save();
 
         // OnPaint draws at (0,0) using Box.Rect.Width/Height
         OnPaint(canvas);
@@ -39,6 +70,8 @@ public partial class Panel
             child.Paint(canvas);
             canvas.Restore();
         }
+        
+        canvas.Restore();
     }
 
     private void PaintBackground(SKCanvas canvas)
