@@ -1,0 +1,44 @@
+@namespace SimpleDesktopApp
+@using System
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Components
+@using Avalazor.UI
+@inherits UIComponent
+@attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
+@attribute [StyleSheet("MainApp.scss")]
+
+<div class="main-app">
+    <header>
+        <h1>Avalazor - Desktop Blazor/Razor with XGUI Themes</h1>
+    </header>
+    
+    <main>
+        <section class="intro">
+            <p>Welcome to Avalazor! A desktop Blazor/Razor system with XGUI theme support.</p>
+            <p>Based on the s&box Razor system (MIT licensed), Avalazor provides:</p>
+            <ul>
+                <li>Razor file transpilation to C#</li>
+                <li>SCSS compilation with XGUI theme compatibility</li>
+                <li>Automatic build-time processing</li>
+                <li>Cross-platform desktop support (Windows, macOS, Linux)</li>
+                <li><strong>XGUI-3 themes ported - use them as-is!</strong></li>
+            </ul>
+        </section>
+
+        <section class="components">
+            <h2>Example Components</h2>
+            <p>Component rendering will be added in a future update</p>
+        </section>
+    </main>
+    
+    <footer>
+        <p>Powered by Avalazor with XGUI Themes - No AXAML Required!</p>
+    </footer>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("MainApp initialized!");
+    }
+}

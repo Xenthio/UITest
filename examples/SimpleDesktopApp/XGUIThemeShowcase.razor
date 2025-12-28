@@ -1,0 +1,62 @@
+@namespace SimpleDesktopApp
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@using Avalazor.UI
+@inherits UIComponent
+@attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
+@attribute [StyleSheet("XGUIThemeShowcase.scss")]
+
+<div class="xgui-demo">
+    <h2>XGUI Theme Showcase</h2>
+    <p>These themes are ported from XGUI-3, accurately mimicking various UI styles.</p>
+    
+    <div class="theme-selector">
+        <h3>Available Themes:</h3>
+        <ul>
+            @foreach (var theme in GetThemes())
+            {
+                <li>
+                    <strong>@theme.Name</strong> - @theme.Description
+                    <br/>
+                    <code>@@@("attribute [StyleSheet(\"" + theme.Path + "\")]")</code>
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="info-box">
+        <h3>Using XGUI Themes</h3>
+        <p>To use an XGUI theme in your component, add the StyleSheet attribute:</p>
+        <pre>@@@("attribute [StyleSheet(\"/themes/XGUI/DefaultStyles/OliveGreen.scss\")]")</pre>
+        <p>Or use a relative path from your component's location.</p>
+    </div>
+</div>
+
+@code {
+    private class ThemeInfo
+    {
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Path { get; set; } = "";
+    }
+
+    private List<ThemeInfo> GetThemes()
+    {
+        return new List<ThemeInfo>
+        {
+            new() { Name = "OliveGreen", Description = "Half-Life 2 / Valve style", Path = "/themes/XGUI/DefaultStyles/OliveGreen.scss" },
+            new() { Name = "Computer95", Description = "Windows 95 classic look", Path = "/themes/XGUI/DefaultStyles/Computer95.scss" },
+            new() { Name = "ComputerXP", Description = "Windows XP Luna theme", Path = "/themes/XGUI/DefaultStyles/ComputerXP.scss" },
+            new() { Name = "Computer7", Description = "Windows 7 Aero-inspired", Path = "/themes/XGUI/DefaultStyles/Computer7.scss" },
+            new() { Name = "Computer11", Description = "Windows 11 modern design", Path = "/themes/XGUI/DefaultStyles/Computer11.scss" },
+            new() { Name = "Derma", Description = "Garry's Mod default UI", Path = "/themes/XGUI/DefaultStyles/Derma.scss" },
+            new() { Name = "SboxDark", Description = "s&box dark theme", Path = "/themes/XGUI/DefaultStyles/SboxDark.scss" },
+            new() { Name = "Vapour", Description = "Steam-inspired interface", Path = "/themes/XGUI/DefaultStyles/Vapour.scss" },
+            new() { Name = "IMGUI", Description = "Dear ImGui style", Path = "/themes/XGUI/DefaultStyles/IMGUI.scss" },
+            new() { Name = "Simple", Description = "Clean, minimal design", Path = "/themes/XGUI/DefaultStyles/Simple.scss" },
+            new() { Name = "ThinGrey", Description = "Lightweight grey theme", Path = "/themes/XGUI/DefaultStyles/ThinGrey.scss" },
+        };
+    }
+}

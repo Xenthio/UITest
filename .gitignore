@@ -3,6 +3,12 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# Avalazor Generated Files
+**/Avalazor/Generated/
+**/*.razor.g.cs
+**/*.scss.stamp
+**/*.razor.stamp
+
 # User-specific files
 *.rsuser
 *.suo
@@ -416,3 +422,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Misc
+/src/Avalazor.UI/Native/yoga-3.1.0
+src/Avalazor.UI/Native/yoga.tar.gz
+*.DS_Store

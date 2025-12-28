@@ -1,0 +1,30 @@
+@namespace SimpleDesktopApp
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using Avalazor.UI
+@inherits UIComponent
+@attribute [StyleSheet("themes/default.scss")]
+
+<div class="panel-list">
+    <h3>Available Components</h3>
+    <ul>
+        @foreach (var component in GetComponents())
+        {
+            <li>@component</li>
+        }
+    </ul>
+</div>
+
+@code {
+    private List<string> GetComponents()
+    {
+        return new List<string>
+        {
+            "ExampleComponent",
+            "PanelList",
+            "Button",
+            "TextInput"
+        };
+    }
+}
