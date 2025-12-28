@@ -1,4 +1,5 @@
 using SkiaSharp;
+using Avalazor.UI.Yoga;
 
 namespace Avalazor.UI;
 
@@ -6,15 +7,21 @@ namespace Avalazor.UI;
 /// Base class for all UI elements in Avalazor.
 /// Based on s&box's Sandbox.UI.Panel architecture (MIT licensed).
 /// Provides a hierarchical structure with CSS-based styling and flexbox layout.
+/// 
+/// This class is split into multiple partial classes for organization:
+/// - Panel.cs: Core properties and initialization
+/// - Panel.Children.cs: Child management
+/// - Panel.Classes.cs: CSS class management
+/// - Panel.Layout.cs: Layout computation (PreLayout/FinalLayout)
+/// - Panel.Render.cs: Rendering (Paint methods)
 /// </summary>
 public partial class Panel
 {
-    private Panel? _parent;
-    private readonly List<Panel> _children = new();
-    private ComputedStyle? _computedStyle;
-    private LayoutNode? _layoutNode;
-    private bool _needsLayout = true;
-    private bool _needsStyleCompute = true;
+    internal Panel? _parent;
+    internal readonly List<Panel> _children = new();
+    internal ComputedStyle? _computedStyle;
+    internal bool needsPreLayout = true;
+    internal StyleEngine? _styleEngine;
 
     /// <summary>
     /// Parent panel in the hierarchy
@@ -26,7 +33,7 @@ public partial class Panel
         {
             if (_parent == value) return;
             _parent = value;
-            MarkNeedsStyleCompute();
+            needsPreLayout = true;
         }
     }
 
@@ -46,19 +53,21 @@ public partial class Panel
     public string? Style { get; set; }
 
     /// <summary>
-    /// Computed position after layout
+    /// Access to various bounding boxes of this panel.
+    /// Based on s&box's Box property (Panel.Layout.cs line 13)
     /// </summary>
-    public SKRect ComputedRect { get; internal set; }
+    public Box Box { get; init; } = new Box();
+
+    /// <summary>
+    /// Yoga layout node - each panel owns its own Yoga node.
+    /// Based on s&box's YogaNode property (Panel.Layout.cs line 7)
+    /// </summary>
+    internal YogaWrapper? YogaNode { get; private set; }
 
     /// <summary>
     /// Computed style after CSS processing
     /// </summary>
     public ComputedStyle? ComputedStyle => _computedStyle;
-
-    /// <summary>
-    /// Layout node for Yoga flexbox layout
-    /// </summary>
-    public LayoutNode? LayoutNode => _layoutNode;
 
     /// <summary>
     /// Whether this panel is visible
@@ -72,241 +81,25 @@ public partial class Panel
 
     public Panel()
     {
+        // Initialize Yoga node (s&box pattern)
+        YogaNode = new YogaWrapper();
     }
 
     /// <summary>
-    /// Add a child panel
-    /// </summary>
-    public virtual void AddChild(Panel child)
-    {
-        if (child.Parent != null)
-        {
-            child.Parent.RemoveChild(child);
-        }
-
-        _children.Add(child);
-        child.Parent = this;
-        MarkNeedsLayout();
-    }
-
-    /// <summary>
-    /// Remove a child panel
-    /// </summary>
-    public virtual void RemoveChild(Panel child)
-    {
-        if (_children.Remove(child))
-        {
-            child.Parent = null;
-            MarkNeedsLayout();
-        }
-    }
-
-    /// <summary>
-    /// Remove all children
-    /// </summary>
-    public virtual void RemoveAllChildren()
-    {
-        foreach (var child in _children.ToList())
-        {
-            RemoveChild(child);
-        }
-    }
-
-    /// <summary>
-    /// Mark this panel and all ancestors as needing layout recalculation
+    /// Mark this panel as needing layout recalculation
     /// </summary>
     protected void MarkNeedsLayout()
     {
-        _needsLayout = true;
+        needsPreLayout = true;
         Parent?.MarkNeedsLayout();
     }
 
     /// <summary>
-    /// Mark this panel and all descendants as needing style recomputation
+    /// Set the StyleEngine to use for style computation
     /// </summary>
-    protected void MarkNeedsStyleCompute()
+    internal void SetStyleEngine(StyleEngine engine)
     {
-        _needsStyleCompute = true;
-        foreach (var child in _children)
-        {
-            child.MarkNeedsStyleCompute();
-        }
-    }
-
-    /// <summary>
-    /// Add a CSS class
-    /// </summary>
-    public void AddClass(string className)
-    {
-        if (Classes.Add(className))
-        {
-            MarkNeedsStyleCompute();
-        }
-    }
-
-    /// <summary>
-    /// Remove a CSS class
-    /// </summary>
-    public void RemoveClass(string className)
-    {
-        if (Classes.Remove(className))
-        {
-            MarkNeedsStyleCompute();
-        }
-    }
-
-    /// <summary>
-    /// Toggle a CSS class
-    /// </summary>
-    public void ToggleClass(string className)
-    {
-        if (Classes.Contains(className))
-            RemoveClass(className);
-        else
-            AddClass(className);
-    }
-
-    /// <summary>
-    /// Check if panel has a CSS class
-    /// </summary>
-    public bool HasClass(string className) => Classes.Contains(className);
-
-    /// <summary>
-    /// Compute CSS styles for this panel
-    /// </summary>
-    public void ComputeStyle(StyleEngine engine)
-    {
-        _computedStyle = engine.ComputeStyle(this);
-        _needsStyleCompute = false;
-
-        // Ensure layout node exists
-        if (_layoutNode == null)
-        {
-            _layoutNode = new LayoutNode();
-        }
-    }
-
-    /// <summary>
-    /// Called when panel needs to paint itself
-    /// Override to provide custom rendering
-    /// </summary>
-    protected virtual void OnPaint(SKCanvas canvas)
-    {
-        // Base implementation paints background, border, etc.
-        PaintBackground(canvas);
-        PaintBorder(canvas);
-    }
-
-    /// <summary>
-    /// Paint the panel and its children
-    /// </summary>
-    internal void Paint(SKCanvas canvas)
-    {
-        if (!IsVisible) return;
-
-        // OnPaint draws at (0,0) using ComputedRect.Width/Height
-        OnPaint(canvas);
-
-        // Paint children relative to this panel
-        foreach (var child in _children)
-        {
-            canvas.Save();
-            // Translate to child's position relative to parent
-            canvas.Translate(child.ComputedRect.Left - ComputedRect.Left, child.ComputedRect.Top - ComputedRect.Top);
-            child.Paint(canvas);
-            canvas.Restore();
-        }
-    }
-
-    private void PaintBackground(SKCanvas canvas)
-    {
-        if (_computedStyle?.BackgroundColor != null)
-        {
-            using var paint = new SKPaint
-            {
-                Color = _computedStyle.BackgroundColor.Value,
-                Style = SKPaintStyle.Fill,
-                IsAntialias = true
-            };
-
-            var rect = new SKRect(0, 0, ComputedRect.Width, ComputedRect.Height);
-            var borderRadius = _computedStyle.BorderRadius;
-
-            if (borderRadius > 0)
-            {
-                canvas.DrawRoundRect(rect, borderRadius, borderRadius, paint);
-            }
-            else
-            {
-                canvas.DrawRect(rect, paint);
-            }
-        }
-    }
-
-    private void PaintBorder(SKCanvas canvas)
-    {
-        if (_computedStyle?.BorderWidth > 0 && _computedStyle?.BorderColor != null)
-        {
-            using var paint = new SKPaint
-            {
-                Color = _computedStyle.BorderColor.Value,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = _computedStyle.BorderWidth,
-                IsAntialias = true
-            };
-
-            var rect = new SKRect(0, 0, ComputedRect.Width, ComputedRect.Height);
-            var borderRadius = _computedStyle.BorderRadius;
-
-            if (borderRadius > 0)
-            {
-                canvas.DrawRoundRect(rect, borderRadius, borderRadius, paint);
-            }
-            else
-            {
-                canvas.DrawRect(rect, paint);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Called when mouse is pressed down on this panel
-    /// </summary>
-    public virtual void OnMouseDown(MouseEventArgs e)
-    {
-        // Override in derived classes
-    }
-
-    /// <summary>
-    /// Called when mouse is released on this panel
-    /// </summary>
-    public virtual void OnMouseUp(MouseEventArgs e)
-    {
-        // Override in derived classes
-    }
-
-    /// <summary>
-    /// Called when mouse enters this panel
-    /// </summary>
-    public virtual void OnMouseEnter(MouseEventArgs e)
-    {
-        // Override in derived classes
-    }
-
-    /// <summary>
-    /// Called when mouse leaves this panel
-    /// </summary>
-    public virtual void OnMouseLeave(MouseEventArgs e)
-    {
-        // Override in derived classes
-    }
-
-    /// <summary>
-    /// Check if point is inside this panel
-    /// </summary>
-    public bool ContainsPoint(float x, float y)
-    {
-        return ComputedRect.Contains(x, y);
+        _styleEngine = engine;
     }
 
     public override string ToString()
