@@ -1,4 +1,5 @@
 using Sandbox.UI;
+using System.Reflection;
 using Xunit;
 
 namespace Sandbox.UI.Tests;
@@ -249,4 +250,38 @@ public class StyleSheetTests
         // The stylesheet should be added to the collection
         Assert.True(panel.AllStyleSheets.Any());
     }
+
+    [Fact]
+    public void Panel_WithStyleSheetAttribute_LoadsStylesheet()
+    {
+        // Test that StyleSheetAttribute can be read from a panel
+        var type = typeof(TestPanelWithStyleSheet);
+        var attrs = type.GetCustomAttributes(typeof(StyleSheetAttribute), false);
+        
+        Assert.NotEmpty(attrs);
+        var styleAttr = (StyleSheetAttribute)attrs[0];
+        Assert.Equal("test.scss", styleAttr.Name);
+    }
+
+    [Fact]
+    public void Panel_WithSourceLocationAttribute_ReturnsPath()
+    {
+        var type = typeof(TestPanelWithSourceLocation);
+        var attr = type.GetCustomAttribute(typeof(SourceLocationAttribute), false) as SourceLocationAttribute;
+        
+        Assert.NotNull(attr);
+        Assert.Equal("/test/path/TestPanel.razor", attr.FilePath);
+    }
 }
+
+/// <summary>
+/// Test panel with StyleSheet attribute for testing
+/// </summary>
+[StyleSheet("test.scss")]
+internal class TestPanelWithStyleSheet : Panel { }
+
+/// <summary>
+/// Test panel with SourceLocation attribute for testing
+/// </summary>
+[SourceLocation("/test/path/TestPanel.razor", 1)]
+internal class TestPanelWithSourceLocation : Panel { }

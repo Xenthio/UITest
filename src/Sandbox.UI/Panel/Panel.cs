@@ -116,6 +116,8 @@ public partial class Panel : IDisposable, IStyleTarget
 
         ElementName = GetType().Name.ToLower();
         Switch(PseudoClass.Empty, true);
+
+        LoadStyleSheet();
     }
 
     public Panel(Panel? parent) : this()
