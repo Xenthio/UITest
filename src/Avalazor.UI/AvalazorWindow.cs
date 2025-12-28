@@ -163,6 +163,11 @@ public class AvalazorWindow : IDisposable
         if (_gl != null)
         {
             _gl.Viewport(0, 0, (uint)size.X, (uint)size.Y);
+            
+            // Clear the default framebuffer immediately to prevent stretched appearance
+            // Without this, the old content gets stretched by the OS until new content is rendered
+            _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         }
 
         // Mark as needing layout
