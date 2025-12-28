@@ -169,7 +169,10 @@ public class AvalazorWindow : IDisposable
         _needsLayout = true;
         RecreateRenderTarget(size.X, size.Y);
 
-        Invalidate();
+        // Force immediate render to prevent stretched frame appearance
+        // This ensures the new size is rendered immediately instead of
+        // stretching the old frame until the next render cycle
+        OnRender(0);
     }
 
     private void RecreateRenderTarget(int width, int height)
