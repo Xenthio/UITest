@@ -2,16 +2,17 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <!-- When imported directly, use relative path to bin -->
-    <AvalazorBuildTasksPath Condition="'$(AvalazorBuildTasksPath)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\net8.0\Avalazor.Build.dll</AvalazorBuildTasksPath>
-    <!-- Fallback for packaged version -->
-    <AvalazorBuildTasksPath Condition="!Exists('$(AvalazorBuildTasksPath)')">$(MSBuildThisFileDirectory)..\lib\net8.0\Avalazor.Build.dll</AvalazorBuildTasksPath>
-    <AvalazorGeneratedPath Condition="'$(AvalazorGeneratedPath)' == ''">$(IntermediateOutputPath)Avalazor\Generated\</AvalazorGeneratedPath>
+    <!-- Default Configuration if not set -->
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <!-- Determine the path to the build tasks DLL -->
+    <!-- When imported directly from source, use relative path to bin directory -->
+    <AvalazorBuildTasksPath Condition="'$(AvalazorBuildTasksPath)' == ''">$(MSBuildThisFileDirectory)..\bin\$(Configuration)\net8.0\Avalazor.Build.dll</AvalazorBuildTasksPath>
+    <AvalazorGeneratedPath Condition="'$(AvalazorGeneratedPath)' == ''">$(IntermediateOutputPath)Avalazor\Generated\</AvalazorGeneratedPath>
   </PropertyGroup>
 
-  <UsingTask TaskName="Avalazor.Build.TranspileRazorTask" AssemblyFile="$(AvalazorBuildTasksPath)" Condition="Exists('$(AvalazorBuildTasksPath)')" />
-  <UsingTask TaskName="Avalazor.Build.CompileScssTask" AssemblyFile="$(AvalazorBuildTasksPath)" Condition="Exists('$(AvalazorBuildTasksPath)')" />
+  <!-- UsingTask declarations - assembly will be loaded when tasks are executed -->
+  <UsingTask TaskName="Avalazor.Build.TranspileRazorTask" AssemblyFile="$(AvalazorBuildTasksPath)" />
+  <UsingTask TaskName="Avalazor.Build.CompileScssTask" AssemblyFile="$(AvalazorBuildTasksPath)" />
 
   <ItemGroup>
     <!-- Include all .razor files -->
@@ -21,7 +22,12 @@
   </ItemGroup>
 
   <!-- Transpile Razor files before BeforeCompile (earlier than CoreCompile) -->
-  <Target Name="AvalazorTranspileRazor" BeforeTargets="BeforeCompile;ResolveReferences" Inputs="@(AvalazorRazorFiles)" Outputs="$(AvalazorGeneratedPath)razor.stamp" Condition="'@(AvalazorRazorFiles)' != '' AND Exists('$(AvalazorBuildTasksPath)')">
+  <Target Name="AvalazorTranspileRazor" 
+          BeforeTargets="BeforeCompile;ResolveReferences" 
+          DependsOnTargets="ResolveProjectReferences"
+          Inputs="@(AvalazorRazorFiles)" 
+          Outputs="$(AvalazorGeneratedPath)razor.stamp" 
+          Condition="'@(AvalazorRazorFiles)' != '' AND Exists('$(AvalazorBuildTasksPath)')">
     <Message Importance="High" Text="Avalazor: Transpiling @(AvalazorRazorFiles->Count()) Razor file(s)..." />
     <MakeDir Directories="$(AvalazorGeneratedPath)" />
     
@@ -66,11 +72,6 @@
   <!-- Clean generated files -->
   <Target Name="AvalazorCleanGenerated" BeforeTargets="Clean">
     <RemoveDir Directories="$(AvalazorGeneratedPath)" />
-  </Target>
-
-  <!-- Warning if tasks DLL not found -->
-  <Target Name="AvalazorCheckTasksExist" BeforeTargets="BeforeBuild" Condition="!Exists('$(AvalazorBuildTasksPath)')">
-    <Warning Text="Avalazor.Build.dll not found at '$(AvalazorBuildTasksPath)'. Razor transpilation and SCSS compilation will be skipped. Build Avalazor.Build project first." />
   </Target>
 
 </Project>
