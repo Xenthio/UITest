@@ -102,7 +102,9 @@ public partial class Panel
         if (string.IsNullOrWhiteSpace(path))
             return false;
 
-        path = path.NormalizeFilename();
+        // Don't normalize to lowercase since we already have a resolved absolute path
+        // with correct casing from ResolveStyleSheetPath
+        path = path.NormalizeFilename(enforceInitialSlash: false, enforceLowerCase: false);
 
         StyleSheet.Load(path, true, failSilently);
         return true;
