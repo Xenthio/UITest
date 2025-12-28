@@ -50,6 +50,9 @@ public static class RazorProcessor
         var generatedCode = document.GeneratedCode;
         var targetNamespace = ExtractNamespace(text);
         generatedCode = FixNamespaceAndClassName(generatedCode, targetNamespace, className);
+        
+        // Inject SourceLocationAttribute for stylesheet loading
+        generatedCode = InjectSourceLocationAttribute(generatedCode, filename);
 
         return generatedCode;
     }
@@ -123,6 +126,29 @@ public static class RazorProcessor
                     generatedCode = generatedCode.Insert(lastUsingLineEnd + 1, "    using Microsoft.AspNetCore.Components.Rendering;\n");
                 }
             }
+        }
+        
+        return generatedCode;
+    }
+
+    /// <summary>
+    /// Inject the SourceLocationAttribute into the generated code
+    /// </summary>
+    private static string InjectSourceLocationAttribute(string generatedCode, string filename)
+    {
+        // Normalize filename to use forward slashes for cross-platform consistency
+        // This is a simple inline normalization since Avalazor.Razor doesn't reference Sandbox.UI
+        filename = filename.Replace('\\', '/');
+        
+        // Find the class declaration and add the attribute before it
+        var classPattern = @"(\s*)(public partial class \w+ :)";
+        var match = System.Text.RegularExpressions.Regex.Match(generatedCode, classPattern);
+        if (match.Success)
+        {
+            var indent = match.Groups[1].Value;
+            var classDecl = match.Groups[2].Value;
+            var replacement = $"{indent}[Sandbox.UI.SourceLocation(\"{filename}\", 1)]\n{indent}{classDecl}";
+            generatedCode = generatedCode.Substring(0, match.Index) + replacement + generatedCode.Substring(match.Index + match.Length);
         }
         
         return generatedCode;

@@ -19,6 +19,8 @@ public enum PseudoClass
     Checked = 1 << 8,
     Disabled = 1 << 9,
     OnlyChild = 1 << 10,
+    Before = 1 << 11,
+    After = 1 << 12,
 }
 
 /// <summary>

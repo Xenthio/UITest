@@ -87,6 +87,71 @@ public struct Length
         LengthUnit.Auto => "auto",
         _ => $"{Value}{Unit}"
     };
+
+    /// <summary>
+    /// Get fraction value for percentages (0-1 range)
+    /// </summary>
+    public float GetFraction() => Unit == LengthUnit.Percentage ? Value / 100f : Value;
+
+    /// <summary>
+    /// Parse a CSS length string
+    /// </summary>
+    public static Length? Parse(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        value = value.Trim().ToLowerInvariant();
+
+        // Handle special keywords
+        if (value == "auto") return Auto;
+        if (value == "contain") return Contain;
+        if (value == "cover") return Cover;
+
+        // Try to extract number and unit
+        int unitStart = 0;
+        for (int i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (char.IsDigit(c) || c == '.' || c == '-' || c == '+')
+            {
+                unitStart = i + 1;
+                continue;
+            }
+            break;
+        }
+
+        // If we didn't find any number characters after initial processing
+        if (unitStart == 0)
+        {
+            // No number found - return null (keywords like auto/contain/cover handled above)
+            return null;
+        }
+
+        var numberPart = value.Substring(0, unitStart);
+        var unitPart = value.Substring(unitStart).Trim();
+
+        if (!float.TryParse(numberPart, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var number))
+            return null;
+
+        var unit = unitPart switch
+        {
+            "" or "px" => LengthUnit.Pixels,
+            "%" => LengthUnit.Percentage,
+            "em" => LengthUnit.Em,
+            "rem" => LengthUnit.RootEm,
+            "vw" => LengthUnit.ViewWidth,
+            "vh" => LengthUnit.ViewHeight,
+            "vmin" => LengthUnit.ViewMin,
+            "vmax" => LengthUnit.ViewMax,
+            _ => LengthUnit.Undefined
+        };
+
+        if (unit == LengthUnit.Undefined && !string.IsNullOrEmpty(unitPart))
+            return null;
+
+        return new Length(number, unit);
+    }
 }
 
 public enum LengthUnit

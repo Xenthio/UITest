@@ -8,6 +8,7 @@ public class PanelStyle : Styles
 {
     private readonly Panel _panel;
     private bool _isDirty = true;
+    private bool _broadphaseDirty = true;
 
     public PanelStyle(Panel panel)
     {
@@ -34,9 +35,18 @@ public class PanelStyle : Styles
     /// <summary>
     /// Mark this style as dirty, requiring recalculation
     /// </summary>
-    public void Dirty()
+    public new void Dirty()
     {
         IsDirty = true;
+    }
+
+    /// <summary>
+    /// Invalidate the broadphase cache for style matching
+    /// </summary>
+    public void InvalidateBroadphase()
+    {
+        _broadphaseDirty = true;
+        _panel?.StyleSelectorsChanged(true, true);
     }
 
     /// <summary>
@@ -50,16 +60,48 @@ public class PanelStyle : Styles
         // Create a new Styles instance with our values
         var result = new Styles();
 
-        // First apply any stylesheet rules (TODO: implement stylesheet system)
-        // For now, we just use inline styles
+        // Apply stylesheet rules from all stylesheets
+        ApplyStyleSheetRules(result);
 
-        // Apply our inline style properties
+        // Apply our inline style properties (inline styles override stylesheet)
         result.Add(this);
 
         // Apply cascading from parent
         cascade.ApplyCascading(result);
 
         return result;
+    }
+
+    /// <summary>
+    /// Apply matching CSS rules from stylesheets
+    /// </summary>
+    private void ApplyStyleSheetRules(Styles result)
+    {
+        if (_panel == null) return;
+
+        var matchingRules = new List<(StyleSelector selector, StyleBlock block)>();
+
+        // Collect all matching rules from all stylesheets
+        foreach (var sheet in _panel.AllStyleSheets)
+        {
+            foreach (var block in sheet.Nodes)
+            {
+                var selector = block.Test(_panel);
+                if (selector != null)
+                {
+                    matchingRules.Add((selector, block));
+                }
+            }
+        }
+
+        // Sort by specificity (score)
+        matchingRules.Sort((a, b) => a.selector.Score.CompareTo(b.selector.Score));
+
+        // Apply rules in order
+        foreach (var (selector, block) in matchingRules)
+        {
+            result.Add(block.Styles);
+        }
     }
 
     /// <summary>
