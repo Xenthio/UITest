@@ -74,11 +74,13 @@ public class CheckBox : Panel
         if (name == "checked" || name == "value")
         {
             Checked = value == "true" || value == "1";
+            return;
         }
 
         if (name == "text")
         {
             LabelText = value;
+            return;
         }
 
         base.SetProperty(name, value);

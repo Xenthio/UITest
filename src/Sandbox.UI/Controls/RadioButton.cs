@@ -71,16 +71,10 @@ public class RadioButton : Panel
         CheckMark = AddChild(new Panel(this, "checkpanel"));
         var checkLabel = CheckMark.AddChild(new Label("a", "checklabel"));
         
-        OptionalRadioSegment1 = AddChild(new Label("", "radio-seg1"));
-        OptionalRadioSegment2 = AddChild(new Label("", "radio-seg2"));
-        OptionalRadioSegment3 = AddChild(new Label("", "radio-seg3"));
-        
-        if (CheckMark != null)
-        {
-            CheckMark.AddChild(OptionalRadioSegment1);
-            CheckMark.AddChild(OptionalRadioSegment2);
-            CheckMark.AddChild(OptionalRadioSegment3);
-        }
+        // Add radio segments directly to CheckMark, not to RadioButton
+        OptionalRadioSegment1 = CheckMark.AddChild(new Label("", "radio-seg1"));
+        OptionalRadioSegment2 = CheckMark.AddChild(new Label("", "radio-seg2"));
+        OptionalRadioSegment3 = CheckMark.AddChild(new Label("", "radio-seg3"));
     }
 
     public override void SetProperty(string name, string value)
@@ -88,16 +82,19 @@ public class RadioButton : Panel
         if (name == "selected" || name == "checked")
         {
             Selected = value == "true" || value == "1";
+            return;
         }
 
         if (name == "value")
         {
             Value = value;
+            return;
         }
 
         if (name == "text")
         {
             LabelText = value;
+            return;
         }
 
         base.SetProperty(name, value);

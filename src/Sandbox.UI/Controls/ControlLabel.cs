@@ -27,9 +27,7 @@ public class ControlLabel : Panel
 
     public bool AnyChildHasFocus(Panel panel)
     {
-        if (_children == null) return false;
-
-        foreach (var child in _children)
+        foreach (var child in panel.Children)
         {
             if (child != null && PanelHasFocus(child))
                 return true;
