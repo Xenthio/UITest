@@ -25,7 +25,7 @@ public class PanelRazorRenderer
     public void BuildPanelRenderTree(Panel panel)
     {
         // Create a RenderTreeBuilder to capture the output
-        var builder = new RenderTreeBuilder();
+        using var builder = new RenderTreeBuilder();
         
         // Call the panel's BuildRenderTree method via reflection (it's protected)
         var method = panel.GetType().GetMethod("BuildRenderTree", 
