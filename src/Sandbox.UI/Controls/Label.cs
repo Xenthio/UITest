@@ -78,7 +78,7 @@ public partial class Label : Panel
     /// </summary>
     public bool IsRich { get; set; }
 
-    public virtual void SetProperty(string name, string value)
+    public override void SetProperty(string name, string value)
     {
         if (name == "text")
         {
@@ -87,7 +87,7 @@ public partial class Label : Panel
         }
     }
 
-    public virtual void SetContent(string? value)
+    public override void SetContent(string? value)
     {
         Text = value ?? "";
     }

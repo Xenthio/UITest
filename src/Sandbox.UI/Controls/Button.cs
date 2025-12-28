@@ -184,7 +184,7 @@ public class Button : Panel
         OnClick?.Invoke();
     }
 
-    public virtual void SetProperty(string name, string value)
+    public override void SetProperty(string name, string value)
     {
         switch (name)
         {
@@ -205,9 +205,11 @@ public class Button : Panel
                 Disabled = value == "true" || value == "1";
                 return;
         }
+
+        base.SetProperty(name, value);
     }
 
-    public virtual void SetContent(string? value)
+    public override void SetContent(string? value)
     {
         SetText(value?.Trim() ?? "");
     }

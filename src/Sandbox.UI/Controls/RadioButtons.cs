@@ -65,11 +65,13 @@ public class RadioButtons : Panel
     /// </summary>
     public event Action<RadioButton>? OnSelectionChanged;
 
-    public virtual void SetProperty(string name, string value)
+    public override void SetProperty(string name, string value)
     {
         if (name == "value")
         {
             SelectByValue(value);
         }
+
+        base.SetProperty(name, value);
     }
 }

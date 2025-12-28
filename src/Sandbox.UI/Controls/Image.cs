@@ -69,7 +69,7 @@ public partial class Image : Panel
         // Actual image drawing is handled by renderer implementation
     }
 
-    public virtual void SetProperty(string name, string value)
+    public override void SetProperty(string name, string value)
     {
         if (name == "src")
             SetTexture(value);

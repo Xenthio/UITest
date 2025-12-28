@@ -83,7 +83,7 @@ public class RadioButton : Panel
         }
     }
 
-    public virtual void SetProperty(string name, string value)
+    public override void SetProperty(string name, string value)
     {
         if (name == "selected" || name == "checked")
         {
@@ -99,9 +99,11 @@ public class RadioButton : Panel
         {
             LabelText = value;
         }
+
+        base.SetProperty(name, value);
     }
 
-    public virtual void SetContent(string? value)
+    public override void SetContent(string? value)
     {
         LabelText = value?.Trim() ?? "";
     }
