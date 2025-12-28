@@ -121,6 +121,16 @@ public enum TextAlign
 }
 
 /// <summary>
+/// CSS word-wrap / overflow-wrap
+/// </summary>
+public enum WordWrap
+{
+    Normal,
+    NoWrap,
+    BreakWord
+}
+
+/// <summary>
 /// CSS object-fit for images
 /// </summary>
 public enum ObjectFit

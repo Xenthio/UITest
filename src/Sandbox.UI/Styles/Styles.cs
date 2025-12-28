@@ -70,6 +70,7 @@ public class Styles
     public string? FontFamily { get; set; }
     public int? FontWeight { get; set; }
     public TextAlign? TextAlign { get; set; }
+    public WordWrap? WordWrap { get; set; }
 
     // Gaps
     public Length? RowGap { get; set; }
@@ -152,6 +153,7 @@ public class Styles
         if (other.FontFamily != null) FontFamily = other.FontFamily;
         if (other.FontWeight.HasValue) FontWeight = other.FontWeight;
         if (other.TextAlign.HasValue) TextAlign = other.TextAlign;
+        if (other.WordWrap.HasValue) WordWrap = other.WordWrap;
 
         if (other.RowGap.HasValue) RowGap = other.RowGap;
         if (other.ColumnGap.HasValue) ColumnGap = other.ColumnGap;

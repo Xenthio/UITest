@@ -58,6 +58,17 @@ public partial class RootPanel : Panel
         PostLayout();
     }
 
+    /// <summary>
+    /// Force a complete re-layout of all children.
+    /// Call this when the root panel bounds have changed significantly.
+    /// </summary>
+    public void InvalidateLayout()
+    {
+        layoutHash = 0;
+        StyleSelectorsChanged(true, true);
+        SkipAllTransitions();
+    }
+
     private int layoutHash;
 
     /// <summary>

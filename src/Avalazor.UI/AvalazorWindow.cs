@@ -23,6 +23,8 @@ public class AvalazorWindow : IDisposable
     private uint _framebuffer;
     private uint _texture;
     private uint _renderbuffer;
+    private bool _needsLayout = true;
+    private Vector2D<int> _lastSize;
 
     public RootPanel? RootPanel
     {
@@ -30,6 +32,7 @@ public class AvalazorWindow : IDisposable
         set
         {
             _rootPanel = value;
+            _needsLayout = true;
             Invalidate();
         }
     }
@@ -105,6 +108,18 @@ public class AvalazorWindow : IDisposable
     {
         if (_gl == null || _surface == null || _rootPanel == null || _grContext == null || _renderer == null) return;
 
+        var currentSize = _window.Size;
+        
+        // Check if size changed (handles resize mid-frame)
+        if (_lastSize.X != currentSize.X || _lastSize.Y != currentSize.Y)
+        {
+            _lastSize = currentSize;
+            _needsLayout = true;
+            
+            // Recreate render target if needed
+            RecreateRenderTarget(currentSize.X, currentSize.Y);
+        }
+
         // Clear screen
         _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -113,7 +128,15 @@ public class AvalazorWindow : IDisposable
         canvas.Clear(new SKColor(240, 240, 240)); // Light gray background
 
         // Set panel bounds to window size
-        _rootPanel.PanelBounds = new Rect(0, 0, _window.Size.X, _window.Size.Y);
+        _rootPanel.PanelBounds = new Rect(0, 0, currentSize.X, currentSize.Y);
+
+        // Force full re-layout when size changes or panel is new
+        if (_needsLayout)
+        {
+            _needsLayout = false;
+            // Force all panels to recalculate their styles and layout
+            _rootPanel.InvalidateLayout();
+        }
 
         // Layout using Sandbox.UI's layout system
         _rootPanel.Layout();
@@ -128,8 +151,8 @@ public class AvalazorWindow : IDisposable
         _gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _framebuffer);
         _gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
         _gl.BlitFramebuffer(
-            0, 0, _window.Size.X, _window.Size.Y,
-            0, 0, _window.Size.X, _window.Size.Y,
+            0, 0, currentSize.X, currentSize.Y,
+            0, 0, currentSize.X, currentSize.Y,
             ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
         _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }
@@ -141,22 +164,40 @@ public class AvalazorWindow : IDisposable
             _gl.Viewport(0, 0, (uint)size.X, (uint)size.Y);
         }
 
-        // Recreate render target with new size
-        if (_surface != null)
-        {
-            _surface.Dispose();
-            
-            if (_gl != null)
-            {
-                if (_framebuffer != 0) _gl.DeleteFramebuffer(_framebuffer);
-                if (_texture != 0) _gl.DeleteTexture(_texture);
-                if (_renderbuffer != 0) _gl.DeleteRenderbuffer(_renderbuffer);
-            }
-
-            CreateRenderTarget(size.X, size.Y);
-        }
+        // Mark as needing layout and recreate render target
+        _needsLayout = true;
+        RecreateRenderTarget(size.X, size.Y);
 
         Invalidate();
+    }
+
+    private void RecreateRenderTarget(int width, int height)
+    {
+        if (_gl == null || _grContext == null) return;
+        if (width <= 0 || height <= 0) return;
+
+        // Clean up old resources
+        _surface?.Dispose();
+        _surface = null;
+
+        if (_framebuffer != 0)
+        {
+            _gl.DeleteFramebuffer(_framebuffer);
+            _framebuffer = 0;
+        }
+        if (_texture != 0)
+        {
+            _gl.DeleteTexture(_texture);
+            _texture = 0;
+        }
+        if (_renderbuffer != 0)
+        {
+            _gl.DeleteRenderbuffer(_renderbuffer);
+            _renderbuffer = 0;
+        }
+
+        // Create new render target
+        CreateRenderTarget(width, height);
     }
 
     private void OnClosing()

@@ -9,6 +9,9 @@ namespace Sandbox.UI.Skia;
 public class SkiaPanelRenderer : IPanelRenderer
 {
     private SKCanvas? _canvas;
+    
+    // Cache typefaces to avoid recreation each frame (which can cause font rendering issues on resize)
+    private static readonly Dictionary<(string family, SKFontStyle style), SKTypeface> _typefaceCache = new();
 
     public Rect Screen { get; private set; }
 
@@ -234,6 +237,10 @@ public class SkiaPanelRenderer : IPanelRenderer
         var textColor = style.Color ?? new Color(0, 0, 0, 1);
         var fontSize = style.FontSize?.GetPixels(16f) ?? 16f;
         var fontFamily = style.FontFamily ?? "Arial";
+        var fontStyle = ToSKFontStyle(style.FontWeight ?? 400);
+        
+        // Get or create cached typeface
+        var typeface = GetCachedTypeface(fontFamily, fontStyle);
 
         using var paint = new SKPaint
         {
@@ -241,8 +248,7 @@ public class SkiaPanelRenderer : IPanelRenderer
             TextSize = fontSize,
             IsAntialias = true,
             SubpixelText = true,
-            LcdRenderText = true,
-            Typeface = SKTypeface.FromFamilyName(fontFamily, ToSKFontStyle(style.FontWeight ?? 400))
+            Typeface = typeface
         };
 
         // Get text rect
@@ -265,7 +271,89 @@ public class SkiaPanelRenderer : IPanelRenderer
             x = rect.Right - textWidth;
         }
 
-        canvas.DrawText(label.Text, x, y, paint);
+        // Check if text needs wrapping (only if width is constrained)
+        var textWidth2 = paint.MeasureText(label.Text);
+        var shouldWrap = rect.Width > 0 && textWidth2 > rect.Width && style.WordWrap != WordWrap.NoWrap;
+
+        if (shouldWrap)
+        {
+            DrawWrappedText(canvas, label.Text, paint, rect, x, y, metrics, style.TextAlign);
+        }
+        else
+        {
+            canvas.DrawText(label.Text, x, y, paint);
+        }
+    }
+
+    private void DrawWrappedText(SKCanvas canvas, string text, SKPaint paint, Rect rect, float startX, float startY, SKFontMetrics metrics, TextAlign? textAlign)
+    {
+        var lineHeight = metrics.Descent - metrics.Ascent + metrics.Leading;
+        var y = startY;
+        var words = text.Split(' ');
+        var currentLine = "";
+
+        foreach (var word in words)
+        {
+            var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
+            var testWidth = paint.MeasureText(testLine);
+
+            if (testWidth > rect.Width && !string.IsNullOrEmpty(currentLine))
+            {
+                // Draw the current line
+                var x = rect.Left;
+                if (textAlign == TextAlign.Center)
+                {
+                    var lineWidth = paint.MeasureText(currentLine);
+                    x = rect.Left + (rect.Width - lineWidth) / 2;
+                }
+                else if (textAlign == TextAlign.Right)
+                {
+                    var lineWidth = paint.MeasureText(currentLine);
+                    x = rect.Right - lineWidth;
+                }
+
+                canvas.DrawText(currentLine, x, y, paint);
+                currentLine = word;
+                y += lineHeight;
+
+                // Stop if we've exceeded the rect height
+                if (y - metrics.Ascent > rect.Bottom)
+                    break;
+            }
+            else
+            {
+                currentLine = testLine;
+            }
+        }
+
+        // Draw the last line if we haven't exceeded bounds
+        if (!string.IsNullOrEmpty(currentLine) && y - metrics.Ascent <= rect.Bottom)
+        {
+            var x = rect.Left;
+            if (textAlign == TextAlign.Center)
+            {
+                var lineWidth = paint.MeasureText(currentLine);
+                x = rect.Left + (rect.Width - lineWidth) / 2;
+            }
+            else if (textAlign == TextAlign.Right)
+            {
+                var lineWidth = paint.MeasureText(currentLine);
+                x = rect.Right - lineWidth;
+            }
+
+            canvas.DrawText(currentLine, x, y, paint);
+        }
+    }
+
+    private static SKTypeface GetCachedTypeface(string fontFamily, SKFontStyle fontStyle)
+    {
+        var key = (fontFamily, fontStyle);
+        if (!_typefaceCache.TryGetValue(key, out var typeface))
+        {
+            typeface = SKTypeface.FromFamilyName(fontFamily, fontStyle);
+            _typefaceCache[key] = typeface;
+        }
+        return typeface;
     }
 
     private void DrawImage(SKCanvas canvas, Image image, ref RenderState state)
