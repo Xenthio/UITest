@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Avalazor.UI\Avalazor.UI.csproj" />
-    <!-- Build-time only reference - ensures Avalazor.Build is compiled before this project -->
-    <ProjectReference Include="..\..\src\Avalazor.Build\Avalazor.Build.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\src\Fazor.UI\Fazor.UI.csproj" />
+    <!-- Build-time only reference - ensures Fazor.Build is compiled before this project -->
+    <ProjectReference Include="..\..\src\Fazor.Build\Fazor.Build.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
-  <!-- Import Avalazor build targets for Razor and SCSS -->
-  <Import Project="..\..\src\Avalazor.Build\build\Avalazor.Build.targets" />
+  <!-- Import Fazor build targets for Razor and SCSS -->
+  <Import Project="..\..\src\Fazor.Build\build\Fazor.Build.targets" />
 </Project>

@@ -2,17 +2,17 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Sandbox.UI;
 
-namespace Avalazor.UI;
+namespace Fazor.UI;
 
 /// <summary>
-/// Main application entry point for Avalazor apps
+/// Main application entry point for Fazor apps
 /// Simplified API similar to s&box's application model
 /// </summary>
-public static class AvalazorApplication
+public static class FazorApplication
 {
-    public static void Run(RootPanel rootPanel, int width = 1280, int height = 720, string title = "Avalazor Application")
+    public static void Run(RootPanel rootPanel, int width = 1280, int height = 720, string title = "Fazor Application")
     {
-        using var window = new AvalazorWindow(width, height, title);
+        using var window = new FazorWindow(width, height, title);
         window.RootPanel = rootPanel;
         window.Run();
     }
@@ -21,7 +21,7 @@ public static class AvalazorApplication
     /// Run a Panel-derived Razor component as the root of the application.
     /// This properly processes the Razor render tree to create child panels.
     /// </summary>
-    public static void RunPanel<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : Panel, new()
+    public static void RunPanel<T>(int width = 1280, int height = 720, string title = "Fazor Application") where T : Panel, new()
     {
         try
         {
@@ -58,7 +58,7 @@ public static class AvalazorApplication
     /// Run a Blazor IComponent as the root of the application (legacy support).
     /// For new code, prefer RunPanel with Panel-derived Razor components.
     /// </summary>
-    public static void RunComponent<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : IComponent
+    public static void RunComponent<T>(int width = 1280, int height = 720, string title = "Fazor Application") where T : IComponent
     {
         try
         {

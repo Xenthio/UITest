@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Avalazor.Razor\Avalazor.Razor.csproj" />
-    <ProjectReference Include="..\Avalazor.Scss\Avalazor.Scss.csproj" />
+    <ProjectReference Include="..\Fazor.Razor\Fazor.Razor.csproj" />
+    <ProjectReference Include="..\Fazor.Scss\Fazor.Scss.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Avalazor.Razor;
+using Fazor.Razor;
 
-namespace Avalazor.Build;
+namespace Fazor.Build;
 
 /// <summary>
 /// MSBuild task to transpile Razor files to C#

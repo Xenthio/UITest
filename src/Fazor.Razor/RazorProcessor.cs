@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.AspNetCore.Razor.Language.Components;
 using System.Collections.Generic;
 
-namespace Avalazor.Razor;
+namespace Fazor.Razor;
 
 /// <summary>
 /// Razor to C# transpilation processor based on s&box implementation (MIT licensed)

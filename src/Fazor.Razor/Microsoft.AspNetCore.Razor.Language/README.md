@@ -33,7 +33,7 @@ This implementation includes ~434 C# files covering:
 
 ## Usage
 
-Projects that reference `Avalazor.Razor` automatically get this implementation and full IntelliSense support for Razor files without any additional configuration.
+Projects that reference `Fazor.Razor` automatically get this implementation and full IntelliSense support for Razor files without any additional configuration.
 
 ## Updates
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using AngleSharp.Html.Parser;
 using Sandbox.UI;
 
-namespace Avalazor.UI;
+namespace Fazor.UI;
 
 /// <summary>
 /// Simple dispatcher that doesn't enforce thread affinity
