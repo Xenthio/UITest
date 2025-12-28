@@ -93,9 +93,14 @@ public class RazorRendererTests
         // Assert
         Assert.NotNull(panel);
         
-        // Should have multiple child elements
-        int childCount = panel.ChildrenCount;
-        Assert.True(childCount >= 2, $"Should have at least 2 children, but got {childCount}");
+        // The component structure is: <div><p>First</p><p>Second</p></div>
+        // So root panel has 1 child (div), and div has 2 children (p elements)
+        Assert.True(panel.ChildrenCount >= 1, $"Should have at least 1 top-level child, but got {panel.ChildrenCount}");
+        
+        // Check that the div has 2 children
+        var divPanel = panel.Children.FirstOrDefault();
+        Assert.NotNull(divPanel);
+        Assert.True(divPanel.ChildrenCount >= 2, $"Div should have at least 2 children, but got {divPanel.ChildrenCount}");
     }
 
     private bool FindLabelWithText(Panel panel, string text)
