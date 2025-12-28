@@ -1,4 +1,5 @@
 using SkiaSharp;
+using Avalazor.UI.Yoga;
 
 namespace Avalazor.UI;
 
@@ -29,7 +30,7 @@ public class Label : Panel
         // Set Yoga measure function for text content
         if (YogaNode != null)
         {
-            YogaNode.SetMeasureFunction(MeasureText);
+            YogaNode.SetMeasureFunc(MeasureText);
         }
     }
 
