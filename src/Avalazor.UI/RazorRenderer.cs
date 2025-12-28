@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AngleSharp.Html.Parser;
+using Sandbox.UI;
 
 namespace Avalazor.UI;
 
@@ -32,7 +33,7 @@ internal class SimpleDispatcher : Dispatcher
 
 /// <summary>
 /// Connects Razor component output to Panel tree
-/// Processes RenderTree and creates corresponding Panel instances
+/// Processes RenderTree and creates corresponding Sandbox.UI.Panel instances
 /// </summary>
 public class RazorRenderer : Renderer
 {
@@ -46,12 +47,20 @@ public class RazorRenderer : Renderer
 
     public override Dispatcher Dispatcher => _dispatcher;
 
-    public async Task<Panel> RenderComponent<T>() where T : IComponent
+    public async Task<RootPanel> RenderComponent<T>() where T : IComponent
     {
         var component = (IComponent)Activator.CreateInstance(typeof(T))!;
         var componentId = AssignRootComponentId(component);
         await RenderRootComponentAsync(componentId);
-        return _rootPanel ?? new Panel();
+        
+        // Wrap in RootPanel if needed
+        if (_rootPanel is RootPanel rp)
+            return rp;
+        
+        var root = new RootPanel();
+        if (_rootPanel != null)
+            root.AddChild(_rootPanel);
+        return root;
     }
 
     protected override void HandleException(Exception exception)
@@ -100,7 +109,11 @@ public class RazorRenderer : Renderer
         var rootPanel = new Panel();
         
         // Apply default styling to make panels visible
-        rootPanel.Style = "background-color: white; padding: 10px;";
+        rootPanel.Style.BackgroundColor = new Color(1, 1, 1, 1);
+        rootPanel.Style.PaddingLeft = Length.Pixels(10);
+        rootPanel.Style.PaddingTop = Length.Pixels(10);
+        rootPanel.Style.PaddingRight = Length.Pixels(10);
+        rootPanel.Style.PaddingBottom = Length.Pixels(10);
 
         int endIndex = start + count;
         for (int i = start; i < endIndex && i < frames.Count; i++)
@@ -118,10 +131,7 @@ public class RazorRenderer : Renderer
                 case RenderTreeFrameType.Text:
                     if (!string.IsNullOrWhiteSpace(frame.TextContent))
                     {
-                        var textPanel = new Label 
-                        { 
-                            Text = frame.TextContent.Trim()
-                        };
+                        var textPanel = new Label(frame.TextContent.Trim());
                         Console.WriteLine($"Adding text: '{textPanel.Text}'");
                         rootPanel.AddChild(textPanel);
                     }
@@ -133,7 +143,7 @@ public class RazorRenderer : Renderer
                     if (markupPanel != null)
                     {
                         rootPanel.AddChild(markupPanel);
-                        Console.WriteLine($"Added parsed markup with {markupPanel.Children.Count} children");
+                        Console.WriteLine($"Added parsed markup with {markupPanel.ChildrenCount} children");
                     }
                     break;
 
@@ -149,7 +159,7 @@ public class RazorRenderer : Renderer
             }
         }
 
-        return rootPanel.Children.Count == 1 ? rootPanel.Children[0] : rootPanel;
+        return rootPanel.ChildrenCount == 1 ? rootPanel.Children.First() : rootPanel;
     }
 
     private Panel ProcessElement(ArrayRange<RenderTreeFrame> frames, ref int index)
@@ -203,7 +213,7 @@ public class RazorRenderer : Renderer
                 }
                 else if (!string.IsNullOrWhiteSpace(current.TextContent))
                 {
-                    var textLabel = new Label { Text = current.TextContent.Trim() };
+                    var textLabel = new Label(current.TextContent.Trim());
                     panel.AddChild(textLabel);
                     Console.WriteLine($"Added text child: '{textLabel.Text}'");
                 }
@@ -235,24 +245,52 @@ public class RazorRenderer : Renderer
     {
         Panel panel = elementName.ToLower() switch
         {
-            "div" => new Panel { Tag = "div" },
-            "span" => new Panel { Tag = "span" },
-            "header" => new Panel { Tag = "header", Style = "background-color: #4CAF50; padding: 20px; color: white;" },
-            "main" => new Panel { Tag = "main", Style = "padding: 20px;" },
-            "footer" => new Panel { Tag = "footer", Style = "background-color: #333; color: white; padding: 10px;" },
-            "section" => new Panel { Tag = "section", Style = "margin: 10px 0; padding: 10px; background-color: #f5f5f5;" },
-            "h1" => new Label { Tag = "h1", Style = "font-size: 24px; font-weight: bold; margin: 10px 0;" },
-            "h2" => new Label { Tag = "h2", Style = "font-size: 20px; font-weight: bold; margin: 8px 0;" },
-            "p" => new Label { Tag = "p", Style = "margin: 5px 0;" },
-            "ul" => new Panel { Tag = "ul", Style = "margin: 5px 0; padding-left: 20px;" },
-            "li" => new Label { Tag = "li", Style = "margin: 3px 0;" },
-            "strong" => new Label { Tag = "strong", Style = "font-weight: bold;" },
+            "div" => new Panel { ElementName = "div" },
+            "span" => new Panel { ElementName = "span" },
+            "header" => CreateStyledPanel("header", new Color(0.298f, 0.686f, 0.314f, 1f), 20, new Color(1, 1, 1, 1)),
+            "main" => CreateStyledPanel("main", null, 20, null),
+            "footer" => CreateStyledPanel("footer", new Color(0.2f, 0.2f, 0.2f, 1f), 10, new Color(1, 1, 1, 1)),
+            "section" => CreateStyledPanel("section", new Color(0.96f, 0.96f, 0.96f, 1f), 10, null),
+            "h1" => CreateStyledLabel("h1", 24, 700, 10),
+            "h2" => CreateStyledLabel("h2", 20, 700, 8),
+            "p" => CreateStyledLabel("p", 14, 400, 5),
+            "ul" => CreateStyledPanel("ul", null, 5, null),
+            "li" => CreateStyledLabel("li", 14, 400, 3),
+            "strong" => CreateStyledLabel("strong", 14, 700, 0),
             "label" => new Label(),
-            "button" => new Panel { Tag = "button" }, // Future: Button control
+            "button" => new Panel { ElementName = "button" },
             _ => new Panel()
         };
         
         return panel;
+    }
+
+    private Panel CreateStyledPanel(string elementName, Color? bgColor, float padding, Color? textColor)
+    {
+        var panel = new Panel { ElementName = elementName };
+        if (bgColor.HasValue) panel.Style.BackgroundColor = bgColor.Value;
+        if (padding > 0)
+        {
+            panel.Style.PaddingLeft = Length.Pixels(padding);
+            panel.Style.PaddingTop = Length.Pixels(padding);
+            panel.Style.PaddingRight = Length.Pixels(padding);
+            panel.Style.PaddingBottom = Length.Pixels(padding);
+        }
+        if (textColor.HasValue) panel.Style.Color = textColor.Value;
+        return panel;
+    }
+
+    private Label CreateStyledLabel(string elementName, float fontSize, int fontWeight, float margin)
+    {
+        var label = new Label { ElementName = elementName };
+        label.Style.FontSize = Length.Pixels(fontSize);
+        label.Style.FontWeight = fontWeight;
+        if (margin > 0)
+        {
+            label.Style.MarginTop = Length.Pixels(margin);
+            label.Style.MarginBottom = Length.Pixels(margin);
+        }
+        return label;
     }
 
     private void ProcessAttribute(Panel panel, RenderTreeFrame frame)
@@ -270,7 +308,7 @@ public class RazorRenderer : Renderer
                 break;
 
             case "style":
-                // Future: Parse inline styles
+                // TODO: Parse inline CSS and apply to panel.Style
                 break;
         }
     }
@@ -322,8 +360,8 @@ public class RazorRenderer : Renderer
         
         if (element.HasAttribute("style"))
         {
-            panel.Style = element.GetAttribute("style");
-            Console.WriteLine($"Set inline style on {element.TagName}: {panel.Style}");
+            // TODO: Parse inline style
+            Console.WriteLine($"Inline style on {element.TagName}: {element.GetAttribute("style")}");
         }
 
         // Process child nodes
@@ -349,7 +387,7 @@ public class RazorRenderer : Renderer
                     }
                     else
                     {
-                        var textLabel = new Label { Text = text };
+                        var textLabel = new Label(text);
                         panel.AddChild(textLabel);
                     }
                 }

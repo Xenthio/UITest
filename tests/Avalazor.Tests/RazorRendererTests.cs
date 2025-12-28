@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Avalazor.UI;
+using Sandbox.UI;
 using Xunit;
 
 namespace Avalazor.Tests;
@@ -43,7 +44,7 @@ public class RazorRendererTests
         // Assert
         Assert.NotNull(panel);
         // The panel should have been created from the div element
-        Assert.True(panel.Children.Count > 0 || panel.Tag == "div");
+        Assert.True(panel.ChildrenCount > 0 || panel.ElementName == "div");
     }
 
     [Fact]
@@ -92,9 +93,14 @@ public class RazorRendererTests
         // Assert
         Assert.NotNull(panel);
         
-        // Should have multiple child elements
-        int childCount = panel.Children.Count;
-        Assert.True(childCount >= 2, $"Should have at least 2 children, but got {childCount}");
+        // The component structure is: <div><p>First</p><p>Second</p></div>
+        // So root panel has 1 child (div), and div has 2 children (p elements)
+        Assert.True(panel.ChildrenCount >= 1, $"Should have at least 1 top-level child, but got {panel.ChildrenCount}");
+        
+        // Check that the div has 2 children
+        var divPanel = panel.Children.FirstOrDefault();
+        Assert.NotNull(divPanel);
+        Assert.True(divPanel.ChildrenCount >= 2, $"Div should have at least 2 children, but got {divPanel.ChildrenCount}");
     }
 
     private bool FindLabelWithText(Panel panel, string text)

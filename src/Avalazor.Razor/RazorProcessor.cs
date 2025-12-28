@@ -91,14 +91,36 @@ public static class RazorProcessor
         // This is needed for the extension methods (AddLocation, OpenElement overloads)
         if (!generatedCode.Contains("using Microsoft.AspNetCore.Components.Rendering;"))
         {
-            // Find the last using statement and insert after it
-            var lastUsingIndex = generatedCode.LastIndexOf("using ");
-            if (lastUsingIndex >= 0)
+            // Find the last actual using statement in the imports section at the top of the file
+            // We need to find using statements that are actual C# using directives, not "using" inside strings
+            // The pattern: using directives appear at the start of a line (with optional whitespace)
+            var classIndex = generatedCode.IndexOf("public partial class");
+            if (classIndex > 0)
             {
-                var nextNewline = generatedCode.IndexOf('\n', lastUsingIndex);
-                if (nextNewline >= 0)
+                // Search for using statements only in the section before the class declaration
+                var importSection = generatedCode.Substring(0, classIndex);
+                
+                // Find the last line that starts with "using " (with optional leading whitespace)
+                // by searching for lines that match the pattern
+                int lastUsingLineEnd = -1;
+                var lines = importSection.Split('\n');
+                int currentPos = 0;
+                
+                for (int i = 0; i < lines.Length; i++)
                 {
-                    generatedCode = generatedCode.Insert(nextNewline + 1, "    using Microsoft.AspNetCore.Components.Rendering;\n");
+                    var line = lines[i];
+                    var trimmedLine = line.TrimStart();
+                    // Check if this is an actual using directive (starts with "using " and ends with ";")
+                    if (trimmedLine.StartsWith("using ") && trimmedLine.TrimEnd().EndsWith(";"))
+                    {
+                        lastUsingLineEnd = currentPos + line.Length;
+                    }
+                    currentPos += line.Length + 1; // +1 for the \n
+                }
+                
+                if (lastUsingLineEnd > 0)
+                {
+                    generatedCode = generatedCode.Insert(lastUsingLineEnd + 1, "    using Microsoft.AspNetCore.Components.Rendering;\n");
                 }
             }
         }

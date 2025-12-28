@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>BL0006;CS0649;CS0414</NoWarn>
+    <RootNamespace>Sandbox.UI</RootNamespace>
+    <AssemblyName>Sandbox.UI</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Razor/Blazor support for RenderTreeBuilder extensions -->
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- Copy native Yoga library to output directory -->
+  <ItemGroup>
+    <None Include="..\Avalazor.UI\Native\libyoga.so" Condition="Exists('..\Avalazor.UI\Native\libyoga.so')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libyoga.so</Link>
+    </None>
+    <None Include="..\Avalazor.UI\Native\libyoga.dylib" Condition="Exists('..\Avalazor.UI\Native\libyoga.dylib')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libyoga.dylib</Link>
+    </None>
+    <None Include="..\Avalazor.UI\Native\yoga.dll" Condition="Exists('..\Avalazor.UI\Native\yoga.dll')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>yoga.dll</Link>
+    </None>
+  </ItemGroup>
+
+</Project>
