@@ -131,20 +131,76 @@ public partial class Panel
         return null;
     }
 
+    /// <summary>
+    /// Find the project root directory by looking for common project files
+    /// </summary>
+    private string? FindProjectRoot(string startDir)
+    {
+        var dir = startDir;
+        while (!string.IsNullOrEmpty(dir))
+        {
+            // Look for common project indicators
+            if (System.IO.Directory.GetFiles(dir, "*.csproj").Length > 0 ||
+                System.IO.Directory.GetFiles(dir, "*.sln").Length > 0)
+            {
+                return dir;
+            }
+            
+            var parent = System.IO.Path.GetDirectoryName(dir);
+            if (parent == dir) break;
+            dir = parent;
+        }
+        return null;
+    }
+
     private string GetFullPath(string? path, string? sourceFile)
     {
         if (string.IsNullOrWhiteSpace(path) && sourceFile != null)
         {
-            // Replace .razor extension with .scss
+            // Auto-detect: replace .razor extension with .scss
             var basePath = System.IO.Path.ChangeExtension(sourceFile, null);
             return basePath + ".scss";
         }
-        else if (sourceFile != null && !string.IsNullOrWhiteSpace(path) && 
-                 !path.StartsWith('/') && !path.StartsWith('\\'))
+        
+        // Explicit path provided
+        if (!string.IsNullOrWhiteSpace(path))
         {
+            // Handle absolute paths (starting with /)
+            if (path.StartsWith('/') || path.StartsWith('\\'))
+            {
+                // Find project root and resolve from there
+                if (!string.IsNullOrEmpty(sourceFile))
+                {
+                    var sourceDir = System.IO.Path.GetDirectoryName(sourceFile);
+                    if (!string.IsNullOrEmpty(sourceDir))
+                    {
+                        var projectRoot = FindProjectRoot(sourceDir);
+                        if (!string.IsNullOrEmpty(projectRoot))
+                        {
+                            var fullPath = System.IO.Path.Combine(projectRoot, path.TrimStart('/', '\\'));
+                            if (System.IO.File.Exists(fullPath))
+                                return fullPath;
+                        }
+                    }
+                }
+                
+                // Fall back to the path as-is (trimmed)
+                return path.TrimStart('/', '\\');
+            }
+            
             // Relative path - combine with source file directory
-            var dir = System.IO.Path.GetDirectoryName(sourceFile);
-            return System.IO.Path.Combine(dir ?? "", path);
+            if (!string.IsNullOrEmpty(sourceFile))
+            {
+                var sourceDir = System.IO.Path.GetDirectoryName(sourceFile);
+                if (!string.IsNullOrEmpty(sourceDir))
+                {
+                    var fullPath = System.IO.Path.Combine(sourceDir, path);
+                    if (System.IO.File.Exists(fullPath))
+                        return fullPath;
+                }
+            }
+            
+            return path;
         }
 
         return path ?? "";

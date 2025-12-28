@@ -13,12 +13,11 @@
   <!-- UsingTask declarations - assembly will be loaded when tasks are executed -->
   <!-- MSBuild 16.0+ automatically uses isolated loading when a .deps.json file is present. The PrivateAssets="all" attribute on ProjectReferences in the .csproj ensures this .deps.json includes all dependencies used by these tasks. -->
   <UsingTask TaskName="Avalazor.Build.TranspileRazorTask" AssemblyFile="$(AvalazorBuildTasksPath)" />
-  <UsingTask TaskName="Avalazor.Build.CompileScssTask" AssemblyFile="$(AvalazorBuildTasksPath)" />
 
   <ItemGroup>
     <!-- Include all .razor files -->
     <AvalazorRazorFiles Include="**\*.razor" Exclude="$(BaseIntermediateOutputPath)**;$(BaseOutputPath)**;bin\**;obj\**" />
-    <!-- Include all .scss files -->
+    <!-- Include all .scss files for copying to output -->
     <AvalazorScssFiles Include="**\*.scss" Exclude="$(BaseIntermediateOutputPath)**;$(BaseOutputPath)**;bin\**;obj\**" />
   </ItemGroup>
 
@@ -49,26 +48,13 @@
     <Touch Files="$(AvalazorGeneratedPath)razor.stamp" AlwaysCreate="true" />
   </Target>
 
-  <!-- Compile SCSS files before Build -->
-  <Target Name="AvalazorCompileScss" BeforeTargets="Build" Inputs="@(AvalazorScssFiles)" Outputs="$(AvalazorGeneratedPath)scss.stamp" Condition="'@(AvalazorScssFiles)' != '' AND Exists('$(AvalazorBuildTasksPath)')">
-    <Message Importance="High" Text="Avalazor: Compiling @(AvalazorScssFiles->Count()) SCSS file(s)..." />
-    <MakeDir Directories="$(AvalazorGeneratedPath)css\" />
-    
-    <CompileScssTask 
-      ScssFiles="@(AvalazorScssFiles)"
-      OutputPath="$(AvalazorGeneratedPath)css\"
-      IncludePaths="$(MSBuildProjectDirectory)">
-      <Output TaskParameter="GeneratedFiles" ItemName="AvalazorGeneratedCss" />
-    </CompileScssTask>
-
-    <!-- Copy CSS files to output -->
+  <!-- Copy SCSS source files to output directory for runtime loading by StyleParser -->
+  <Target Name="AvalazorCopyScssToOutput" AfterTargets="Build">
     <ItemGroup>
-      <Content Include="@(AvalazorGeneratedCss)">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
+      <AvalazorScssContent Include="@(AvalazorScssFiles)" />
     </ItemGroup>
-
-    <Touch Files="$(AvalazorGeneratedPath)scss.stamp" AlwaysCreate="true" />
+    <Copy SourceFiles="@(AvalazorScssContent)" DestinationFolder="$(OutputPath)%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Message Importance="High" Text="Avalazor: Copied @(AvalazorScssContent->Count()) SCSS file(s) to output" Condition="'@(AvalazorScssContent)' != ''" />
   </Target>
 
   <!-- Clean generated files -->
