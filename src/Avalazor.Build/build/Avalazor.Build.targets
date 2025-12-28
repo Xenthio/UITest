@@ -28,6 +28,7 @@
           Inputs="@(AvalazorRazorFiles)" 
           Outputs="$(AvalazorGeneratedPath)razor.stamp" 
           Condition="'@(AvalazorRazorFiles)' != '' AND Exists('$(AvalazorBuildTasksPath)')">
+    <!-- Note: Exists() check is defensive - DLL should exist due to DependsOnTargets="ResolveProjectReferences" -->
     <Message Importance="High" Text="Avalazor: Transpiling @(AvalazorRazorFiles->Count()) Razor file(s)..." />
     <MakeDir Directories="$(AvalazorGeneratedPath)" />
     
