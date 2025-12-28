@@ -119,16 +119,21 @@ public class PanelRazorRenderer
             if (frame.FrameType == RenderTreeFrameType.Markup)
             {
                 var markup = frame.MarkupContent;
-                Console.WriteLine($"Found markup content: {markup?.Substring(0, Math.Min(100, markup?.Length ?? 0))}...");
                 
-                if (!string.IsNullOrWhiteSpace(markup))
+                if (string.IsNullOrWhiteSpace(markup))
                 {
-                    var childPanel = ParseMarkupToPanel(markup);
-                    if (childPanel != null)
-                    {
-                        panel.AddChild(childPanel);
-                        Console.WriteLine($"Added panel with {childPanel.ChildrenCount} children from markup");
-                    }
+                    Console.WriteLine("Found empty or null markup content.");
+                    continue;
+                }
+
+                var previewLength = Math.Min(100, markup.Length);
+                Console.WriteLine($"Found markup content: {markup.Substring(0, previewLength)}...");
+
+                var childPanel = ParseMarkupToPanel(markup);
+                if (childPanel != null)
+                {
+                    panel.AddChild(childPanel);
+                    Console.WriteLine($"Added panel with {childPanel.ChildrenCount} children from markup");
                 }
             }
             else if (frame.FrameType == RenderTreeFrameType.Text)
@@ -154,16 +159,21 @@ public class PanelRazorRenderer
             if (frame.FrameType == RenderTreeFrameType.Markup)
             {
                 var markup = frame.MarkupContent;
-                Console.WriteLine($"Found markup content: {markup?.Substring(0, Math.Min(100, markup?.Length ?? 0))}...");
                 
-                if (!string.IsNullOrWhiteSpace(markup))
+                if (string.IsNullOrWhiteSpace(markup))
                 {
-                    var childPanel = ParseMarkupToPanel(markup);
-                    if (childPanel != null)
-                    {
-                        panel.AddChild(childPanel);
-                        Console.WriteLine($"Added panel with {childPanel.ChildrenCount} children from markup");
-                    }
+                    Console.WriteLine("Found empty or null markup content.");
+                    continue;
+                }
+
+                var previewLength = Math.Min(100, markup.Length);
+                Console.WriteLine($"Found markup content: {markup.Substring(0, previewLength)}...");
+
+                var childPanel = ParseMarkupToPanel(markup);
+                if (childPanel != null)
+                {
+                    panel.AddChild(childPanel);
+                    Console.WriteLine($"Added panel with {childPanel.ChildrenCount} children from markup");
                 }
             }
             else if (frame.FrameType == RenderTreeFrameType.Text)

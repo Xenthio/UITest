@@ -111,7 +111,8 @@ public class AvalazorWindow : IDisposable
         var currentSize = _window.Size;
         
         // Check if size changed (handles resize mid-frame)
-        if (_lastSize.X != currentSize.X || _lastSize.Y != currentSize.Y)
+        bool sizeChanged = _lastSize.X != currentSize.X || _lastSize.Y != currentSize.Y;
+        if (sizeChanged)
         {
             _lastSize = currentSize;
             _needsLayout = true;
@@ -127,7 +128,7 @@ public class AvalazorWindow : IDisposable
         var canvas = _surface.Canvas;
         canvas.Clear(new SKColor(240, 240, 240)); // Light gray background
 
-        // Set panel bounds to window size
+        // Set panel bounds to window size BEFORE invalidating layout
         _rootPanel.PanelBounds = new Rect(0, 0, currentSize.X, currentSize.Y);
 
         // Force full re-layout when size changes or panel is new

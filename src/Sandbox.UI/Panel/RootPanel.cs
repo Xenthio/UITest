@@ -67,6 +67,30 @@ public partial class RootPanel : Panel
         layoutHash = 0;
         StyleSelectorsChanged(true, true);
         SkipAllTransitions();
+        
+        // Force all Yoga nodes to reinitialize on next layout
+        InvalidateYogaRecursive(this);
+    }
+    
+    private static void InvalidateYogaRecursive(Panel panel)
+    {
+        if (panel.YogaNode != null)
+        {
+            panel.YogaNode.Initialized = false;
+        }
+        panel.needsPreLayout = true;
+        panel.needsFinalLayout = true;
+        
+        if (panel._children != null)
+        {
+            foreach (var child in panel._children)
+            {
+                if (child != null)
+                {
+                    InvalidateYogaRecursive(child);
+                }
+            }
+        }
     }
 
     private int layoutHash;

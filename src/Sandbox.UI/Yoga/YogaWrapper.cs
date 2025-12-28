@@ -9,7 +9,7 @@ namespace Sandbox.UI;
 public sealed class YogaWrapper : IDisposable
 {
     private YGNodeRef _native;
-    private Panel? _panel;
+    private readonly Panel? _panel;
     private static YGConfigRef _config;
 
     static YogaWrapper()
