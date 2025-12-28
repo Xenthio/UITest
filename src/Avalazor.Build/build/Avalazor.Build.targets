@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <!-- UsingTask declarations - assembly will be loaded when tasks are executed -->
-  <!-- MSBuild 16.0+ automatically uses isolated loading when a .deps.json file is present -->
+  <!-- MSBuild 16.0+ automatically uses isolated loading when a .deps.json file is present. The PrivateAssets="all" attribute on ProjectReferences in the .csproj ensures this .deps.json includes all dependencies used by these tasks. -->
   <UsingTask TaskName="Avalazor.Build.TranspileRazorTask" AssemblyFile="$(AvalazorBuildTasksPath)" />
   <UsingTask TaskName="Avalazor.Build.CompileScssTask" AssemblyFile="$(AvalazorBuildTasksPath)" />
 
