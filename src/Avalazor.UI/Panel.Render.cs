@@ -52,6 +52,7 @@ public partial class Panel
     /// <summary>
     /// Paint the panel and its children.
     /// Uses Box.Rect for positioning (s&box pattern)
+    /// Based on s&box's rendering approach where panels render at their Box.Rect position
     /// </summary>
     internal void Paint(SKCanvas canvas)
     {
@@ -59,18 +60,18 @@ public partial class Panel
 
         // Save canvas state
         canvas.Save();
+        
+        // Translate canvas to this panel's position
+        // Box.Rect contains absolute coordinates from Yoga layout
+        canvas.Translate(Box.Rect.Left, Box.Rect.Top);
 
         // OnPaint draws at (0,0) using Box.Rect.Width/Height
         OnPaint(canvas);
 
-        // Paint children relative to this panel
+        // Paint children - they will position themselves
         foreach (var child in _children)
         {
-            canvas.Save();
-            // Translate to child's position relative to parent
-            canvas.Translate(child.Box.Rect.Left - Box.Rect.Left, child.Box.Rect.Top - Box.Rect.Top);
             child.Paint(canvas);
-            canvas.Restore();
         }
         
         canvas.Restore();
