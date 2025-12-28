@@ -50,7 +50,7 @@ public partial class RootPanel : Panel
     /// <summary>
     /// This is called from tests to emulate the regular root panel simulate loop
     /// </summary>
-    internal void Layout()
+    public void Layout()
     {
         TickInternal();
         PreLayout();

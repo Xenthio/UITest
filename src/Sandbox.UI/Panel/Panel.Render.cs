@@ -27,7 +27,7 @@ public partial class Panel
     /// <summary>
     /// Render this panel's children
     /// </summary>
-    internal void RenderChildren(IPanelRenderer renderer, ref RenderState state)
+    public void RenderChildren(IPanelRenderer renderer, ref RenderState state)
     {
         if (_renderChildrenDirty && _renderChildren != null)
         {

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Sandbox.UI.Skia</RootNamespace>
+    <AssemblyName>Sandbox.UI.Skia</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SkiaSharp for rendering -->
+    <PackageReference Include="SkiaSharp" Version="2.88.7" />
+    <PackageReference Include="HarfBuzzSharp" Version="7.3.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sandbox.UI\Sandbox.UI.csproj" />
+  </ItemGroup>
+
+</Project>
