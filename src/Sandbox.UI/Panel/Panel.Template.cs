@@ -42,9 +42,16 @@ public partial class Panel
         {
             var path = attr.Name;
             var fullPath = ResolveStyleSheetPath(path, type);
-            if (fullPath != null && LoadStyleSheetFromPath(fullPath, false))
+            if (fullPath != null)
             {
-                _loadedTemplateStylesheets.Add(fullPath);
+                if (LoadStyleSheetFromPath(fullPath, false))
+                {
+                    _loadedTemplateStylesheets.Add(fullPath);
+                }
+            }
+            else
+            {
+                System.Console.WriteLine($"Error opening stylesheet: {path} (File not found in search paths)");
             }
         }
 
@@ -131,8 +138,8 @@ public partial class Panel
                 return fullPath;
         }
 
-        // If nothing found, return the path as-is (will show error when loading)
-        return relativePath;
+        // If nothing found, return null to let the caller handle the missing file
+        return null;
     }
 
     /// <summary>

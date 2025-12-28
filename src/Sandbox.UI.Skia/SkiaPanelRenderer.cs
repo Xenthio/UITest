@@ -153,23 +153,23 @@ public class SkiaPanelRenderer : IPanelRenderer
 
         if (shader == null) return;
 
-        using var paint = new SKPaint
+        using (shader)
+        using (var paint = new SKPaint
         {
             Shader = shader,
             Style = SKPaintStyle.Fill,
             IsAntialias = true
-        };
-
-        if (hasRadius)
+        })
         {
-            canvas.DrawRoundRect(rect, avgRadius, avgRadius, paint);
+            if (hasRadius)
+            {
+                canvas.DrawRoundRect(rect, avgRadius, avgRadius, paint);
+            }
+            else
+            {
+                canvas.DrawRect(rect, paint);
+            }
         }
-        else
-        {
-            canvas.DrawRect(rect, paint);
-        }
-
-        shader.Dispose();
     }
 
     private SKShader? CreateLinearGradientShader(SKRect rect, GradientInfo gradient, float opacity)

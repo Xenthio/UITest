@@ -136,7 +136,8 @@ public static class RazorProcessor
     /// </summary>
     private static string InjectSourceLocationAttribute(string generatedCode, string filename)
     {
-        // Normalize filename to use forward slashes
+        // Normalize filename to use forward slashes for cross-platform consistency
+        // This is a simple inline normalization since Avalazor.Razor doesn't reference Sandbox.UI
         filename = filename.Replace('\\', '/');
         
         // Find the class declaration and add the attribute before it
