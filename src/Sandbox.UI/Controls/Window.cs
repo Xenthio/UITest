@@ -119,12 +119,8 @@ public class Window : Panel
         Style.Position = PositionMode.Absolute;
         Style.FlexDirection = FlexDirection.Column;
 
-        if (HasTitleBar)
-        {
-            TitleBar = new TitleBar();
-            TitleBar.ParentWindow = this;
-            AddChild(TitleBar);
-        }
+        // Don't create TitleBar here - let CreateTitleBar handle it
+        // This allows for truly optional custom title bar
     }
 
     /// <summary>
@@ -176,9 +172,20 @@ public class Window : Panel
         }
     }
 
+    /// <summary>
+    /// Create and configure the title bar with controls
+    /// </summary>
     public void CreateTitleBar()
     {
-        if (!HasTitleBar || TitleBar == null) return;
+        if (!HasTitleBar) return;
+
+        // Create TitleBar if it doesn't exist
+        if (TitleBar == null)
+        {
+            TitleBar = new TitleBar();
+            TitleBar.ParentWindow = this;
+            AddChild(TitleBar);
+        }
 
         // Set title
         TitleBar.SetTitle(Title);
@@ -387,6 +394,17 @@ public class Window : Panel
             case "hastitlebar":
                 HasTitleBar = value == "true" || value == "1";
                 SetClass("notitlebar", !HasTitleBar);
+                
+                // Dynamically create or remove title bar
+                if (HasTitleBar && TitleBar == null)
+                {
+                    CreateTitleBar();
+                }
+                else if (!HasTitleBar && TitleBar != null)
+                {
+                    TitleBar.Delete();
+                    TitleBar = null;
+                }
                 return;
 
             case "hasminimise":
