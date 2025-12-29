@@ -163,4 +163,36 @@ public class StyleApplicationTests
         // Check alpha is normalized from 255 to 1.0
         Assert.Equal(1.0f, color.a, precision: 3);
     }
+
+    [Fact]
+    public void Panel_ColorPropertyAlias_MapsToFontColor()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // CSS standard uses "color" for text color, s&box uses "font-color"
+        var css = @"
+            * {
+                color: #FFFFFF;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert - "color" should be aliased to FontColor
+        Assert.NotNull(panel.ComputedStyle);
+        Assert.NotNull(panel.ComputedStyle.FontColor);
+        var color = panel.ComputedStyle.FontColor.Value;
+        
+        // Check white color (1, 1, 1, 1)
+        Assert.Equal(1.0f, color.r, precision: 3);
+        Assert.Equal(1.0f, color.g, precision: 3);
+        Assert.Equal(1.0f, color.b, precision: 3);
+        Assert.Equal(1.0f, color.a, precision: 3);
+    }
 }
