@@ -1,88 +1,108 @@
 .main-app {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    padding: 0;
-    margin: 0;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.controls-demo-window {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    padding: 20px;
+    background-color: #2a2a2a;
+}
+
+.main-window {
+    flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 600px;
+}
 
-    header {
-        background: linear-gradient(135deg, #007acc 0%, #005a9e 100%);
-        color: white;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-
-        h1 {
-            margin: 0;
-            font-size: 28px;
-        }
+.demo-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    
+    h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 16px;
     }
+}
 
-    main {
-        flex: 1;
-        padding: 30px;
+.button-group {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.theme-selector-window {
+    z-index: 1000;
+    
+    .theme-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 15px;
+        max-height: 400px;
         overflow-y: auto;
-
-        .intro {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-
-            p {
-                margin: 10px 0;
-                line-height: 1.6;
-            }
-
-            ul {
-                list-style-type: none;
-                padding-left: 0;
-
-                li {
-                    padding: 8px 0;
-                    padding-left: 24px;
-                    position: relative;
-
-                    &:before {
-                        content: '✓';
-                        position: absolute;
-                        left: 0;
-                        color: #5cb85c;
-                        font-weight: bold;
-                    }
-
-                    strong {
-                        color: #007acc;
-                        font-weight: 600;
-                    }
-                }
-            }
-        }
-
-        .xgui-section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-
-        .components {
-            h2 {
-                color: #333;
-                margin-bottom: 20px;
-            }
-        }
     }
-
-    footer {
-        background-color: #2c3e50;
-        color: white;
-        padding: 15px;
-        text-align: center;
-
+    
+    .theme-item {
+        padding: 12px;
+        border: 1px solid #444;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: #666;
+        }
+        
+        &.selected {
+            background-color: rgba(100, 150, 255, 0.2);
+            border-color: #5599ff;
+        }
+        
+        strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        
         p {
             margin: 0;
+            font-size: 12px;
+            opacity: 0.8;
         }
     }
+    
+    .theme-info {
+        padding: 12px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        
+        p {
+            margin: 4px 0;
+            font-size: 13px;
+        }
+        
+        em {
+            opacity: 0.7;
+        }
+    }
+}
+
+.groupbox-content {
+    padding: 10px;
 }

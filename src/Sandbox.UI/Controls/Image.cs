@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A generic box that displays a given texture within itself.
 /// Based on s&box's Image from engine/Sandbox.Engine/Systems/UI/Controls/Image.cs
 /// </summary>
+[Library("image"), Alias("img")]
 public partial class Image : Panel
 {
     /// <summary>
@@ -69,7 +70,7 @@ public partial class Image : Panel
         // Actual image drawing is handled by renderer implementation
     }
 
-    public virtual void SetProperty(string name, string value)
+    public override void SetProperty(string name, string value)
     {
         if (name == "src")
             SetTexture(value);

@@ -29,6 +29,11 @@ public struct Length
     /// Auto length
     /// </summary>
     public static Length Auto => new(0, LengthUnit.Auto);
+    
+    /// <summary>
+    /// Undefined length
+    /// </summary>
+    public static Length Undefined => new(0, LengthUnit.Undefined);
 
     /// <summary>
     /// Contain (for images)
@@ -87,6 +92,38 @@ public struct Length
         LengthUnit.Auto => "auto",
         _ => $"{Value}{Unit}"
     };
+    
+    /// <summary>
+    /// Scale a length value by a multiplier (ref parameter for in-place modification)
+    /// </summary>
+    public static void Scale(ref Length length, float scale)
+    {
+        length = new Length(length.Value * scale, length.Unit);
+    }
+    
+    /// <summary>
+    /// Linear interpolation between two length values
+    /// </summary>
+    public static Length? Lerp(Length a, Length b, float t)
+    {
+        // Only lerp if units match
+        if (a.Unit != b.Unit)
+            return b;
+            
+        return new Length(MathX.Lerp(a.Value, b.Value, t), a.Unit);
+    }
+    
+    /// <summary>
+    /// Linear interpolation between two length values with dimension context (for percentage calculations)
+    /// </summary>
+    public static Length? Lerp(Length a, Length b, float t, float dimension)
+    {
+        // Only lerp if units match
+        if (a.Unit != b.Unit)
+            return b;
+            
+        return new Length(MathX.Lerp(a.Value, b.Value, t), a.Unit);
+    }
 
     /// <summary>
     /// Get fraction value for percentages (0-1 range)
@@ -152,6 +189,21 @@ public struct Length
 
         return new Length(number, unit);
     }
+    
+    /// <summary>
+    /// Try to parse a CSS length string
+    /// </summary>
+    public static bool TryParse(string value, out Length result)
+    {
+        var parsed = Parse(value);
+        if (parsed.HasValue)
+        {
+            result = parsed.Value;
+            return true;
+        }
+        result = default;
+        return false;
+    }
 }
 
 public enum LengthUnit
@@ -169,12 +221,4 @@ public enum LengthUnit
     Expression,
     Contain,
     Cover
-}
-
-public static class LengthExtensions
-{
-    public static bool IsDynamic(this LengthUnit unit) => unit is
-        LengthUnit.ViewWidth or LengthUnit.ViewHeight or
-        LengthUnit.ViewMin or LengthUnit.ViewMax or
-        LengthUnit.Em or LengthUnit.RootEm or LengthUnit.Expression;
 }

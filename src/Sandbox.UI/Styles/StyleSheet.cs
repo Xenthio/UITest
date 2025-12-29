@@ -34,7 +34,8 @@ public class StyleSheet
 
 	public static StyleSheet FromFile( string filename, IEnumerable<(string key, string value)> variables = null, bool failSilently = false )
 	{
-		filename = filename.NormalizeFilename();
+		// Normalize path separators but preserve case for file system compatibility
+		filename = filename.NormalizeFilename(enforceInitialSlash: false, enforceLowerCase: false);
 
 		var alreadyLoaded = Loaded.FirstOrDefault( x => x.FileName == filename );
 		if ( alreadyLoaded != null )

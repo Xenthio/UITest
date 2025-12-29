@@ -3,41 +3,192 @@
 @using System.Collections.Generic
 @using Sandbox.UI
 @attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
+@attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
 @attribute [StyleSheet("MainApp.scss")]
+@inherits Window
 
-<div class="main-app">
-    <header>
-        <h1>Avalazor - Desktop Blazor/Razor with XGUI Themes</h1>
-    </header>
+<root title="Controls Demo - @currentTheme" hasminimise="true" hasmaximise="true" hasclose="true" width="600" height="700">
+    <h2>Sandbox.UI Controls Demo</h2>
     
-    <main>
-        <section class="intro">
-            <p>Welcome to Avalazor! A desktop Blazor/Razor system with XGUI theme support.</p>
-            <p>Based on the s&box Razor system (MIT licensed), Avalazor provides:</p>
-            <ul>
-                <li>Razor file transpilation to C#</li>
-                <li>SCSS compilation with XGUI theme compatibility</li>
-                <li>Automatic build-time processing</li>
-                <li>Cross-platform desktop support (Windows, macOS, Linux)</li>
-                <li><strong>XGUI-3 themes ported - use them as-is!</strong></li>
-            </ul>
-        </section>
-
-        <section class="components">
-            <h2>Example Components</h2>
-            <p>Component rendering will be added in a future update</p>
-        </section>
-    </main>
+    <!-- Button tests -->
+    <section class="demo-section">
+        <h3>Buttons</h3>
+        <div class="button-group">
+            <button class="button" @onclick="@IncrementCounter">
+                <span class="button-text">Click Count: @clickCount</span>
+            </button>
+            <button class="button" @onclick="@OpenThemeSelector">
+                <span class="button-text">🎨 Open Theme Selector</span>
+            </button>
+            <button class="button disabled">
+                <span class="button-text">Disabled Button</span>
+            </button>
+        </div>
+    </section>
     
-    <footer>
-        <p>Powered by Avalazor with XGUI Themes - No AXAML Required!</p>
-    </footer>
-</div>
+    <!-- Checkbox tests -->
+    <section class="demo-section">
+        <h3>Checkboxes</h3>
+        <div class="checkbox-group">
+            <div class="checkbox @(checkbox1 ? "checked" : "")" @onclick="@(() => checkbox1 = !checkbox1)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
+                </div>
+                <label>Enable Feature A</label>
+            </div>
+            <div class="checkbox @(checkbox2 ? "checked" : "")" @onclick="@(() => checkbox2 = !checkbox2)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
+                </div>
+                <label>Enable Feature B</label>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Radio button tests -->
+    <section class="demo-section">
+        <h3>Radio Buttons</h3>
+        <div class="radiobuttons">
+            <div class="radiobutton @(selectedOption == 1 ? "checked" : "")" @onclick="@(() => selectedOption = 1)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
+                </div>
+                <label>Option 1</label>
+            </div>
+            <div class="radiobutton @(selectedOption == 2 ? "checked" : "")" @onclick="@(() => selectedOption = 2)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
+                </div>
+                <label>Option 2</label>
+            </div>
+            <div class="radiobutton @(selectedOption == 3 ? "checked" : "")" @onclick="@(() => selectedOption = 3)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
+                </div>
+                <label>Option 3</label>
+            </div>
+        </div>
+        <p>Selected: Option @selectedOption</p>
+    </section>
+    
+    <!-- Group box test -->
+    <section class="demo-section">
+        <div class="groupbox">
+            <label class="groupbox-title">Settings Group</label>
+            <div class="groupbox-content">
+                <p>This is a grouped section of controls</p>
+                <div class="checkbox @(groupCheckbox ? "checked" : "")" @onclick="@(() => groupCheckbox = !groupCheckbox)">
+                    <div class="checkpanel">
+                        <label class="checklabel">a</label>
+                    </div>
+                    <label>Enable Advanced Options</label>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Theme Selector (inline for now) -->
+    @if (showThemeSelector)
+    {
+        <section class="demo-section theme-selector-section">
+            <h3>XGUI Theme Selector</h3>
+            <button class="button" @onclick="@CloseThemeSelector">
+                <span class="button-text">✖ Close Selector</span>
+            </button>
+            <p>Choose a theme to apply globally:</p>
+            
+            <div class="theme-list">
+                @foreach (var theme in GetAvailableThemes())
+                {
+                    <div class="theme-item @(currentTheme == theme.Name ? "selected" : "")" 
+                         @onclick="@(() => ApplyTheme(theme))">
+                        <strong>@theme.Name</strong>
+                        <p>@theme.Description</p>
+                    </div>
+                }
+            </div>
+            
+            <div class="theme-info">
+                <p><strong>Current Theme:</strong> @currentTheme</p>
+                <p><em>Note: Full dynamic theme reload would require StyleSheet.Remove/Add API.</em></p>
+            </div>
+        </section>
+    }
+</root>
 
 @code {
+    private int clickCount = 0;
+    private bool checkbox1 = false;
+    private bool checkbox2 = true;
+    private int selectedOption = 1;
+    private bool groupCheckbox = false;
+    private bool showThemeSelector = false;
+    private string currentTheme = "OliveGreen";
+    
+    private void IncrementCounter()
+    {
+        clickCount++;
+        Console.WriteLine($"Button clicked! Count: {clickCount}");
+    }
+    
+    private void OpenThemeSelector()
+    {
+        showThemeSelector = true;
+        Console.WriteLine("Opening theme selector");
+    }
+    
+    private void CloseThemeSelector()
+    {
+        showThemeSelector = false;
+        Console.WriteLine("Closing theme selector");
+    }
+    
+    private class ThemeInfo
+    {
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Path { get; set; } = "";
+    }
+    
+    private List<ThemeInfo> GetAvailableThemes()
+    {
+        return new List<ThemeInfo>
+        {
+            new() { Name = "OliveGreen", Description = "Half-Life 2 / Valve style", Path = "/themes/XGUI/DefaultStyles/OliveGreen.scss" },
+            new() { Name = "Computer95", Description = "Windows 95 classic look", Path = "/themes/XGUI/DefaultStyles/Computer95.scss" },
+            new() { Name = "ComputerXP", Description = "Windows XP Luna theme", Path = "/themes/XGUI/DefaultStyles/ComputerXP.scss" },
+            new() { Name = "Computer7", Description = "Windows 7 Aero-inspired", Path = "/themes/XGUI/DefaultStyles/Computer7.scss" },
+            new() { Name = "Computer11", Description = "Windows 11 modern design", Path = "/themes/XGUI/DefaultStyles/Computer11.scss" },
+            new() { Name = "Derma", Description = "Garry's Mod default UI", Path = "/themes/XGUI/DefaultStyles/Derma.scss" },
+            new() { Name = "SboxDark", Description = "s&box dark theme", Path = "/themes/XGUI/DefaultStyles/SboxDark.scss" },
+            new() { Name = "Vapour", Description = "Steam-inspired interface", Path = "/themes/XGUI/DefaultStyles/Vapour.scss" },
+            new() { Name = "IMGUI", Description = "Dear ImGui style", Path = "/themes/XGUI/DefaultStyles/IMGUI.scss" },
+            new() { Name = "Simple", Description = "Clean, minimal design", Path = "/themes/XGUI/DefaultStyles/Simple.scss" },
+            new() { Name = "ThinGrey", Description = "Lightweight grey theme", Path = "/themes/XGUI/DefaultStyles/ThinGrey.scss" },
+        };
+    }
+    
+    private void ApplyTheme(ThemeInfo theme)
+    {
+        currentTheme = theme.Name;
+        Console.WriteLine($"Applying theme: {theme.Name}");
+        Console.WriteLine($"Theme path: {theme.Path}");
+        Console.WriteLine("Note: Full dynamic theme switching requires StyleSheet API implementation");
+        
+        // In a real implementation, this would use:
+        // StyleSheet.Remove(oldThemeSheet);
+        // var newTheme = StyleSheet.FromFile(theme.Path);
+        // StyleSheet.Add(newTheme);
+    }
+    
     protected override void OnAfterTreeRender(bool firstTime)
     {
+        base.OnAfterTreeRender(firstTime);
+        
         if (firstTime)
-            Console.WriteLine("MainApp initialized!");
+        {
+            Console.WriteLine($"MainApp initialized as Window - Controls Demo with XGUI theme: {currentTheme}");
+            Console.WriteLine($"Window properties: Title='{Title}', HasMinimise={HasMinimise}, HasMaximise={HasMaximise}, HasClose={HasClose}");
+        }
     }
 }

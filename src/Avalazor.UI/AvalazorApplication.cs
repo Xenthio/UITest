@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Sandbox.UI;
+using Sandbox.UI.Reflection;
 
 namespace Avalazor.UI;
 
@@ -25,6 +26,9 @@ public static class AvalazorApplication
     {
         try
         {
+            // Initialize PanelFactory to register all [Library] and [Alias] types
+            PanelFactory.Initialize();
+            
             // Set up DI for Blazor components
             var services = new ServiceCollection();
             services.AddLogging();

@@ -46,7 +46,7 @@ public class AvalazorWindow : IDisposable
         options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(3, 3));
         options.VSync = true;
 
-        _window = Window.Create(options);
+        _window = Silk.NET.Windowing.Window.Create(options);
 
         _window.Load += OnLoad;
         _window.Render += OnRender;

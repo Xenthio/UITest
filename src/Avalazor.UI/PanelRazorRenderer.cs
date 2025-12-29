@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.RenderTree;
 using AngleSharp.Html.Parser;
 using Sandbox.UI;
+using Sandbox.UI.Reflection;
 using System.Reflection;
 
 namespace Avalazor.UI;
@@ -278,7 +279,19 @@ public class PanelRazorRenderer
 
     private Panel CreatePanelForElement(string elementName)
     {
-        Panel panel = elementName.ToLower() switch
+        var lowerName = elementName.ToLower();
+        
+        // Try to create using PanelFactory (for controls with [Library] or [Alias] attributes)
+        var panel = PanelFactory.Create(lowerName);
+        if (panel != null)
+        {
+            panel.ElementName = lowerName;
+            Console.WriteLine($"Created {panel.GetType().Name} for element '{lowerName}' via PanelFactory");
+            return panel;
+        }
+        
+        // Fallback to built-in HTML elements
+        panel = lowerName switch
         {
             "div" => new Panel { ElementName = "div" },
             "span" => new Panel { ElementName = "span" },
@@ -294,8 +307,7 @@ public class PanelRazorRenderer
             "li" => new Panel { ElementName = "li" },
             "strong" => CreateStyledLabel("strong", 14, 700),
             "label" => new Label(),
-            "button" => new Panel { ElementName = "button" },
-            _ => new Panel { ElementName = elementName.ToLower() }
+            _ => new Panel { ElementName = lowerName }
         };
         
         return panel;
@@ -328,7 +340,7 @@ public class PanelRazorRenderer
                         panel.Style.BackgroundColor = ParseColor(value);
                         break;
                     case "color":
-                        panel.Style.Color = ParseColor(value);
+                        panel.Style.FontColor = ParseColor(value);
                         break;
                     case "width":
                         panel.Style.Width = ParseLength(value);

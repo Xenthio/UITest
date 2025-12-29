@@ -22,7 +22,8 @@ internal static partial class StyleParser
 		IncludeLoops++;
 
 		filename ??= "none";
-		filename = filename.NormalizeFilename();
+		// Normalize path separators but preserve case
+		filename = filename.NormalizeFilename(enforceInitialSlash: false, enforceLowerCase: false);
 
 		sheet.AddFilename( filename );
 
@@ -134,14 +135,49 @@ internal static partial class StyleParser
 				// if no extension clean it up as an include
 				if ( !System.IO.Path.HasExtension( cleanFile ) ) cleanFile = $"_{cleanFile}.scss";
 
-				// try to find file in local directory, if not found then fall back
-				var localPath = System.IO.Path.Combine( thisRoot ?? "", cleanFile ).ToLower();
+				string localPath;
+				
+				// Handle absolute paths starting with / (theme paths)
+				if ( cleanFile.StartsWith( "/" ) )
+				{
+					// Find the themes directory by going up from current file
+					var searchRoot = thisRoot;
+					while ( !string.IsNullOrEmpty( searchRoot ) )
+					{
+						var themesPath = System.IO.Path.Combine( searchRoot, "themes" );
+						if ( System.IO.Directory.Exists( themesPath ) )
+						{
+							localPath = System.IO.Path.Combine( themesPath, cleanFile.TrimStart( '/' ) );
+							if ( System.IO.File.Exists( localPath ) )
+							{
+								TryImport( sheet, localPath, p.FileAndLine );
+								goto nextFile;
+							}
+						}
+						searchRoot = System.IO.Path.GetDirectoryName( searchRoot );
+					}
+					
+					// If not found in themes, try relative to output directory
+					localPath = cleanFile.TrimStart( '/' );
+				}
+				else
+				{
+					// Relative path - combine with current file's directory
+					localPath = System.IO.Path.Combine( thisRoot ?? "", cleanFile );
+				}
+				
+				// Check if file exists, if not try lowercase variant (for case-insensitive systems)
 				if ( !System.IO.File.Exists( localPath ) )
 				{
-					localPath = cleanFile.ToLower();
+					var lowerPath = localPath.ToLower();
+					if ( System.IO.File.Exists( lowerPath ) )
+					{
+						localPath = lowerPath;
+					}
 				}
 
 				TryImport( sheet, localPath, p.FileAndLine );
+				nextFile:;
 			}
 
 			if ( p.Is( ';' ) )

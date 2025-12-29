@@ -346,7 +346,7 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (style == null) return;
 
         var opacity = label.Opacity * state.RenderOpacity;
-        var textColor = style.Color ?? new Color(0, 0, 0, 1);
+        var textColor = style.FontColor ?? new Color(0, 0, 0, 1);
         var fontSize = style.FontSize?.GetPixels(16f) ?? 16f;
         var fontFamily = style.FontFamily ?? "Arial";
         var fontStyle = ToSKFontStyle(style.FontWeight ?? 400);
@@ -387,7 +387,7 @@ public class SkiaPanelRenderer : IPanelRenderer
 
         // Check if text needs wrapping (only if width is constrained)
         var textWidth2 = paint.MeasureText(label.Text);
-        var shouldWrap = rect.Width > 0 && textWidth2 > rect.Width && style.WordWrap != WordWrap.NoWrap;
+        var shouldWrap = rect.Width > 0 && textWidth2 > rect.Width && style.WhiteSpace != WhiteSpace.NoWrap;
 
         if (shouldWrap)
         {

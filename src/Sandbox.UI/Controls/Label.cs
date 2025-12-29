@@ -6,6 +6,7 @@ namespace Sandbox.UI;
 /// A generic text label. Can be made editable.
 /// Based on s&box's Label from engine/Sandbox.Engine/Systems/UI/Controls/Label.cs
 /// </summary>
+[Library("label")]
 public partial class Label : Panel
 {
     /// <summary>
@@ -78,7 +79,7 @@ public partial class Label : Panel
     /// </summary>
     public bool IsRich { get; set; }
 
-    public virtual void SetProperty(string name, string value)
+    public override void SetProperty(string name, string value)
     {
         if (name == "text")
         {
@@ -87,7 +88,7 @@ public partial class Label : Panel
         }
     }
 
-    public virtual void SetContent(string? value)
+    public override void SetContent(string? value)
     {
         Text = value ?? "";
     }

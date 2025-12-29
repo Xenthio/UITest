@@ -276,7 +276,7 @@ public class RazorRenderer : Renderer
             panel.Style.PaddingRight = Length.Pixels(padding);
             panel.Style.PaddingBottom = Length.Pixels(padding);
         }
-        if (textColor.HasValue) panel.Style.Color = textColor.Value;
+        if (textColor.HasValue) panel.Style.FontColor = textColor.Value;
         return panel;
     }
 
