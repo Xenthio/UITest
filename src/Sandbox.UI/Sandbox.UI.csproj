@@ -13,6 +13,7 @@
   <ItemGroup>
     <!-- Razor/Blazor support for RenderTreeBuilder extensions -->
     <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.0" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" />
   </ItemGroup>
 
   <!-- Copy native Yoga library to output directory -->
