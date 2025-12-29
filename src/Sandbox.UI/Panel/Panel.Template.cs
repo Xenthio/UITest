@@ -34,6 +34,8 @@ public partial class Panel
             return false;
         }
 
+        Console.WriteLine($"Panel {ElementName} ({type.Name}): Found {attrs.Count} StyleSheet attribute(s)");
+
         // Clear old sheets and load new ones
         ClearLoadedTemplateStylesheets();
         _loadedTemplateStylesheets = new List<string>();
@@ -41,12 +43,19 @@ public partial class Panel
         foreach (var attr in attrs)
         {
             var path = attr.Name;
+            Console.WriteLine($"  - Attempting to load stylesheet: {path}");
             var fullPath = ResolveStyleSheetPath(path, type);
             if (fullPath != null)
             {
+                Console.WriteLine($"  - Resolved to: {fullPath}");
                 if (LoadStyleSheetFromPath(fullPath, false))
                 {
                     _loadedTemplateStylesheets.Add(fullPath);
+                    Console.WriteLine($"  - Successfully loaded!");
+                }
+                else
+                {
+                    Console.WriteLine($"  - Failed to load");
                 }
             }
             else

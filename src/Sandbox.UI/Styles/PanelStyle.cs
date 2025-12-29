@@ -118,8 +118,15 @@ public sealed class PanelStyle : Styles
             }
         }
 
+        var oldChanged = rulesChanged;
         rulesChanged = rulesChanged || ruleguid != ActiveRulesGuid;
         ActiveRulesGuid = ruleguid;
+
+        // Debug logging for first few panels
+        if (panel.ElementName == "button" || panel.ElementName == "window")
+        {
+            Console.WriteLine($"BuildRulesInThread for {panel.ElementName}: found {activeRules?.Count ?? 0} matching rules");
+        }
 
         return rulesChanged;
     }
