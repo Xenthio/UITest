@@ -58,4 +58,18 @@ public static class MatrixHelpers
 			MathX.Lerp(a.M41, b.M41, t), MathX.Lerp(a.M42, b.M42, t), MathX.Lerp(a.M43, b.M43, t), MathX.Lerp(a.M44, b.M44, t)
 		);
 	}
+	
+	/// <summary>
+	/// Create a rotation matrix from euler angles (in degrees)
+	/// </summary>
+	public static Matrix4x4 CreateRotation(Vector3 eulerDegrees)
+	{
+		// Convert degrees to radians
+		float pitch = MathX.DegreeToRadian(eulerDegrees.X);
+		float yaw = MathX.DegreeToRadian(eulerDegrees.Y);
+		float roll = MathX.DegreeToRadian(eulerDegrees.Z);
+		
+		// Create rotation matrix from Euler angles (XYZ order)
+		return Matrix4x4.CreateFromYawPitchRoll(yaw, pitch, roll);
+	}
 }

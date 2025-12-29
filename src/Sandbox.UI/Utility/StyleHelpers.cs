@@ -79,6 +79,26 @@ public static class StyleHelpers
 	}
 	
 	/// <summary>
+	/// Parse rotation value from numeric value and unit string (handles deg, rad, grad, turn units)
+	/// </summary>
+	public static float RotationDegrees(float value, string unit)
+	{
+		if (string.IsNullOrWhiteSpace(unit))
+			return value;
+			
+		unit = unit.Trim().ToLowerInvariant();
+		
+		return unit switch
+		{
+			"deg" => value,
+			"rad" => value * 180f / MathF.PI,
+			"grad" => value * 0.9f,
+			"turn" => value * 360f,
+			_ => value // assume degrees if no unit or unknown unit
+		};
+	}
+	
+	/// <summary>
 	/// Trim quotes from a string value
 	/// </summary>
 	public static string TrimQuoted(this string value, bool alsotrim = true)

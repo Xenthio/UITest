@@ -112,6 +112,18 @@ public struct Length
             
         return new Length(MathX.Lerp(a.Value, b.Value, t), a.Unit);
     }
+    
+    /// <summary>
+    /// Linear interpolation between two length values with dimension context (for percentage calculations)
+    /// </summary>
+    public static Length? Lerp(Length a, Length b, float t, float dimension)
+    {
+        // Only lerp if units match
+        if (a.Unit != b.Unit)
+            return b;
+            
+        return new Length(MathX.Lerp(a.Value, b.Value, t), a.Unit);
+    }
 
     /// <summary>
     /// Get fraction value for percentages (0-1 range)

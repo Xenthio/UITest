@@ -160,7 +160,7 @@ namespace Sandbox.UI
 			var p = new Parse( value );
 
 			if ( !p.TryReadFloat( out var val ) )
-				return 0;
+				return 0f;
 
 			return val;
 		}
@@ -170,7 +170,7 @@ namespace Sandbox.UI
 			var p = new Parse( value );
 
 			if ( !p.TryReadFloat( out var val ) )
-				return 0;
+				return 0f;
 
 			p = p.SkipWhitespaceAndNewlines();
 			return StyleHelpers.RotationDegrees( val, p.ReadRemaining( true ) );
@@ -185,7 +185,7 @@ namespace Sandbox.UI
 			for ( int i = 0; i < 3; i++ )
 			{
 				if ( !p.TryReadFloat( out var component ) )
-					return 0;
+					return Vector3.Zero;
 
 				p = p.SkipWhitespaceAndNewlines();
 				float actual = StyleHelpers.RotationDegrees( component, p.ReadUntilWhitespaceOrNewlineOrEnd() );

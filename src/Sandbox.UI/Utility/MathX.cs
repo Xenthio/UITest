@@ -51,6 +51,14 @@ public static class MathX
 	}
 	
 	/// <summary>
+	/// Convert degrees to radians (alias)
+	/// </summary>
+	public static float DegreeToRadian(float degrees)
+	{
+		return degrees * (MathF.PI / 180f);
+	}
+	
+	/// <summary>
 	/// Convert radians to degrees
 	/// </summary>
 	public static float RadToDeg(float radians)

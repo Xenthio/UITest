@@ -25,9 +25,9 @@ namespace Sandbox.UI
 				Matrix m = Matrix.Identity;
 				if ( e.Type == EntryType.Perspective )
 				{
-					m *= Matrix4x4.CreateTranslation( new Vector3( perspectiveOrigin.X, perspectiveOrigin.Y, 0.0f ) );
+					m *= Matrix4x4.CreateTranslation( new Vector3( perspectiveOrigin.x, perspectiveOrigin.y, 0.0f ) );
 					m *= e.ToMatrix( width, height );
-					m *= Matrix4x4.CreateTranslation( new Vector3( -perspectiveOrigin.X, -perspectiveOrigin.Y, 0.0f ) );
+					m *= Matrix4x4.CreateTranslation( new Vector3( -perspectiveOrigin.x, -perspectiveOrigin.y, 0.0f ) );
 				}
 				else
 				{
@@ -291,16 +291,16 @@ namespace Sandbox.UI
 			internal static Entry Lerp( Entry a, Entry b, float delta, Vector2 dimensions )
 			{
 				var data = a.Type == EntryType.Rotation || a.Type == EntryType.Skew ?
-					Angles.Lerp( new Angles( a.Data ), new Angles( b.Data ), delta ).AsVector3() :
-					Vector3.Lerp( a.Data, b.Data, delta, false );
+					Angles.Lerp( new Angles( a.Data.X, a.Data.Y, a.Data.Z ), new Angles( b.Data.X, b.Data.Y, b.Data.Z ), delta ).AsVector3() :
+					Vector3.Lerp( a.Data, b.Data, delta );
 
 				return new Entry
 				{
 					Type = a.Type,
 					Data = data,
 					Matrix = MatrixHelpers.Lerp( a.Matrix, b.Matrix, delta ),
-					X = Length.Lerp( a.X, b.X, delta, dimensions.X ) ?? b.X,
-					Y = Length.Lerp( a.Y, b.Y, delta, dimensions.Y ) ?? b.Y,
+					X = Length.Lerp( a.X, b.X, delta, dimensions.x ) ?? b.X,
+					Y = Length.Lerp( a.Y, b.Y, delta, dimensions.y ) ?? b.Y,
 					Z = Length.Lerp( a.Z, b.Z, delta ) ?? b.Z,
 				};
 			}
@@ -311,7 +311,7 @@ namespace Sandbox.UI
 				{
 					case EntryType.Rotation:
 						{
-							return Matrix.CreateRotation( Data );
+							return MatrixHelpers.CreateRotation( Data );
 						}
 
 					case EntryType.Scale:
@@ -326,10 +326,10 @@ namespace Sandbox.UI
 
 					case EntryType.Skew:
 						{
-							var ax = MathF.Tan( Data.X.DegreeToRadian() );
-							var ay = MathF.Tan( Data.Y.DegreeToRadian() );
+							var ax = MathF.Tan( MathX.DegreeToRadian( Data.X ) );
+							var ay = MathF.Tan( MathX.DegreeToRadian( Data.Y ) );
 
-							return Matrix.CreateMatrix3D( [
+							return MatrixHelpers.CreateMatrix3D( [
 								1.0f, ay, 0.0f, 0.0f,
 								ax, 1.0f, 0.0f, 0.0f,
 								0.0f, 0.0f, 1.0f, 0.0f,
@@ -342,7 +342,7 @@ namespace Sandbox.UI
 						}
 					case EntryType.Perspective:
 						{
-							return Matrix.CreateMatrix3D( [
+							return MatrixHelpers.CreateMatrix3D( [
 								1.0f, 0.0f, 0.0f, 0.0f,
 								0.0f, 1.0f, 0.0f, 0.0f,
 								0.0f, 0.0f, 1.0f, -1.0f / MathF.Max(X.GetPixels( width ), 1.0f),
