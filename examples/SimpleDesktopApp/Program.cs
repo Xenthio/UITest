@@ -12,6 +12,6 @@ class Program
         // Avalazor.UI.AvalazorApplication.RunPanel<FlexboxTest>(title: "Avalazor - Flexbox Layout Test");
         
         // Or use MainApp with text:
-        Avalazor.UI.AvalazorApplication.RunPanel<MainApp>(title: "Avalazor - Desktop Razor with XGUI Themes");
+        Avalazor.UI.AvalazorApplication.RunPanel<XGUIPortTest>(title: "Avalazor - Desktop Razor with XGUI Themes");
     }
 }
