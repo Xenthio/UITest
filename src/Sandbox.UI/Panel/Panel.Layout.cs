@@ -91,14 +91,18 @@ public partial class Panel
             UpdateYoga();
         }
 
+        // Update HasBackground based on current ComputedStyle
+        // This needs to be checked every PreLayout, not just when changed is true
+        HasBackground = ComputedStyle.BackgroundColor?.a > 0f ||
+            (ComputedStyle.BackgroundGradient?.IsValid ?? false) ||
+            (ComputedStyle.BorderLeftColor?.a > 0f && ComputedStyle.BorderLeftWidth?.GetPixels(1.0f) > 0f) ||
+            (ComputedStyle.BorderTopColor?.a > 0f && ComputedStyle.BorderTopWidth?.GetPixels(1.0f) > 0f) ||
+            (ComputedStyle.BorderRightColor?.a > 0f && ComputedStyle.BorderRightWidth?.GetPixels(1.0f) > 0f) ||
+            (ComputedStyle.BorderBottomColor?.a > 0f && ComputedStyle.BorderBottomWidth?.GetPixels(1.0f) > 0f);
+
         if (changed)
         {
             _renderChildrenDirty = true;
-            HasBackground = ComputedStyle.BackgroundColor?.a > 0f ||
-                (ComputedStyle.BorderLeftColor?.a > 0f && ComputedStyle.BorderLeftWidth?.GetPixels(1.0f) > 0f) ||
-                (ComputedStyle.BorderTopColor?.a > 0f && ComputedStyle.BorderTopWidth?.GetPixels(1.0f) > 0f) ||
-                (ComputedStyle.BorderRightColor?.a > 0f && ComputedStyle.BorderRightWidth?.GetPixels(1.0f) > 0f) ||
-                (ComputedStyle.BorderBottomColor?.a > 0f && ComputedStyle.BorderBottomWidth?.GetPixels(1.0f) > 0f);
         }
 
         if (!IsVisibleSelf) return;
