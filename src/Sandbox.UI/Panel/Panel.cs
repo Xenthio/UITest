@@ -231,30 +231,54 @@ public partial class Panel : IDisposable, IStyleTarget
     }
 
     /// <summary>
-    /// Called when style selectors may have changed
-    /// </summary>
-    internal virtual void StyleSelectorsChanged(bool includeChildren, bool includeSiblings)
-    {
-        SetNeedsPreLayout();
-
-        if (includeChildren && _children != null)
-        {
-            foreach (var child in _children)
-            {
-                child?.StyleSelectorsChanged(true, false);
-            }
-        }
-
-        // Add to root panel's style rebuild list
-        FindRootPanel()?.AddToBuildStyleRulesList(this);
-    }
-
-    /// <summary>
     /// Called when the panel should mark that styles need to be rebuilt
     /// </summary>
     internal void MarkStylesRebuilt()
     {
-        // Nothing needed in simplified implementation
+        inRebuildStyleRulesList = false;
+        inRebuildStyleRulesList_Ancestors = false;
+        inRebuildStyleRulesList_Children = false;
+    }
+
+    bool inRebuildStyleRulesList;
+    bool inRebuildStyleRulesList_Ancestors;
+    bool inRebuildStyleRulesList_Children;
+
+    /// <summary>
+    /// Should be called when something happens that means that this panel's stylesheets need to be
+    /// re-evaluated. Like becoming hovered or classes changed. You don't call this when changing styles
+    /// directly on the panel, just on anything that will change which stylesheets should get selected.
+    /// </summary>
+    /// <param name="ancestors">Also re-evaluate all ancestor panels.</param>
+    /// <param name="descendants">Also re-evaluate all child panels.</param>
+    /// <param name="root">Root panel cache so we don't need to keep looking it up.</param>
+    internal virtual void StyleSelectorsChanged(bool ancestors, bool descendants, RootPanel? root = null)
+    {
+        root ??= FindRootPanel();
+        if (root == null)
+            return;
+
+        if (ancestors && !inRebuildStyleRulesList_Ancestors)
+        {
+            inRebuildStyleRulesList_Ancestors = true;
+            Parent?.StyleSelectorsChanged(true, false, root);
+        }
+
+        if (descendants && !inRebuildStyleRulesList_Children && HasChildren)
+        {
+            inRebuildStyleRulesList_Children = true;
+
+            foreach (var child in Children)
+            {
+                child.StyleSelectorsChanged(false, true, root);
+            }
+        }
+
+        if (!inRebuildStyleRulesList)
+        {
+            inRebuildStyleRulesList = true;
+            root.AddToBuildStyleRulesList(this);
+        }
     }
 
     public override string ToString()

@@ -57,14 +57,20 @@ public sealed class PanelStyle : Styles
 
     /// <summary>
     /// Called when a stylesheet has been added or removed from ourselves or one of
-    /// our ancestor panels.
+    /// our ancestor panels - because under that condition we need to rebuild our
+    /// broadphase.
     /// </summary>
     internal void InvalidateBroadphase()
     {
+        if (StyleBlocks == null)
+            return;
+
         StyleBlocks = null;
-        
-        // Mark that we need to rebuild style rules
-        panel.StyleSelectorsChanged(true, false);
+
+        foreach (var child in panel.Children)
+        {
+            child.Style.InvalidateBroadphase();
+        }
     }
 
     void BuildApplicableBlocks()
