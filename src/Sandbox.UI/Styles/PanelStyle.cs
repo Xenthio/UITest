@@ -6,10 +6,10 @@ namespace Sandbox.UI;
 /// </summary>
 public sealed class PanelStyle : Styles
 {
-    Panel panel;
+    readonly Panel panel;
 
-    internal Styles Cached = new Styles();
-    internal Styles Final = new Styles();
+    internal readonly Styles Cached = new Styles();
+    internal readonly Styles Final = new Styles();
 
     /// <summary>
     /// This could be a local variable if we wanted to create a new class every time
@@ -98,13 +98,15 @@ public sealed class PanelStyle : Styles
 
         if (StyleBlocks != null)
         {
-            foreach (var c in StyleBlocks)
-            {
-                var winningSelector = c.Test(panel);
-                if (winningSelector == null) continue;
+            var winningSelectors = StyleBlocks
+                .Select(c => c.Test(panel))
+                .Where(winningSelector => winningSelector != null)
+                .ToList();
 
+            if (winningSelectors.Count > 0)
+            {
                 activeRules ??= new();
-                activeRules.Add(winningSelector);
+                activeRules.AddRange(winningSelectors!);
             }
         }
 
@@ -184,7 +186,7 @@ public sealed class PanelStyle : Styles
 
 internal class StyleOrderer : IComparer<StyleSelector>
 {
-    internal static StyleOrderer Instance = new StyleOrderer();
+    internal static readonly StyleOrderer Instance = new StyleOrderer();
 
     public int Compare(StyleSelector? x, StyleSelector? y)
     {

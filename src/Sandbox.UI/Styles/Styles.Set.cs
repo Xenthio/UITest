@@ -154,14 +154,10 @@ namespace Sandbox.UI
 				return false;
 
 			// Parse all parts as lengths
-			var lengths = new System.Collections.Generic.List<Length?>();
-			foreach ( var part in parts )
-			{
-				var lengthValue = Length.Parse( part );
-				if ( !lengthValue.HasValue )
-					return false; // Invalid value
-				lengths.Add( lengthValue );
-			}
+			var lengths = parts.Select( part => Length.Parse( part ) ).ToList();
+
+			if ( lengths.Any( lengthValue => !lengthValue.HasValue ) )
+				return false; // Invalid value
 
 			// Apply based on count
 			switch ( lengths.Count )
@@ -271,12 +267,9 @@ namespace Sandbox.UI
 			}
 
 			// Second value is flex-shrink
-			if ( parts.Length > 1 )
+			if ( parts.Length > 1 && float.TryParse( parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var shrink ) )
 			{
-				if ( float.TryParse( parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var shrink ) )
-				{
-					FlexShrink = shrink;
-				}
+				FlexShrink = shrink;
 			}
 
 			// Third value is flex-basis

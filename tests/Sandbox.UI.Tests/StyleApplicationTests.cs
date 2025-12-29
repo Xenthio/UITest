@@ -415,7 +415,8 @@ public class StyleApplicationTests
 
         // Assert
         Assert.NotNull(panel.ComputedStyle);
-        Assert.Equal(FontSmooth.None, panel.ComputedStyle.FontSmooth);
+        Assert.True(panel.ComputedStyle.FontSmooth.HasValue);
+        Assert.Equal(FontSmooth.None, panel.ComputedStyle.FontSmooth.Value);
     }
 
     [Fact]
@@ -440,6 +441,7 @@ public class StyleApplicationTests
 
         // Assert
         Assert.NotNull(panel.ComputedStyle);
-        Assert.Equal(FontSmooth.Antialiased, panel.ComputedStyle.FontSmooth);
+        Assert.True(panel.ComputedStyle.FontSmooth.HasValue);
+        Assert.Equal(FontSmooth.Antialiased, panel.ComputedStyle.FontSmooth.Value);
     }
 }
