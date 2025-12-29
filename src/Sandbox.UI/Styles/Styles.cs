@@ -45,27 +45,11 @@ public class Styles : BaseStyles
     public Length? PaddingRight { get; set; }
     public Length? PaddingBottom { get; set; }
 
-    // Border
-    public Length? BorderLeftWidth { get; set; }
-    public Length? BorderTopWidth { get; set; }
-    public Length? BorderRightWidth { get; set; }
-    public Length? BorderBottomWidth { get; set; }
-    public Color? BorderLeftColor { get; set; }
-    public Color? BorderTopColor { get; set; }
-    public Color? BorderRightColor { get; set; }
-    public Color? BorderBottomColor { get; set; }
-    public Length? BorderTopLeftRadius { get; set; }
-    public Length? BorderTopRightRadius { get; set; }
-    public Length? BorderBottomLeftRadius { get; set; }
-    public Length? BorderBottomRightRadius { get; set; }
-
-    // Visual
-    public DisplayMode? Display { get; set; }
-    public OverflowMode? Overflow { get; set; }
-    public float? Opacity { get; set; }
-    public Color? BackgroundColor { get; set; }
-    public int? ZIndex { get; set; }
-    public PointerEvents? PointerEvents { get; set; }
+    // Note: Border properties (BorderLeftWidth, BorderTopColor, BorderTopLeftRadius, etc.)
+    // are inherited from BaseStyles.Generated.cs - do not duplicate them here!
+    
+    // Note: Visual properties (BackgroundColor, Display, Opacity, etc.) 
+    // are inherited from BaseStyles.Generated.cs - do not duplicate them here!
 
     // Background gradient (for linear-gradient, radial-gradient)
     public GradientInfo? BackgroundGradient { get; set; }
@@ -154,26 +138,28 @@ public class Styles : BaseStyles
         if (other.PaddingRight.HasValue) PaddingRight = other.PaddingRight;
         if (other.PaddingBottom.HasValue) PaddingBottom = other.PaddingBottom;
 
-        if (other.BorderLeftWidth.HasValue) BorderLeftWidth = other.BorderLeftWidth;
-        if (other.BorderTopWidth.HasValue) BorderTopWidth = other.BorderTopWidth;
-        if (other.BorderRightWidth.HasValue) BorderRightWidth = other.BorderRightWidth;
-        if (other.BorderBottomWidth.HasValue) BorderBottomWidth = other.BorderBottomWidth;
-        if (other.BorderLeftColor.HasValue) BorderLeftColor = other.BorderLeftColor;
-        if (other.BorderTopColor.HasValue) BorderTopColor = other.BorderTopColor;
-        if (other.BorderRightColor.HasValue) BorderRightColor = other.BorderRightColor;
-        if (other.BorderBottomColor.HasValue) BorderBottomColor = other.BorderBottomColor;
-        if (other.BorderTopLeftRadius.HasValue) BorderTopLeftRadius = other.BorderTopLeftRadius;
-        if (other.BorderTopRightRadius.HasValue) BorderTopRightRadius = other.BorderTopRightRadius;
-        if (other.BorderBottomLeftRadius.HasValue) BorderBottomLeftRadius = other.BorderBottomLeftRadius;
-        if (other.BorderBottomRightRadius.HasValue) BorderBottomRightRadius = other.BorderBottomRightRadius;
+        // Border properties inherited from BaseStyles - use base class
+        if (other.BorderLeftWidth.HasValue) base.BorderLeftWidth = other.BorderLeftWidth;
+        if (other.BorderTopWidth.HasValue) base.BorderTopWidth = other.BorderTopWidth;
+        if (other.BorderRightWidth.HasValue) base.BorderRightWidth = other.BorderRightWidth;
+        if (other.BorderBottomWidth.HasValue) base.BorderBottomWidth = other.BorderBottomWidth;
+        if (other.BorderLeftColor.HasValue) base.BorderLeftColor = other.BorderLeftColor;
+        if (other.BorderTopColor.HasValue) base.BorderTopColor = other.BorderTopColor;
+        if (other.BorderRightColor.HasValue) base.BorderRightColor = other.BorderRightColor;
+        if (other.BorderBottomColor.HasValue) base.BorderBottomColor = other.BorderBottomColor;
+        if (other.BorderTopLeftRadius.HasValue) base.BorderTopLeftRadius = other.BorderTopLeftRadius;
+        if (other.BorderTopRightRadius.HasValue) base.BorderTopRightRadius = other.BorderTopRightRadius;
+        if (other.BorderBottomLeftRadius.HasValue) base.BorderBottomLeftRadius = other.BorderBottomLeftRadius;
+        if (other.BorderBottomRightRadius.HasValue) base.BorderBottomRightRadius = other.BorderBottomRightRadius;
 
-        if (other.Display.HasValue) Display = other.Display;
-        if (other.Overflow.HasValue) Overflow = other.Overflow;
-        if (other.Opacity.HasValue) Opacity = other.Opacity;
-        if (other.BackgroundColor.HasValue) BackgroundColor = other.BackgroundColor;
+        // Visual properties inherited from BaseStyles - use base class
+        if (other.Display.HasValue) base.Display = other.Display;
+        if (other.Overflow.HasValue) base.Overflow = other.Overflow;
+        if (other.Opacity.HasValue) base.Opacity = other.Opacity;
+        if (other.BackgroundColor.HasValue) base.BackgroundColor = other.BackgroundColor;
         if (other.BackgroundGradient.HasValue) BackgroundGradient = other.BackgroundGradient;
-        if (other.ZIndex.HasValue) ZIndex = other.ZIndex;
-        if (other.PointerEvents.HasValue) PointerEvents = other.PointerEvents;
+        if (other.ZIndex.HasValue) base.ZIndex = other.ZIndex;
+        if (other.PointerEvents.HasValue) base.PointerEvents = other.PointerEvents;
 
         if (other.Color.HasValue) Color = other.Color;
         if (other.FontSize.HasValue) FontSize = other.FontSize;
@@ -224,26 +210,28 @@ public class Styles : BaseStyles
         PaddingRight = other.PaddingRight;
         PaddingBottom = other.PaddingBottom;
 
-        BorderLeftWidth = other.BorderLeftWidth;
-        BorderTopWidth = other.BorderTopWidth;
-        BorderRightWidth = other.BorderRightWidth;
-        BorderBottomWidth = other.BorderBottomWidth;
-        BorderLeftColor = other.BorderLeftColor;
-        BorderTopColor = other.BorderTopColor;
-        BorderRightColor = other.BorderRightColor;
-        BorderBottomColor = other.BorderBottomColor;
-        BorderTopLeftRadius = other.BorderTopLeftRadius;
-        BorderTopRightRadius = other.BorderTopRightRadius;
-        BorderBottomLeftRadius = other.BorderBottomLeftRadius;
-        BorderBottomRightRadius = other.BorderBottomRightRadius;
+        // Border properties inherited from BaseStyles - use base class
+        base.BorderLeftWidth = other.BorderLeftWidth;
+        base.BorderTopWidth = other.BorderTopWidth;
+        base.BorderRightWidth = other.BorderRightWidth;
+        base.BorderBottomWidth = other.BorderBottomWidth;
+        base.BorderLeftColor = other.BorderLeftColor;
+        base.BorderTopColor = other.BorderTopColor;
+        base.BorderRightColor = other.BorderRightColor;
+        base.BorderBottomColor = other.BorderBottomColor;
+        base.BorderTopLeftRadius = other.BorderTopLeftRadius;
+        base.BorderTopRightRadius = other.BorderTopRightRadius;
+        base.BorderBottomLeftRadius = other.BorderBottomLeftRadius;
+        base.BorderBottomRightRadius = other.BorderBottomRightRadius;
 
-        Display = other.Display;
-        Overflow = other.Overflow;
-        Opacity = other.Opacity;
-        BackgroundColor = other.BackgroundColor;
+        // Visual properties inherited from BaseStyles - use base class
+        base.Display = other.Display;
+        base.Overflow = other.Overflow;
+        base.Opacity = other.Opacity;
+        base.BackgroundColor = other.BackgroundColor;
         BackgroundGradient = other.BackgroundGradient;
-        ZIndex = other.ZIndex;
-        PointerEvents = other.PointerEvents;
+        base.ZIndex = other.ZIndex;
+        base.PointerEvents = other.PointerEvents;
 
         Color = other.Color;
         FontSize = other.FontSize;
@@ -323,35 +311,12 @@ public class Styles : BaseStyles
             case "padding-right": PaddingRight = Length.Parse(value); return PaddingRight.HasValue;
             case "padding-bottom": PaddingBottom = Length.Parse(value); return PaddingBottom.HasValue;
 
-            // Border width
-            case "border-width": return SetBorderWidth(value);
-            case "border-left-width": BorderLeftWidth = Length.Parse(value); return BorderLeftWidth.HasValue;
-            case "border-top-width": BorderTopWidth = Length.Parse(value); return BorderTopWidth.HasValue;
-            case "border-right-width": BorderRightWidth = Length.Parse(value); return BorderRightWidth.HasValue;
-            case "border-bottom-width": BorderBottomWidth = Length.Parse(value); return BorderBottomWidth.HasValue;
-
-            // Border color
-            case "border-color": return SetBorderColor(value);
-            case "border-left-color": BorderLeftColor = UI.Color.Parse(value); return BorderLeftColor.HasValue;
-            case "border-top-color": BorderTopColor = UI.Color.Parse(value); return BorderTopColor.HasValue;
-            case "border-right-color": BorderRightColor = UI.Color.Parse(value); return BorderRightColor.HasValue;
-            case "border-bottom-color": BorderBottomColor = UI.Color.Parse(value); return BorderBottomColor.HasValue;
-
-            // Border radius
-            case "border-radius": return SetBorderRadius(value);
-            case "border-top-left-radius": BorderTopLeftRadius = Length.Parse(value); return BorderTopLeftRadius.HasValue;
-            case "border-top-right-radius": BorderTopRightRadius = Length.Parse(value); return BorderTopRightRadius.HasValue;
-            case "border-bottom-left-radius": BorderBottomLeftRadius = Length.Parse(value); return BorderBottomLeftRadius.HasValue;
-            case "border-bottom-right-radius": BorderBottomRightRadius = Length.Parse(value); return BorderBottomRightRadius.HasValue;
-
-            // Visual
-            case "display": return SetDisplay(value);
-            case "overflow": return SetOverflow(value);
-            case "opacity": return SetFloat(value, v => Opacity = v);
-            case "background-color": BackgroundColor = UI.Color.Parse(value); return BackgroundColor.HasValue;
+            // Note: Border properties (width, color, radius) are now handled by BaseStyles.Set()
+            // Note: Visual properties (display, opacity, background-color, z-index, pointer-events) 
+            // are now handled by BaseStyles.Set()
+            
+            // Background (for gradients)
             case "background": return SetBackground(value);
-            case "z-index": return SetInt(value, v => ZIndex = v);
-            case "pointer-events": return SetPointerEvents(value);
 
             // Text
             case "color": Color = UI.Color.Parse(value); return Color.HasValue;
