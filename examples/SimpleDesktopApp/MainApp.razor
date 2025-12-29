@@ -5,139 +5,116 @@
 @attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
 @attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
 @attribute [StyleSheet("MainApp.scss")]
+@inherits Window
 
-<div class="main-app">
-    <div class="controls-demo-window">
-        <!-- Main Window with test controls -->
-        <div class="main-window window">
-            <div class="titlebar">
-                <div class="titleelements">
-                    <div class="titlelabel">Controls Demo - @currentTheme</div>
-                    <div class="titlespacer"></div>
-                    <button class="control closebutton" @onclick="@(() => Console.WriteLine("Close clicked"))">×</button>
+<root title="Controls Demo - @currentTheme" hasminimise="true" hasmaximise="true" hasclose="true" width="600" height="700">
+    <h2>Sandbox.UI Controls Demo</h2>
+    
+    <!-- Button tests -->
+    <section class="demo-section">
+        <h3>Buttons</h3>
+        <div class="button-group">
+            <button class="button" @onclick="@IncrementCounter">
+                <span class="button-text">Click Count: @clickCount</span>
+            </button>
+            <button class="button" @onclick="@OpenThemeSelector">
+                <span class="button-text">🎨 Open Theme Selector</span>
+            </button>
+            <button class="button disabled">
+                <span class="button-text">Disabled Button</span>
+            </button>
+        </div>
+    </section>
+    
+    <!-- Checkbox tests -->
+    <section class="demo-section">
+        <h3>Checkboxes</h3>
+        <div class="checkbox-group">
+            <div class="checkbox @(checkbox1 ? "checked" : "")" @onclick="@(() => checkbox1 = !checkbox1)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
                 </div>
-                <div class="titlebackground"></div>
+                <label>Enable Feature A</label>
             </div>
-            
-            <div class="window-content">
-                <h2>Sandbox.UI Controls Demo</h2>
-                
-                <!-- Button tests -->
-                <section class="demo-section">
-                    <h3>Buttons</h3>
-                    <div class="button-group">
-                        <button class="button" @onclick="@IncrementCounter">
-                            <span class="button-text">Click Count: @clickCount</span>
-                        </button>
-                        <button class="button" @onclick="@OpenThemeSelector">
-                            <span class="button-text">🎨 Open Theme Selector</span>
-                        </button>
-                        <button class="button disabled">
-                            <span class="button-text">Disabled Button</span>
-                        </button>
-                    </div>
-                </section>
-                
-                <!-- Checkbox tests -->
-                <section class="demo-section">
-                    <h3>Checkboxes</h3>
-                    <div class="checkbox-group">
-                        <div class="checkbox @(checkbox1 ? "checked" : "")" @onclick="@(() => checkbox1 = !checkbox1)">
-                            <div class="checkpanel">
-                                <label class="checklabel">a</label>
-                            </div>
-                            <label>Enable Feature A</label>
-                        </div>
-                        <div class="checkbox @(checkbox2 ? "checked" : "")" @onclick="@(() => checkbox2 = !checkbox2)">
-                            <div class="checkpanel">
-                                <label class="checklabel">a</label>
-                            </div>
-                            <label>Enable Feature B</label>
-                        </div>
-                    </div>
-                </section>
-                
-                <!-- Radio button tests -->
-                <section class="demo-section">
-                    <h3>Radio Buttons</h3>
-                    <div class="radiobuttons">
-                        <div class="radiobutton @(selectedOption == 1 ? "checked" : "")" @onclick="@(() => selectedOption = 1)">
-                            <div class="checkpanel">
-                                <label class="checklabel">a</label>
-                            </div>
-                            <label>Option 1</label>
-                        </div>
-                        <div class="radiobutton @(selectedOption == 2 ? "checked" : "")" @onclick="@(() => selectedOption = 2)">
-                            <div class="checkpanel">
-                                <label class="checklabel">a</label>
-                            </div>
-                            <label>Option 2</label>
-                        </div>
-                        <div class="radiobutton @(selectedOption == 3 ? "checked" : "")" @onclick="@(() => selectedOption = 3)">
-                            <div class="checkpanel">
-                                <label class="checklabel">a</label>
-                            </div>
-                            <label>Option 3</label>
-                        </div>
-                    </div>
-                    <p>Selected: Option @selectedOption</p>
-                </section>
-                
-                <!-- Group box test -->
-                <section class="demo-section">
-                    <div class="groupbox">
-                        <label class="groupbox-title">Settings Group</label>
-                        <div class="groupbox-content">
-                            <p>This is a grouped section of controls</p>
-                            <div class="checkbox @(groupCheckbox ? "checked" : "")" @onclick="@(() => groupCheckbox = !groupCheckbox)">
-                                <div class="checkpanel">
-                                    <label class="checklabel">a</label>
-                                </div>
-                                <label>Enable Advanced Options</label>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+            <div class="checkbox @(checkbox2 ? "checked" : "")" @onclick="@(() => checkbox2 = !checkbox2)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
+                </div>
+                <label>Enable Feature B</label>
             </div>
         </div>
-        
-        <!-- Theme Selector Window (shown when opened) -->
-        @if (showThemeSelector)
-        {
-            <div class="theme-selector-window window" style="position: absolute; left: 100px; top: 100px; width: 500px;">
-                <div class="titlebar">
-                    <div class="titleelements">
-                        <div class="titlelabel">XGUI Theme Selector</div>
-                        <div class="titlespacer"></div>
-                        <button class="control closebutton" @onclick="@CloseThemeSelector">×</button>
-                    </div>
-                    <div class="titlebackground"></div>
+    </section>
+    
+    <!-- Radio button tests -->
+    <section class="demo-section">
+        <h3>Radio Buttons</h3>
+        <div class="radiobuttons">
+            <div class="radiobutton @(selectedOption == 1 ? "checked" : "")" @onclick="@(() => selectedOption = 1)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
                 </div>
-                
-                <div class="window-content">
-                    <h3>Select Theme</h3>
-                    <p>Choose a theme to apply globally to all windows:</p>
-                    
-                    <div class="theme-list">
-                        @foreach (var theme in GetAvailableThemes())
-                        {
-                            <div class="theme-item @(currentTheme == theme.Name ? "selected" : "")" 
-                                 @onclick="@(() => ApplyTheme(theme))">
-                                <strong>@theme.Name</strong>
-                                <p>@theme.Description</p>
-                            </div>
-                        }
+                <label>Option 1</label>
+            </div>
+            <div class="radiobutton @(selectedOption == 2 ? "checked" : "")" @onclick="@(() => selectedOption = 2)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
+                </div>
+                <label>Option 2</label>
+            </div>
+            <div class="radiobutton @(selectedOption == 3 ? "checked" : "")" @onclick="@(() => selectedOption = 3)">
+                <div class="checkpanel">
+                    <label class="checklabel">a</label>
+                </div>
+                <label>Option 3</label>
+            </div>
+        </div>
+        <p>Selected: Option @selectedOption</p>
+    </section>
+    
+    <!-- Group box test -->
+    <section class="demo-section">
+        <div class="groupbox">
+            <label class="groupbox-title">Settings Group</label>
+            <div class="groupbox-content">
+                <p>This is a grouped section of controls</p>
+                <div class="checkbox @(groupCheckbox ? "checked" : "")" @onclick="@(() => groupCheckbox = !groupCheckbox)">
+                    <div class="checkpanel">
+                        <label class="checklabel">a</label>
                     </div>
-                    
-                    <div class="theme-info">
-                        <p><strong>Current Theme:</strong> @currentTheme</p>
-                        <p><em>Note: Theme switching is shown visually. Full dynamic theme reload would require StyleSheet.Remove/Add API implementation.</em></p>
-                    </div>
+                    <label>Enable Advanced Options</label>
                 </div>
             </div>
-        }
-    </div>
-</div>
+        </div>
+    </section>
+    
+    <!-- Theme Selector (inline for now) -->
+    @if (showThemeSelector)
+    {
+        <section class="demo-section theme-selector-section">
+            <h3>XGUI Theme Selector</h3>
+            <button class="button" @onclick="@CloseThemeSelector">
+                <span class="button-text">✖ Close Selector</span>
+            </button>
+            <p>Choose a theme to apply globally:</p>
+            
+            <div class="theme-list">
+                @foreach (var theme in GetAvailableThemes())
+                {
+                    <div class="theme-item @(currentTheme == theme.Name ? "selected" : "")" 
+                         @onclick="@(() => ApplyTheme(theme))">
+                        <strong>@theme.Name</strong>
+                        <p>@theme.Description</p>
+                    </div>
+                }
+            </div>
+            
+            <div class="theme-info">
+                <p><strong>Current Theme:</strong> @currentTheme</p>
+                <p><em>Note: Full dynamic theme reload would require StyleSheet.Remove/Add API.</em></p>
+            </div>
+        </section>
+    }
+</root>
 
 @code {
     private int clickCount = 0;
@@ -206,9 +183,12 @@
     
     protected override void OnAfterTreeRender(bool firstTime)
     {
+        base.OnAfterTreeRender(firstTime);
+        
         if (firstTime)
         {
-            Console.WriteLine("MainApp initialized - Controls Demo with XGUI theme: " + currentTheme);
+            Console.WriteLine($"MainApp initialized as Window - Controls Demo with XGUI theme: {currentTheme}");
+            Console.WriteLine($"Window properties: Title='{Title}', HasMinimise={HasMinimise}, HasMaximise={HasMaximise}, HasClose={HasClose}");
         }
     }
 }
