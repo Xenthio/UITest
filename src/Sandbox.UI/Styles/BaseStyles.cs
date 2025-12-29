@@ -98,7 +98,7 @@ public abstract partial class BaseStyles : ICloneable
 				set( OverflowMode.Visible );
 				return true;
 			default:
-				Log.Warning( $"Unhandled overflow property: {value}" );
+				Console.WriteLine( $"Unhandled overflow property: {value}" );
 				return false;
 		}
 	}

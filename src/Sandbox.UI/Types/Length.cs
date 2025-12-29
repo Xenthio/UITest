@@ -177,6 +177,21 @@ public struct Length
 
         return new Length(number, unit);
     }
+    
+    /// <summary>
+    /// Try to parse a CSS length string
+    /// </summary>
+    public static bool TryParse(string value, out Length result)
+    {
+        var parsed = Parse(value);
+        if (parsed.HasValue)
+        {
+            result = parsed.Value;
+            return true;
+        }
+        result = default;
+        return false;
+    }
 }
 
 public enum LengthUnit

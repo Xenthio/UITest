@@ -1,3 +1,4 @@
+using System.Numerics;
 ﻿using System;
 using System.Collections.Immutable;
 using System.Numerics;
@@ -24,9 +25,9 @@ namespace Sandbox.UI
 				Matrix m = Matrix.Identity;
 				if ( e.Type == EntryType.Perspective )
 				{
-					m *= Matrix4x4.CreateTranslation( new Vector3( perspectiveOrigin.x, perspectiveOrigin.y, 0.0f ) );
+					m *= Matrix4x4.CreateTranslation( new Vector3( perspectiveOrigin.X, perspectiveOrigin.Y, 0.0f ) );
 					m *= e.ToMatrix( width, height );
-					m *= Matrix4x4.CreateTranslation( new Vector3( -perspectiveOrigin.x, -perspectiveOrigin.y, 0.0f ) );
+					m *= Matrix4x4.CreateTranslation( new Vector3( -perspectiveOrigin.X, -perspectiveOrigin.Y, 0.0f ) );
 				}
 				else
 				{
@@ -154,7 +155,7 @@ namespace Sandbox.UI
 			return true;
 		}
 
-		public bool AddRotation( Vector3 angles ) => AddRotation( angles.x, angles.y, angles.z );
+		public bool AddRotation( Vector3 angles ) => AddRotation( angles.X, angles.Y, angles.Z );
 
 		public bool AddMatrix3D( Matrix matrix )
 		{
@@ -298,8 +299,8 @@ namespace Sandbox.UI
 					Type = a.Type,
 					Data = data,
 					Matrix = MatrixHelpers.Lerp( a.Matrix, b.Matrix, delta ),
-					X = Length.Lerp( a.X, b.X, delta, dimensions.x ) ?? b.X,
-					Y = Length.Lerp( a.Y, b.Y, delta, dimensions.y ) ?? b.Y,
+					X = Length.Lerp( a.X, b.X, delta, dimensions.X ) ?? b.X,
+					Y = Length.Lerp( a.Y, b.Y, delta, dimensions.Y ) ?? b.Y,
 					Z = Length.Lerp( a.Z, b.Z, delta ) ?? b.Z,
 				};
 			}
@@ -325,8 +326,8 @@ namespace Sandbox.UI
 
 					case EntryType.Skew:
 						{
-							var ax = MathF.Tan( Data.x.DegreeToRadian() );
-							var ay = MathF.Tan( Data.y.DegreeToRadian() );
+							var ax = MathF.Tan( Data.X.DegreeToRadian() );
+							var ay = MathF.Tan( Data.Y.DegreeToRadian() );
 
 							return Matrix.CreateMatrix3D( [
 								1.0f, ay, 0.0f, 0.0f,

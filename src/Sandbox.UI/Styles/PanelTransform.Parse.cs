@@ -1,3 +1,4 @@
+using System.Numerics;
 ﻿
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -202,17 +203,17 @@ namespace Sandbox.UI
 
 			if ( p.TryReadFloat( out var x ) )
 			{
-				val.x = x;
-				val.y = x;
+				val.X = x;
+				val.Y = x;
 			}
 
 			p = p.SkipWhitespaceAndNewlines();
 
 			if ( p.TryReadFloat( out var y ) )
-				val.y = y;
+				val.Y = y;
 
 			if ( is3d && p.TryReadFloat( out var z ) )
-				val.z = z;
+				val.Z = z;
 
 			return val;
 		}

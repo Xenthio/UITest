@@ -39,6 +39,46 @@ public static class StyleHelpers
 	}
 	
 	/// <summary>
+	/// Parse rotation value (handles deg, rad, grad, turn units)
+	/// </summary>
+	public static float RotationDegrees(string value)
+	{
+		value = value.Trim().ToLowerInvariant();
+		
+		if (value.EndsWith("deg"))
+		{
+			if (float.TryParse(value.Substring(0, value.Length - 3), System.Globalization.NumberStyles.Float,
+				System.Globalization.CultureInfo.InvariantCulture, out var deg))
+				return deg;
+		}
+		else if (value.EndsWith("rad"))
+		{
+			if (float.TryParse(value.Substring(0, value.Length - 3), System.Globalization.NumberStyles.Float,
+				System.Globalization.CultureInfo.InvariantCulture, out var rad))
+				return rad * 180f / MathF.PI;
+		}
+		else if (value.EndsWith("grad"))
+		{
+			if (float.TryParse(value.Substring(0, value.Length - 4), System.Globalization.NumberStyles.Float,
+				System.Globalization.CultureInfo.InvariantCulture, out var grad))
+				return grad * 0.9f;
+		}
+		else if (value.EndsWith("turn"))
+		{
+			if (float.TryParse(value.Substring(0, value.Length - 4), System.Globalization.NumberStyles.Float,
+				System.Globalization.CultureInfo.InvariantCulture, out var turn))
+				return turn * 360f;
+		}
+		else if (float.TryParse(value, System.Globalization.NumberStyles.Float,
+			System.Globalization.CultureInfo.InvariantCulture, out var num))
+		{
+			return num;
+		}
+		
+		return 0f;
+	}
+	
+	/// <summary>
 	/// Trim quotes from a string value
 	/// </summary>
 	public static string TrimQuoted(this string value, bool alsotrim = true)

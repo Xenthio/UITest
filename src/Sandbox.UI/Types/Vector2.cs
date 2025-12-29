@@ -27,6 +27,10 @@ public struct Vector2
     public static bool operator !=(Vector2 a, Vector2 b) => !(a == b);
 
     public static implicit operator Vector2(float value) => new(value, value);
+    
+    // Conversion to/from System.Numerics.Vector2
+    public static implicit operator System.Numerics.Vector2(Vector2 v) => new(v.x, v.y);
+    public static implicit operator Vector2(System.Numerics.Vector2 v) => new(v.X, v.Y);
 
     public bool IsNearZeroLength => Math.Abs(x) < 0.0001f && Math.Abs(y) < 0.0001f;
 
