@@ -80,6 +80,10 @@ namespace Sandbox.UI
 				// Handle flex shorthand
 				case "flex":
 					return SetFlex( value );
+
+				// Handle font-smooth with never/always aliases
+				case "font-smooth":
+					return SetFontSmooth( value );
 			}
 
 			return base.Set( property, value );
@@ -284,6 +288,37 @@ namespace Sandbox.UI
 			}
 
 			return true;
+		}
+
+		/// <summary>
+		/// Parse font-smooth values including never/always aliases
+		/// Based on s&box's font-smooth handling
+		/// </summary>
+		private bool SetFontSmooth( string value )
+		{
+			switch ( value )
+			{
+				case "never":
+				case "none":
+					FontSmooth = UI.FontSmooth.None;
+					return true;
+
+				case "always":
+				case "antialiased":
+					FontSmooth = UI.FontSmooth.Antialiased;
+					return true;
+
+				case "subpixel-antialiased":
+					FontSmooth = UI.FontSmooth.SubpixelAntialiased;
+					return true;
+
+				case "auto":
+					FontSmooth = UI.FontSmooth.Auto;
+					return true;
+
+				default:
+					return false;
+			}
 		}
 	}
 }

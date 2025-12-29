@@ -350,6 +350,7 @@ public class SkiaPanelRenderer : IPanelRenderer
         var fontSize = style.FontSize?.GetPixels(16f) ?? 16f;
         var fontFamily = style.FontFamily ?? "Arial";
         var fontStyle = ToSKFontStyle(style.FontWeight ?? 400);
+        var fontSmooth = style.FontSmooth ?? FontSmooth.Auto;
         
         // Get or create cached typeface
         var typeface = GetCachedTypeface(fontFamily, fontStyle);
@@ -358,10 +359,11 @@ public class SkiaPanelRenderer : IPanelRenderer
         {
             Color = ToSKColor(textColor, opacity),
             TextSize = fontSize,
-            IsAntialias = true,
-            SubpixelText = true,
-            // Note: LcdRenderText is not used as it can cause rendering issues when
-            // the background changes or when rendering to offscreen textures
+            IsAntialias = fontSmooth != FontSmooth.None,
+            SubpixelText = fontSmooth != FontSmooth.None,
+            // Note: LcdRenderText can cause rendering issues when the background changes 
+            // or when rendering to offscreen textures, so only enable for subpixel antialiasing
+            LcdRenderText = fontSmooth == FontSmooth.SubpixelAntialiased,
             Typeface = typeface
         };
 

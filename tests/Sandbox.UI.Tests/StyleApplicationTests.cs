@@ -392,4 +392,54 @@ public class StyleApplicationTests
         Assert.NotNull(panel.ComputedStyle.FlexBasis);
         Assert.Equal(LengthUnit.Auto, panel.ComputedStyle.FlexBasis.Value.Unit);
     }
+
+    [Fact]
+    public void Panel_FontSmooth_ParsesAliases()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // Test font-smooth: never (maps to None)
+        var css = @"
+            * {
+                font-smooth: never;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert
+        Assert.NotNull(panel.ComputedStyle);
+        Assert.Equal(FontSmooth.None, panel.ComputedStyle.FontSmooth);
+    }
+
+    [Fact]
+    public void Panel_FontSmooth_ParsesAlwaysAlias()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // Test font-smooth: always (maps to Antialiased)
+        var css = @"
+            * {
+                font-smooth: always;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert
+        Assert.NotNull(panel.ComputedStyle);
+        Assert.Equal(FontSmooth.Antialiased, panel.ComputedStyle.FontSmooth);
+    }
 }
