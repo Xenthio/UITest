@@ -3,8 +3,9 @@ namespace Sandbox.UI;
 /// <summary>
 /// Style property container - holds CSS property values.
 /// Based on s&box's Styles class from engine/Sandbox.Engine/Systems/UI/Styles/
+/// Inherits from BaseStyles to get all ~200+ CSS properties from BaseStyles.Generated.cs
 /// </summary>
-public class Styles
+public class Styles : BaseStyles
 {
     internal Dictionary<string, IStyleBlock.StyleProperty> RawValues = new Dictionary<string, IStyleBlock.StyleProperty>( StringComparer.OrdinalIgnoreCase );
 
@@ -83,6 +84,26 @@ public class Styles
 
     // Aspect ratio
     public float? AspectRatio { get; set; }
+
+    /// <summary>
+    /// Implement abstract Dirty() method from BaseStyles.
+    /// Called when any CSS properties are changed.
+    /// </summary>
+    public override void Dirty()
+    {
+        // Mark panels using this style as dirty for re-rendering
+        MarkPanelsDirty();
+    }
+
+    /// <summary>
+    /// Implement abstract Clone() method from ICloneable
+    /// </summary>
+    public object Clone()
+    {
+        var clone = new Styles();
+        clone.From(this);
+        return clone;
+    }
 
     /// <summary>
     /// Apply cascading properties from parent styles
@@ -246,10 +267,17 @@ public class Styles
     }
 
     /// <summary>
-    /// Set a CSS property by name
+    /// Set a CSS property by name.
+    /// First tries BaseStyles.Set() for all properties from BaseStyles.Generated.cs,
+    /// then falls back to legacy property handling for backwards compatibility.
     /// </summary>
-    public virtual bool Set(string property, string value)
+    public override bool Set(string property, string value)
     {
+        // Try BaseStyles first - this handles ~200+ CSS properties from BaseStyles.Generated.cs
+        if (base.Set(property, value))
+            return true;
+
+        // Fall back to legacy handling for any remaining properties
         property = property.Trim().ToLowerInvariant();
         value = value.Trim();
 
