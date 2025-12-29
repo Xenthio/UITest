@@ -129,4 +129,38 @@ public class StyleApplicationTests
         Assert.NotNull(panel.ComputedStyle.AlignItems);
         Assert.NotNull(panel.ComputedStyle.Opacity);
     }
+
+    [Fact]
+    public void Panel_RgbaWith255Alpha_NormalizesAlphaCorrectly()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // XGUI stylesheets use rgba(76,88,68,255) with alpha as 255 instead of 1.0
+        var css = @"
+            * {
+                background-color: rgba(76,88,68,255);
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert - Alpha should be normalized to 1.0 (255/255)
+        Assert.NotNull(panel.ComputedStyle);
+        Assert.NotNull(panel.ComputedStyle.BackgroundColor);
+        var color = panel.ComputedStyle.BackgroundColor.Value;
+        
+        // Check RGB values are normalized from 0-255 to 0-1 range
+        Assert.Equal(76f / 255f, color.r, precision: 3);
+        Assert.Equal(88f / 255f, color.g, precision: 3);
+        Assert.Equal(68f / 255f, color.b, precision: 3);
+        
+        // Check alpha is normalized from 255 to 1.0
+        Assert.Equal(1.0f, color.a, precision: 3);
+    }
 }
