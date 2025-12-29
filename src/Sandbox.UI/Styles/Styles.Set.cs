@@ -43,6 +43,22 @@ namespace Sandbox.UI
 						BorderWidth = borderWidth;
 						return borderWidth.HasValue;
 					}
+
+				// Handle padding shorthand
+				case "padding":
+					return SetBoxModel( value, 
+						t => PaddingTop = t,
+						r => PaddingRight = r,
+						b => PaddingBottom = b,
+						l => PaddingLeft = l );
+
+				// Handle margin shorthand
+				case "margin":
+					return SetBoxModel( value,
+						t => MarginTop = t,
+						r => MarginRight = r,
+						b => MarginBottom = b,
+						l => MarginLeft = l );
 			}
 
 			return base.Set( property, value );
@@ -94,6 +110,68 @@ namespace Sandbox.UI
 			}
 
 			return true;
+		}
+
+		/// <summary>
+		/// Parse box model shorthand syntax (padding/margin): "5px" or "5px 10px" or "5px 10px 15px 20px"
+		/// CSS standard: 1 value = all sides, 2 values = vertical horizontal, 
+		///               3 values = top horizontal bottom, 4 values = top right bottom left
+		/// </summary>
+		private bool SetBoxModel( string value, 
+			System.Action<Length?> setTop, 
+			System.Action<Length?> setRight,
+			System.Action<Length?> setBottom, 
+			System.Action<Length?> setLeft )
+		{
+			var parts = value.Split( new[] { ' ', ',' }, System.StringSplitOptions.RemoveEmptyEntries );
+
+			if ( parts.Length == 0 )
+				return false;
+
+			// Parse all parts as lengths
+			var lengths = new System.Collections.Generic.List<Length?>();
+			foreach ( var part in parts )
+			{
+				var lengthValue = Length.Parse( part );
+				if ( !lengthValue.HasValue )
+					return false; // Invalid value
+				lengths.Add( lengthValue );
+			}
+
+			// Apply based on count
+			switch ( lengths.Count )
+			{
+				case 1: // All sides
+					setTop( lengths[0] );
+					setRight( lengths[0] );
+					setBottom( lengths[0] );
+					setLeft( lengths[0] );
+					return true;
+
+				case 2: // Vertical, Horizontal
+					setTop( lengths[0] );
+					setBottom( lengths[0] );
+					setRight( lengths[1] );
+					setLeft( lengths[1] );
+					return true;
+
+				case 3: // Top, Horizontal, Bottom
+					setTop( lengths[0] );
+					setRight( lengths[1] );
+					setLeft( lengths[1] );
+					setBottom( lengths[2] );
+					return true;
+
+				case 4: // Top, Right, Bottom, Left
+					setTop( lengths[0] );
+					setRight( lengths[1] );
+					setBottom( lengths[2] );
+					setLeft( lengths[3] );
+					return true;
+
+				default:
+					return false;
+			}
 		}
 	}
 }

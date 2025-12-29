@@ -241,4 +241,49 @@ public class StyleApplicationTests
         Assert.NotNull(panel.ComputedStyle.BorderRightColor);
         Assert.NotNull(panel.ComputedStyle.BorderBottomColor);
     }
+
+    [Fact]
+    public void Panel_PaddingMarginShorthand_ParsesCorrectly()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // Test padding and margin shorthands with different value counts
+        var css = @"
+            * {
+                padding: 5px;
+                margin: 10px 20px;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert
+        Assert.NotNull(panel.ComputedStyle);
+        
+        // Check padding (1 value = all sides)
+        Assert.NotNull(panel.ComputedStyle.PaddingTop);
+        Assert.Equal(5f, panel.ComputedStyle.PaddingTop.Value.Value);
+        Assert.NotNull(panel.ComputedStyle.PaddingRight);
+        Assert.Equal(5f, panel.ComputedStyle.PaddingRight.Value.Value);
+        Assert.NotNull(panel.ComputedStyle.PaddingBottom);
+        Assert.Equal(5f, panel.ComputedStyle.PaddingBottom.Value.Value);
+        Assert.NotNull(panel.ComputedStyle.PaddingLeft);
+        Assert.Equal(5f, panel.ComputedStyle.PaddingLeft.Value.Value);
+        
+        // Check margin (2 values = vertical horizontal)
+        Assert.NotNull(panel.ComputedStyle.MarginTop);
+        Assert.Equal(10f, panel.ComputedStyle.MarginTop.Value.Value);
+        Assert.NotNull(panel.ComputedStyle.MarginRight);
+        Assert.Equal(20f, panel.ComputedStyle.MarginRight.Value.Value);
+        Assert.NotNull(panel.ComputedStyle.MarginBottom);
+        Assert.Equal(10f, panel.ComputedStyle.MarginBottom.Value.Value);
+        Assert.NotNull(panel.ComputedStyle.MarginLeft);
+        Assert.Equal(20f, panel.ComputedStyle.MarginLeft.Value.Value);
+    }
 }
