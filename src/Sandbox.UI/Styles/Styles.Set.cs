@@ -12,7 +12,7 @@ namespace Sandbox.UI
 			if ( property == "color" )
 				property = "font-color";
 
-			// Handle border shorthand properties
+			// Handle border shorthand properties and other common CSS properties
 			switch ( property )
 			{
 				case "border":
@@ -59,6 +59,27 @@ namespace Sandbox.UI
 						r => MarginRight = r,
 						b => MarginBottom = b,
 						l => MarginLeft = l );
+
+				// Handle alignment properties
+				case "align-content":
+					AlignContent = GetAlign( value );
+					return AlignContent.HasValue;
+
+				case "align-self":
+					AlignSelf = GetAlign( value );
+					return AlignSelf.HasValue;
+
+				case "align-items":
+					AlignItems = GetAlign( value );
+					return AlignItems.HasValue;
+
+				// Handle gap shorthand (row-gap column-gap)
+				case "gap":
+					return SetGap( value );
+
+				// Handle flex shorthand
+				case "flex":
+					return SetFlex( value );
 			}
 
 			return base.Set( property, value );
@@ -172,6 +193,97 @@ namespace Sandbox.UI
 				default:
 					return false;
 			}
+		}
+
+		/// <summary>
+		/// Parse alignment values for align-items, align-self, align-content
+		/// Based on s&box's GetAlign implementation
+		/// </summary>
+		private Align? GetAlign( string value )
+		{
+			switch ( value )
+			{
+				case "auto": return Align.Auto;
+				case "flex-end": return Align.FlexEnd;
+				case "flex-start": return Align.FlexStart;
+				case "center": return Align.Center;
+				case "stretch": return Align.Stretch;
+				case "space-between": return Align.SpaceBetween;
+				case "space-around": return Align.SpaceAround;
+				case "space-evenly": return Align.SpaceEvenly;
+				case "baseline": return Align.Baseline;
+				default:
+					return null;
+			}
+		}
+
+		/// <summary>
+		/// Parse gap shorthand: "10px" (both row and column) or "10px 20px" (row column)
+		/// Based on s&box's SetGap implementation
+		/// </summary>
+		private bool SetGap( string value )
+		{
+			var parts = value.Split( new[] { ' ', ',' }, System.StringSplitOptions.RemoveEmptyEntries );
+
+			if ( parts.Length == 0 )
+				return false;
+
+			var gap = Length.Parse( parts[0] );
+			if ( !gap.HasValue )
+				return false;
+
+			RowGap = gap;
+			ColumnGap = gap;
+
+			if ( parts.Length > 1 )
+			{
+				var colGap = Length.Parse( parts[1] );
+				if ( colGap.HasValue )
+					ColumnGap = colGap;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse flex shorthand: "1" (flex-grow) or "1 0" (grow shrink) or "1 0 auto" (grow shrink basis)
+		/// Based on s&box's SetFlex implementation
+		/// </summary>
+		private bool SetFlex( string value )
+		{
+			var parts = value.Split( new[] { ' ', ',' }, System.StringSplitOptions.RemoveEmptyEntries );
+
+			if ( parts.Length == 0 )
+				return false;
+
+			// First value is flex-grow
+			if ( float.TryParse( parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var grow ) )
+			{
+				FlexGrow = grow;
+			}
+			else
+			{
+				return false;
+			}
+
+			// Second value is flex-shrink
+			if ( parts.Length > 1 )
+			{
+				if ( float.TryParse( parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var shrink ) )
+				{
+					FlexShrink = shrink;
+				}
+			}
+
+			// Third value is flex-basis
+			if ( parts.Length > 2 )
+			{
+				var basis = Length.Parse( parts[2] );
+				if ( basis.HasValue )
+					FlexBasis = basis;
+			}
+
+			return true;
 		}
 	}
 }

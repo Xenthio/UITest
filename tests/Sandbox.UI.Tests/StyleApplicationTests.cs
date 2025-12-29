@@ -286,4 +286,110 @@ public class StyleApplicationTests
         Assert.NotNull(panel.ComputedStyle.MarginLeft);
         Assert.Equal(20f, panel.ComputedStyle.MarginLeft.Value.Value);
     }
+
+    [Fact]
+    public void Panel_AlignmentProperties_ParsesCorrectly()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // Test alignment properties
+        var css = @"
+            * {
+                align-items: center;
+                align-self: flex-end;
+                align-content: space-between;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert
+        Assert.NotNull(panel.ComputedStyle);
+        
+        // Check align-items
+        Assert.NotNull(panel.ComputedStyle.AlignItems);
+        Assert.Equal(Align.Center, panel.ComputedStyle.AlignItems.Value);
+        
+        // Check align-self
+        Assert.NotNull(panel.ComputedStyle.AlignSelf);
+        Assert.Equal(Align.FlexEnd, panel.ComputedStyle.AlignSelf.Value);
+        
+        // Check align-content
+        Assert.NotNull(panel.ComputedStyle.AlignContent);
+        Assert.Equal(Align.SpaceBetween, panel.ComputedStyle.AlignContent.Value);
+    }
+
+    [Fact]
+    public void Panel_GapShorthand_ParsesCorrectly()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // Test gap shorthand (row-gap column-gap)
+        var css = @"
+            * {
+                gap: 10px 20px;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert
+        Assert.NotNull(panel.ComputedStyle);
+        
+        // Check row-gap
+        Assert.NotNull(panel.ComputedStyle.RowGap);
+        Assert.Equal(10f, panel.ComputedStyle.RowGap.Value.Value);
+        
+        // Check column-gap
+        Assert.NotNull(panel.ComputedStyle.ColumnGap);
+        Assert.Equal(20f, panel.ComputedStyle.ColumnGap.Value.Value);
+    }
+
+    [Fact]
+    public void Panel_FlexShorthand_ParsesCorrectly()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // Test flex shorthand (grow shrink basis)
+        var css = @"
+            * {
+                flex: 1 0 auto;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert
+        Assert.NotNull(panel.ComputedStyle);
+        
+        // Check flex-grow
+        Assert.NotNull(panel.ComputedStyle.FlexGrow);
+        Assert.Equal(1f, panel.ComputedStyle.FlexGrow.Value);
+        
+        // Check flex-shrink
+        Assert.NotNull(panel.ComputedStyle.FlexShrink);
+        Assert.Equal(0f, panel.ComputedStyle.FlexShrink.Value);
+        
+        // Check flex-basis (auto)
+        Assert.NotNull(panel.ComputedStyle.FlexBasis);
+        Assert.Equal(LengthUnit.Auto, panel.ComputedStyle.FlexBasis.Value.Unit);
+    }
 }
