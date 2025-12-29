@@ -74,7 +74,7 @@ public struct Shadow
 			OffsetY = OffsetY.LerpTo( shadow.OffsetY, delta, false ),
 			Blur = Blur.LerpTo( shadow.Blur, delta, false ),
 			Spread = Spread.LerpTo( shadow.Spread, delta, false ),
-			Color = Color.Lerp( Color, shadow.Color, delta ),
+			Color = ColorExtensions.Lerp( Color, shadow.Color, delta ),
 		};
 
 		return s;

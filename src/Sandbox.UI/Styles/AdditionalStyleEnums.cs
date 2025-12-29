@@ -68,9 +68,10 @@ LineThrough = 4
 /// </summary>
 public enum FontStyle
 {
-Normal = 0,
-Italic = 1,
-Oblique = 2
+None = 0,
+Normal = 1,
+Italic = 2,
+Oblique = 3
 }
 
 /// <summary>
@@ -100,8 +101,9 @@ MatchSource = 2
 /// </summary>
 public enum MaskScope
 {
-Panel = 0,
-Parent = 1
+Default = 0,
+Panel = 1,
+Parent = 2
 }
 
 /// <summary>
@@ -123,7 +125,8 @@ Round = 5
 public enum BorderImageFill
 {
 None = 0,
-Fill = 1
+Fill = 1,
+Unfilled = 2
 }
 
 /// <summary>
@@ -146,7 +149,8 @@ Auto = 0,
 Smooth = 1,
 HighQuality = 2,
 CrispEdges = 3,
-Pixelated = 4
+Pixelated = 4,
+Anisotropic = 5
 }
 
 /// <summary>

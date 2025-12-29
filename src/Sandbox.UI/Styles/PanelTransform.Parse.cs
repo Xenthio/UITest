@@ -97,7 +97,7 @@ namespace Sandbox.UI
 			matrix3d[13] = matrix[5];
 			matrix3d[15] = 1.0f;
 
-			return AddMatrix3D( Matrix.CreateMatrix3D( matrix3d ) );
+			return AddMatrix3D( MatrixHelpers.CreateMatrix3D( matrix3d ) );
 		}
 
 		private bool ParseMatrix3D( string val )
@@ -113,7 +113,7 @@ namespace Sandbox.UI
 				p = p.SkipWhitespaceAndNewlines( "," );
 			}
 
-			return AddMatrix3D( Matrix.CreateMatrix3D( matrix ) );
+			return AddMatrix3D( MatrixHelpers.CreateMatrix3D( matrix ) );
 		}
 
 		private bool Set( string key, string val )
@@ -214,7 +214,7 @@ namespace Sandbox.UI
 			if ( is3d && p.TryReadFloat( out var z ) )
 				val.z = z;
 
-			return new Vector3( val );
+			return val;
 		}
 	}
 }

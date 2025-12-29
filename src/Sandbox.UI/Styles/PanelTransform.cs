@@ -24,9 +24,9 @@ namespace Sandbox.UI
 				Matrix m = Matrix.Identity;
 				if ( e.Type == EntryType.Perspective )
 				{
-					m *= Matrix.CreateTranslation( new Vector3( perspectiveOrigin, 0.0f ) );
+					m *= Matrix4x4.CreateTranslation( new Vector3( perspectiveOrigin.x, perspectiveOrigin.y, 0.0f ) );
 					m *= e.ToMatrix( width, height );
-					m *= Matrix.CreateTranslation( new Vector3( -perspectiveOrigin, 0.0f ) );
+					m *= Matrix4x4.CreateTranslation( new Vector3( -perspectiveOrigin.x, -perspectiveOrigin.y, 0.0f ) );
 				}
 				else
 				{
@@ -273,14 +273,14 @@ namespace Sandbox.UI
 			internal static Entry Lerp( Entry a, Entry b, float delta )
 			{
 				var data = a.Type == EntryType.Rotation || a.Type == EntryType.Skew ?
-					Angles.Lerp( new Angles( a.Data ), new Angles( b.Data ), delta ).AsVector3() :
-					Vector3.Lerp( a.Data, b.Data, delta, false );
+					Angles.Lerp( new Angles( a.Data.X, a.Data.Y, a.Data.Z ), new Angles( b.Data.X, b.Data.Y, b.Data.Z ), delta ).AsVector3() :
+					Vector3.Lerp( a.Data, b.Data, delta );
 
 				return new Entry
 				{
 					Type = a.Type,
 					Data = data,
-					Matrix = Matrix.Lerp( a.Matrix, b.Matrix, delta ),
+					Matrix = MatrixHelpers.Lerp( a.Matrix, b.Matrix, delta ),
 					X = Length.Lerp( a.X, b.X, delta ) ?? b.X,
 					Y = Length.Lerp( a.Y, b.Y, delta ) ?? b.Y,
 					Z = Length.Lerp( a.Z, b.Z, delta ) ?? b.Z,
@@ -297,7 +297,7 @@ namespace Sandbox.UI
 				{
 					Type = a.Type,
 					Data = data,
-					Matrix = Matrix.Lerp( a.Matrix, b.Matrix, delta ),
+					Matrix = MatrixHelpers.Lerp( a.Matrix, b.Matrix, delta ),
 					X = Length.Lerp( a.X, b.X, delta, dimensions.x ) ?? b.X,
 					Y = Length.Lerp( a.Y, b.Y, delta, dimensions.y ) ?? b.Y,
 					Z = Length.Lerp( a.Z, b.Z, delta ) ?? b.Z,
