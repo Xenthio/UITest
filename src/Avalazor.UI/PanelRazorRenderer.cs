@@ -340,7 +340,7 @@ public class PanelRazorRenderer
                         panel.Style.BackgroundColor = ParseColor(value);
                         break;
                     case "color":
-                        panel.Style.Color = ParseColor(value);
+                        panel.Style.FontColor = ParseColor(value);
                         break;
                     case "width":
                         panel.Style.Width = ParseLength(value);

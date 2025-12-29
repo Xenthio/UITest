@@ -192,9 +192,9 @@ public class StyleSheetTests
         var result = styles.Set("color", "#ff0000");
 
         Assert.True(result);
-        Assert.Equal(1f, styles.Color?.r);
-        Assert.Equal(0f, styles.Color?.g);
-        Assert.Equal(0f, styles.Color?.b);
+        Assert.Equal(1f, styles.FontColor?.r);
+        Assert.Equal(0f, styles.FontColor?.g);
+        Assert.Equal(0f, styles.FontColor?.b);
     }
 
     [Fact]
@@ -204,7 +204,7 @@ public class StyleSheetTests
         var result = styles.Set("color", "red");
 
         Assert.True(result);
-        Assert.Equal(Color.Red, styles.Color);
+        Assert.Equal(Color.Red, styles.FontColor);
     }
 
     [Fact]
