@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A simple button panel.
 /// Based on s&box's Button.
 /// </summary>
+[Library("button")]
 public class Button : Panel
 {
     /// <summary>

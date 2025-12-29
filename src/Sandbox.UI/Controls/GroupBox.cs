@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A panel with a title and border, useful for grouping related controls.
 /// Based on XGUI-3's GroupBox.
 /// </summary>
+[Library("groupbox")]
 public class GroupBox : Panel
 {
     /// <summary>

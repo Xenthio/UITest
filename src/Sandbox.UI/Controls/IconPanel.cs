@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A panel containing an icon, typically a material icon.
 /// Based on s&box's IconPanel.
 /// </summary>
+[Library("iconpanel"), Alias("icon")]
 public class IconPanel : Label
 {
     public IconPanel()

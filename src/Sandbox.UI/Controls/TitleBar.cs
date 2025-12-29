@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A title bar for windows with draggable area and control buttons.
 /// Based on XGUI-3's TitleBar.
 /// </summary>
+[Library("titlebar")]
 public class TitleBar : Panel
 {
     /// <summary>

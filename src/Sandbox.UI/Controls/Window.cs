@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A window panel with title bar, dragging, resizing, and window controls.
 /// Based on XGUI-3's Window implementation.
 /// </summary>
+[Library("window")]
 public class Window : Panel
 {
     /// <summary>

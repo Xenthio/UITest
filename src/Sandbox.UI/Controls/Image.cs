@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A generic box that displays a given texture within itself.
 /// Based on s&box's Image from engine/Sandbox.Engine/Systems/UI/Controls/Image.cs
 /// </summary>
+[Library("image"), Alias("img")]
 public partial class Image : Panel
 {
     /// <summary>

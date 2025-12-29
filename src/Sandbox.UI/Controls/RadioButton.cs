@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A radio button control that works as part of a RadioButtons group.
 /// Based on XGUI-3's RadioButton.
 /// </summary>
+[Library("radiobutton"), Alias("radio")]
 public class RadioButton : Panel
 {
     /// <summary>

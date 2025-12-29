@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A checkbox control.
 /// Based on XGUI-3's CheckBox.
 /// </summary>
+[Library("checkbox"), Alias("check")]
 public class CheckBox : Panel
 {
     /// <summary>

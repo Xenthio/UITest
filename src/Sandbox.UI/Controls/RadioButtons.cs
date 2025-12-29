@@ -4,6 +4,7 @@ namespace Sandbox.UI;
 /// A container for RadioButton controls that manages mutual exclusion.
 /// Based on XGUI-3's RadioButtons.
 /// </summary>
+[Library("radiobuttons")]
 public class RadioButtons : Panel
 {
     /// <summary>

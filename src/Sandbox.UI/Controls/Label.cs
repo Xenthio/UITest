@@ -6,6 +6,7 @@ namespace Sandbox.UI;
 /// A generic text label. Can be made editable.
 /// Based on s&box's Label from engine/Sandbox.Engine/Systems/UI/Controls/Label.cs
 /// </summary>
+[Library("label")]
 public partial class Label : Panel
 {
     /// <summary>
