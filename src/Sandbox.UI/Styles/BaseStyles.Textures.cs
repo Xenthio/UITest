@@ -5,9 +5,9 @@ namespace Sandbox.UI
 {
 	public abstract partial class BaseStyles
 	{
-		internal Lazy<Texture> _backgroundImage;
-		internal Lazy<Texture> _maskImage;
-		internal Lazy<Texture> _borderImageSource;
+		internal Lazy<Texture>? _backgroundImage;
+		internal Lazy<Texture>? _maskImage;
+		internal Lazy<Texture>? _borderImageSource;
 
 		public Texture BackgroundImage
 		{

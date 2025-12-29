@@ -12,6 +12,23 @@ public partial class Styles : BaseStyles
 internal Dictionary<string, IStyleBlock.StyleProperty> RawValues = new Dictionary<string, IStyleBlock.StyleProperty>( StringComparer.OrdinalIgnoreCase );
 internal GradientInfo? TextGradient;
 
+// Additional properties not in BaseStyles.Generated.cs
+// These were part of the original Avalazor.UI implementation
+
+/// <summary>
+/// Background gradient (for linear-gradient, radial-gradient CSS functions)
+/// </summary>
+public GradientInfo? BackgroundGradient { get; set; }
+
+/// <summary>
+/// Text color - alias for FontColor for backwards compatibility with SkiaPanelRenderer
+/// </summary>
+public Color? Color
+{
+get => FontColor;
+set => FontColor = value;
+}
+
 /// <summary>
 /// Whether this style sheet has any transitions that would need to be run.
 /// </summary>

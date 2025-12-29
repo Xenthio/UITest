@@ -387,7 +387,7 @@ public class SkiaPanelRenderer : IPanelRenderer
 
         // Check if text needs wrapping (only if width is constrained)
         var textWidth2 = paint.MeasureText(label.Text);
-        var shouldWrap = rect.Width > 0 && textWidth2 > rect.Width && style.WordWrap != WordWrap.NoWrap;
+        var shouldWrap = rect.Width > 0 && textWidth2 > rect.Width && style.WhiteSpace != WhiteSpace.NoWrap;
 
         if (shouldWrap)
         {
