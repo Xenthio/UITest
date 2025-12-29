@@ -124,9 +124,10 @@ Round = 5
 /// </summary>
 public enum BorderImageFill
 {
-None = 0,
-Fill = 1,
-Unfilled = 2
+	None = 0,
+	Fill = 1,
+	Unfilled = 2,
+	Filled = 1 // Alias for Fill
 }
 
 /// <summary>
@@ -192,14 +193,19 @@ Luminosity = 15
 /// </summary>
 public class Texture
 {
-public string Path { get; set; } = string.Empty;
-public int Width { get; set; }
-public int Height { get; set; }
+	public string Path { get; set; } = string.Empty;
+	public int Width { get; set; }
+	public int Height { get; set; }
 
-public static Texture Load(string path)
-{
-return new Texture { Path = path };
-}
+	/// <summary>
+	/// Invalid/placeholder texture
+	/// </summary>
+	public static Texture Invalid => new Texture { Path = "invalid" };
+
+	public static Texture Load(string path)
+	{
+		return new Texture { Path = path };
+	}
 }
 
 /// <summary>

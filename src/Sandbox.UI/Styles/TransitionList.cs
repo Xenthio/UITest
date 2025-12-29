@@ -8,3 +8,15 @@ public class TransitionList
 {
 	public List<object> List { get; set; } = new List<object>();
 }
+
+/// <summary>
+/// Stub class for transition descriptors
+/// </summary>
+public class TransitionDesc
+{
+	public static TransitionList? ParseProperty(string property, string value, TransitionList? existing)
+	{
+		// Stub implementation - transitions not fully supported yet
+		return existing ?? new TransitionList();
+	}
+}
