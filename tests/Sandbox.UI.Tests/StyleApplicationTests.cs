@@ -195,4 +195,50 @@ public class StyleApplicationTests
         Assert.Equal(1.0f, color.b, precision: 3);
         Assert.Equal(1.0f, color.a, precision: 3);
     }
+
+    [Fact]
+    public void Panel_BorderShorthand_ParsesCorrectly()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // Test border shorthand: "1px solid #808080"
+        var css = @"
+            * {
+                border: 1px solid #808080;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert
+        Assert.NotNull(panel.ComputedStyle);
+        
+        // Check border width
+        Assert.NotNull(panel.ComputedStyle.BorderLeftWidth);
+        Assert.Equal(1f, panel.ComputedStyle.BorderLeftWidth.Value.Value);
+        Assert.NotNull(panel.ComputedStyle.BorderTopWidth);
+        Assert.Equal(1f, panel.ComputedStyle.BorderTopWidth.Value.Value);
+        Assert.NotNull(panel.ComputedStyle.BorderRightWidth);
+        Assert.Equal(1f, panel.ComputedStyle.BorderRightWidth.Value.Value);
+        Assert.NotNull(panel.ComputedStyle.BorderBottomWidth);
+        Assert.Equal(1f, panel.ComputedStyle.BorderBottomWidth.Value.Value);
+        
+        // Check border color (gray #808080 = rgb(128,128,128))
+        Assert.NotNull(panel.ComputedStyle.BorderLeftColor);
+        var leftColor = panel.ComputedStyle.BorderLeftColor.Value;
+        Assert.Equal(128f / 255f, leftColor.r, precision: 3);
+        Assert.Equal(128f / 255f, leftColor.g, precision: 3);
+        Assert.Equal(128f / 255f, leftColor.b, precision: 3);
+        
+        // All borders should have the same color
+        Assert.NotNull(panel.ComputedStyle.BorderTopColor);
+        Assert.NotNull(panel.ComputedStyle.BorderRightColor);
+        Assert.NotNull(panel.ComputedStyle.BorderBottomColor);
+    }
 }
