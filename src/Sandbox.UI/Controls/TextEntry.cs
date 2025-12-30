@@ -25,7 +25,7 @@ public class TextEntry : Panel
         set
         {
             _disabled = value;
-            // Note: AcceptsFocus not implemented in base Panel yet
+            AcceptsFocus = !value;
             SetClass("disabled", value);
         }
     }
@@ -108,7 +108,7 @@ public class TextEntry : Panel
         AddClass("textentry");
         ElementName = "textentry";
 
-        // TODO: AcceptsFocus = true; (not available yet in base Panel)
+        AcceptsFocus = true;
         Label = AddChild(new Label("", "content-label"));
     }
 
