@@ -4,113 +4,195 @@ namespace Sandbox.UI;
 /// Per-panel style handler. Manages inline styles and computed styles.
 /// Based on s&box's PanelStyle from engine/Sandbox.Engine/Systems/UI/PanelStyle.cs
 /// </summary>
-public class PanelStyle : Styles
+public sealed class PanelStyle : Styles
 {
-    private readonly Panel _panel;
-    private bool _isDirty = true;
-    private bool _broadphaseDirty = true;
+    readonly Panel panel;
 
-    public PanelStyle(Panel panel)
+    internal readonly Styles Cached = new Styles();
+    internal readonly Styles Final = new Styles();
+
+    /// <summary>
+    /// This could be a local variable if we wanted to create a new class every time
+    /// </summary>
+    List<StyleSelector>? activeRules;
+
+    /// <summary>
+    /// Store the last active rules so we can compare them when they change
+    /// </summary>
+    internal List<StyleSelector>? LastActiveRules;
+
+    /// <summary>
+    /// Cache of the active rules that are applied
+    /// </summary>
+    int ActiveRulesGuid;
+
+    private bool isDirty = true;
+    bool rulesChanged = true;
+
+    public override void Dirty() => isDirty = true;
+    internal bool IsDirty => isDirty;
+
+    internal PanelStyle(Panel panel)
     {
-        _panel = panel;
+        this.panel = panel;
     }
 
     /// <summary>
-    /// Whether the style needs recalculation
+    /// Should be called when a stylesheet in our bundle has changed.
     /// </summary>
-    public bool IsDirty
+    internal void UnderlyingStyleHasChanged()
     {
-        get => _isDirty;
-        set
+        ActiveRulesGuid = -1;
+    }
+
+    /// <summary>
+    /// All these styles could possibly apply to us.
+    /// </summary>
+    StyleBlock[]? StyleBlocks;
+
+    /// <summary>
+    /// A hash of the things that are checked in the broadphase.
+    /// </summary>
+    int broadPhaseHash = 0;
+
+    /// <summary>
+    /// Called when a stylesheet has been added or removed from ourselves or one of
+    /// our ancestor panels - because under that condition we need to rebuild our
+    /// broadphase.
+    /// </summary>
+    internal void InvalidateBroadphase()
+    {
+        if (StyleBlocks == null)
+            return;
+
+        StyleBlocks = null;
+
+        foreach (var child in panel.Children)
         {
-            if (value && !_isDirty)
+            child.Style.InvalidateBroadphase();
+        }
+    }
+
+    void BuildApplicableBlocks()
+    {
+        StyleBlocks = panel.AllStyleSheets
+                                    .SelectMany(x => x.Nodes)
+                                    .Where(x => x.TestBroadphase(panel))
+                                    .ToArray();
+    }
+
+    /// <summary>
+    /// Called from the root panel in a thread. We replace activeRules with all of the rules that
+    /// we want applied and return true if the rules changed.
+    /// </summary>
+    internal bool BuildRulesInThread()
+    {
+        activeRules?.Clear();
+
+        var hash = HashCode.Combine(panel.Id, panel.ElementName, panel.Classes);
+        if (StyleBlocks == null || hash != broadPhaseHash)
+        {
+            BuildApplicableBlocks();
+        }
+        broadPhaseHash = hash;
+
+        if (StyleBlocks != null)
+        {
+            var winningSelectors = StyleBlocks
+                .Select(c => c.Test(panel))
+                .Where(winningSelector => winningSelector != null)
+                .ToList();
+
+            if (winningSelectors.Count > 0)
             {
-                _isDirty = true;
-                _panel.SetNeedsPreLayout();
+                activeRules ??= new();
+                activeRules.AddRange(winningSelectors!);
             }
-            _isDirty = value;
         }
-    }
 
-    /// <summary>
-    /// Mark this style as dirty, requiring recalculation
-    /// </summary>
-    public new void Dirty()
-    {
-        IsDirty = true;
-    }
-
-    /// <summary>
-    /// Invalidate the broadphase cache for style matching
-    /// </summary>
-    public void InvalidateBroadphase()
-    {
-        _broadphaseDirty = true;
-        _panel?.StyleSelectorsChanged(true, true);
-    }
-
-    /// <summary>
-    /// Build the final computed styles for this panel
-    /// </summary>
-    public Styles BuildFinal(ref LayoutCascade cascade, out bool changed)
-    {
-        changed = _isDirty;
-        _isDirty = false;
-
-        // Create a new Styles instance with our values
-        var result = new Styles();
-
-        // Apply stylesheet rules from all stylesheets
-        ApplyStyleSheetRules(result);
-
-        // Apply our inline style properties (inline styles override stylesheet)
-        result.Add(this);
-
-        // Apply cascading from parent
-        cascade.ApplyCascading(result);
-
-        return result;
-    }
-
-    /// <summary>
-    /// Apply matching CSS rules from stylesheets
-    /// </summary>
-    private void ApplyStyleSheetRules(Styles result)
-    {
-        if (_panel == null) return;
-
-        var matchingRules = new List<(StyleSelector selector, StyleBlock block)>();
-
-        // Collect all matching rules from all stylesheets
-        foreach (var sheet in _panel.AllStyleSheets)
+        int ruleguid = 0;
+        if (activeRules != null)
         {
-            foreach (var block in sheet.Nodes)
+            activeRules.Sort(StyleOrderer.Instance);
+
+            foreach (var entry in activeRules)
             {
-                var selector = block.Test(_panel);
-                if (selector != null)
-                {
-                    matchingRules.Add((selector, block));
-                }
+                ruleguid = HashCode.Combine(ruleguid, entry);
             }
         }
 
-        // Sort by specificity (score)
-        matchingRules.Sort((a, b) => a.selector.Score.CompareTo(b.selector.Score));
+        rulesChanged = rulesChanged || ruleguid != ActiveRulesGuid;
+        ActiveRulesGuid = ruleguid;
 
-        // Apply rules in order
-        foreach (var (selector, block) in matchingRules)
-        {
-            result.Add(block.Styles);
-        }
+        return rulesChanged;
     }
 
-    /// <summary>
-    /// Build style rules in a thread-safe manner (for parallel processing)
-    /// Returns true if rules changed
-    /// </summary>
-    public bool BuildRulesInThread()
+    internal bool BuildCached(ref LayoutCascade cascade)
     {
-        // Simplified implementation - just mark as needing rebuild
-        return _isDirty;
+        if (!isDirty && !cascade.SelectorChanged && !rulesChanged)
+            return false;
+
+        isDirty = false;
+
+        Cached.From(Styles.Default);
+
+        if (activeRules != null)
+        {
+            foreach (var entry in activeRules)
+            {
+                Cached.Add(entry.Block.Styles);
+            }
+        }
+
+        //
+        // Rules changed
+        //
+        if (rulesChanged)
+        {
+            rulesChanged = false;
+            cascade.SelectorChanged = true;
+
+            LastActiveRules ??= new();
+            activeRules ??= new();
+
+            LastActiveRules.Clear();
+            LastActiveRules.AddRange(activeRules);
+        }
+
+        Cached.Add(this);
+
+        // ApplyScale is simplified - removed for now
+        return true;
+    }
+
+    internal Styles BuildFinal(ref LayoutCascade cascade, out bool changed)
+    {
+        changed = BuildCached(ref cascade);
+
+        Final.From(Cached);
+        cascade.ApplyCascading(Final);
+        Final.FillDefaults();  // THIS IS THE KEY FIX!
+
+        return Final;
+    }
+
+    public override bool Set(string property, string value)
+    {
+        isDirty = true;
+
+        return base.Set(property, value);
+    }
+}
+
+internal class StyleOrderer : IComparer<StyleSelector>
+{
+    internal static readonly StyleOrderer Instance = new StyleOrderer();
+
+    public int Compare(StyleSelector? x, StyleSelector? y)
+    {
+        if (x == null && y == null) return 0;
+        if (x == null) return -1;
+        if (y == null) return 1;
+        return x.Score - y.Score;
     }
 }

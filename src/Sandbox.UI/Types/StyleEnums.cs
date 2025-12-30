@@ -70,6 +70,7 @@ public enum Align
     Baseline,
     SpaceBetween,
     SpaceAround,
+    SpaceEvenly,
 }
 
 /// <summary>

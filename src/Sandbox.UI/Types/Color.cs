@@ -127,6 +127,12 @@ public struct Color
             b /= 255f;
         }
 
+        // Alpha can also be in 0-255 range
+        if (a > 1)
+        {
+            a /= 255f;
+        }
+
         return new Color(r, g, b, a);
     }
 

@@ -5,14 +5,15 @@ namespace Sandbox.UI;
 /// </summary>
 public static class Rendering
 {
-/// <summary>
-/// Filter modes for texture/text rendering
-/// </summary>
-public enum FilterMode
-{
-None = 0,
-Bilinear = 1,
-Trilinear = 2,
-Point = 3
-}
+	/// <summary>
+	/// Filter modes for texture/text rendering
+	/// </summary>
+	public enum FilterMode
+	{
+		None = 0,
+		Bilinear = 1,
+		Trilinear = 2,
+		Point = 3,
+		Anisotropic = 4
+	}
 }
