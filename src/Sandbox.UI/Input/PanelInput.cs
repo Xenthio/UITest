@@ -146,14 +146,16 @@ internal class PanelInput
 
 		var inside = panel.IsInside(pos);
 
+		// pointer-events defaults to All when not set (null)
+		var pointerEvents = panel.ComputedStyle.PointerEvents ?? PointerEvents.All;
+
 		// DEBUG: Log hover checks
 		if (inside)
 		{
-			var pointerEvents = panel.ComputedStyle.PointerEvents;
 			Console.WriteLine($"CheckHover: {panel.GetType().Name} at {panel.Box.Rect} - inside=true, pointerEvents={pointerEvents}");
 		}
 
-		if (inside && panel.ComputedStyle.PointerEvents != PointerEvents.None)
+		if (inside && pointerEvents != PointerEvents.None)
 		{
 			current = panel;
 			found = true;
