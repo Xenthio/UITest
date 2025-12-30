@@ -36,10 +36,16 @@ public partial class RootPanel : Panel
     /// </summary>
     internal Vector2 MousePos;
 
+    /// <summary>
+    /// Input handler for this root panel
+    /// </summary>
+    internal PanelInput Input { get; private set; }
+
     public RootPanel()
     {
         Style.Width = Length.Percent(100);
         Style.Height = Length.Percent(100);
+        Input = new PanelInput();
     }
 
     public override void Delete(bool immediate = true)
@@ -193,6 +199,60 @@ public partial class RootPanel : Panel
     internal void SkipAllTransitions()
     {
         // Skip transitions implementation
+    }
+
+    /// <summary>
+    /// Update input for this root panel
+    /// </summary>
+    public void UpdateInput(Vector2 mousePosition, bool mouseIsActive)
+    {
+        Input.Tick(new[] { this }, mousePosition, mouseIsActive);
+        InputFocus.Tick();
+    }
+
+    /// <summary>
+    /// Process a button event (mouse or keyboard)
+    /// </summary>
+    public void ProcessButtonEvent(string button, bool pressed, KeyboardModifiers modifiers = KeyboardModifiers.None)
+    {
+        if (button.StartsWith("mouse"))
+        {
+            Input.AddMouseButton(button, pressed);
+        }
+        else
+        {
+            // Keyboard button event
+            var e = new ButtonEvent(button, pressed, modifiers);
+            var target = Input.Hovered ?? InputFocus.Current;
+            target?.OnButtonEvent(e);
+
+            if (pressed && InputFocus.Current != null)
+            {
+                InputFocus.Current.OnButtonTyped(e);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Process a character typed event
+    /// </summary>
+    public void ProcessCharTyped(char character)
+    {
+        InputFocus.Current?.OnKeyTyped(character);
+    }
+
+    /// <summary>
+    /// Process mouse wheel event
+    /// </summary>
+    public void ProcessMouseWheel(Vector2 delta, KeyboardModifiers modifiers = KeyboardModifiers.None)
+    {
+        // Windows apps translate vertical scroll to horizontal if shift is held
+        if (modifiers.HasFlag(KeyboardModifiers.Shift))
+        {
+            delta = new Vector2(-delta.y, 0);
+        }
+
+        Input.Hovered?.OnMouseWheel(delta);
     }
 
     /// <summary>
