@@ -13,5 +13,8 @@ class Program
         
         // Or use MainApp with text:
         Avalazor.UI.AvalazorApplication.RunPanel<XGUIPortTest>(title: "Avalazor - Desktop Razor with XGUI Themes");
+
+
+        Avalazor.UI.AvalazorApplication.RunPanel<About>();
     }
 }
