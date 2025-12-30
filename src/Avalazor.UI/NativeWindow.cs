@@ -1,9 +1,12 @@
 using Silk.NET.Windowing;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using Silk.NET.Input;
 using SkiaSharp;
 using Sandbox.UI;
 using Sandbox.UI.Skia;
+using SysVector2 = System.Numerics.Vector2;
+using UIVector2 = Sandbox.UI.Vector2;
 
 namespace Avalazor.UI;
 
@@ -27,6 +30,9 @@ public class NativeWindow : IDisposable
     private bool _needsLayout = true;
     private Vector2D<int> _lastSize;
     private bool _disposed = false;
+    private IInputContext? _input;
+    private IMouse? _mouse;
+    private IKeyboard? _keyboard;
 
     public RootPanel? RootPanel
     {
@@ -102,6 +108,29 @@ public class NativeWindow : IDisposable
 
         // Create render target
         CreateRenderTarget(_window.Size.X, _window.Size.Y);
+
+        // Initialize input handling
+        _input = _window.CreateInput();
+        
+        // Wire up mouse events
+        foreach (var mouse in _input.Mice)
+        {
+            _mouse = mouse;
+            _mouse.MouseDown += OnMouseDown;
+            _mouse.MouseUp += OnMouseUp;
+            _mouse.Scroll += OnMouseScroll;
+            break; // Use first mouse
+        }
+
+        // Wire up keyboard events
+        foreach (var keyboard in _input.Keyboards)
+        {
+            _keyboard = keyboard;
+            _keyboard.KeyDown += OnKeyDown;
+            _keyboard.KeyUp += OnKeyUp;
+            _keyboard.KeyChar += OnKeyChar;
+            break; // Use first keyboard
+        }
     }
 
     private unsafe void CreateRenderTarget(int width, int height)
@@ -154,6 +183,10 @@ public class NativeWindow : IDisposable
 
         // Set panel bounds to window size BEFORE invalidating layout
         _rootPanel.PanelBounds = new Rect(0, 0, currentSize.X, currentSize.Y);
+
+        // Update input for root panel
+        var mousePos = _mouse != null ? new UIVector2(_mouse.Position.X, _mouse.Position.Y) : UIVector2.Zero;
+        _rootPanel.UpdateInput(mousePos, _mouse != null);
 
         // Force full re-layout when size changes or panel is new
         if (_needsLayout)
@@ -264,8 +297,93 @@ public class NativeWindow : IDisposable
         _grGlInterface = null;
         _gl?.Dispose();
         _gl = null;
+        _input?.Dispose();
+        _input = null;
         
         _disposed = true;
+    }
+
+    private void OnMouseDown(IMouse mouse, MouseButton button)
+    {
+        if (_rootPanel == null) return;
+        
+        var buttonName = button switch
+        {
+            MouseButton.Left => "mouseleft",
+            MouseButton.Right => "mouseright",
+            MouseButton.Middle => "mousemiddle",
+            _ => $"mouse{(int)button}"
+        };
+
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessButtonEvent(buttonName, true, modifiers);
+    }
+
+    private void OnMouseUp(IMouse mouse, MouseButton button)
+    {
+        if (_rootPanel == null) return;
+        
+        var buttonName = button switch
+        {
+            MouseButton.Left => "mouseleft",
+            MouseButton.Right => "mouseright",
+            MouseButton.Middle => "mousemiddle",
+            _ => $"mouse{(int)button}"
+        };
+
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessButtonEvent(buttonName, false, modifiers);
+    }
+
+    private void OnMouseScroll(IMouse mouse, ScrollWheel scroll)
+    {
+        if (_rootPanel == null) return;
+        
+        var delta = new UIVector2(scroll.X, scroll.Y);
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessMouseWheel(delta, modifiers);
+    }
+
+    private void OnKeyDown(IKeyboard keyboard, Key key, int scancode)
+    {
+        if (_rootPanel == null) return;
+        
+        var buttonName = key.ToString().ToLower();
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessButtonEvent(buttonName, true, modifiers);
+    }
+
+    private void OnKeyUp(IKeyboard keyboard, Key key, int scancode)
+    {
+        if (_rootPanel == null) return;
+        
+        var buttonName = key.ToString().ToLower();
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessButtonEvent(buttonName, false, modifiers);
+    }
+
+    private void OnKeyChar(IKeyboard keyboard, char character)
+    {
+        if (_rootPanel == null) return;
+        _rootPanel.ProcessCharTyped(character);
+    }
+
+    private KeyboardModifiers GetKeyboardModifiers()
+    {
+        if (_keyboard == null) return KeyboardModifiers.None;
+
+        var modifiers = KeyboardModifiers.None;
+        
+        if (_keyboard.IsKeyPressed(Key.ShiftLeft) || _keyboard.IsKeyPressed(Key.ShiftRight))
+            modifiers |= KeyboardModifiers.Shift;
+            
+        if (_keyboard.IsKeyPressed(Key.ControlLeft) || _keyboard.IsKeyPressed(Key.ControlRight))
+            modifiers |= KeyboardModifiers.Ctrl;
+            
+        if (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight))
+            modifiers |= KeyboardModifiers.Alt;
+
+        return modifiers;
     }
 
     public void Dispose()
