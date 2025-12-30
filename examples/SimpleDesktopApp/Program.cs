@@ -7,11 +7,11 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        // Run the application with FlexboxTest to verify layout (colored divs)
-        // Switch to MainApp to test text rendering
-        // Avalazor.UI.AvalazorApplication.RunPanel<FlexboxTest>(title: "Avalazor - Flexbox Layout Test");
+        // Run the Panel Inspector Test to demonstrate the new inspector feature
+        Avalazor.UI.AvalazorApplication.RunPanel<PanelInspectorTest>(title: "Avalazor - Panel Inspector Demo");
         
-        // Or use MainApp with text:
-        Avalazor.UI.AvalazorApplication.RunPanel<XGUIPortTest>(title: "Avalazor - Desktop Razor with XGUI Themes");
+        // Other examples:
+        // Avalazor.UI.AvalazorApplication.RunPanel<FlexboxTest>(title: "Avalazor - Flexbox Layout Test");
+        // Avalazor.UI.AvalazorApplication.RunPanel<XGUIPortTest>(title: "Avalazor - Desktop Razor with XGUI Themes");
     }
 }

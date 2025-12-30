@@ -1,0 +1,48 @@
+@namespace SimpleDesktopApp
+@using Sandbox;
+@using Sandbox.UI;
+@attribute [StyleSheet( "/themes/XGUI/DefaultStyles/OliveGreen.scss" )]
+@inherits Window
+
+<root title="Panel Inspector Demo - Press F12" windowwidth="1200" windowheight="800" hasminimise="true" hasmaximise="true">
+	<div class="container" style="padding: 20px; flex-direction: column;">
+		<h1>Panel Inspector Demo</h1>
+		
+		<p>Press <strong>F12</strong> to open the Panel Inspector!</p>
+		
+		<div class="sample-content" style="padding: 20px; background-color: #f0f0f0; border-radius: 8px; margin-top: 20px;">
+			<h2>Sample UI Elements</h2>
+			
+			<button id="sample-button" class="primary">Primary Button</button>
+			<button class="secondary">Secondary Button</button>
+			
+			<tabcontrol style="margin-top: 20px;">
+				<tab tabName="general" slot="tab" tabtext="General">
+					<div style="padding: 10px;">
+						<label>This is a label</label>
+						<textentry placeholder="Enter text here"></textentry>
+						<check>Checkbox option</check>
+					</div>
+				</tab>
+				<tab tabName="settings" slot="tab" tabtext="Settings">
+					<div style="padding: 10px;">
+						<slider min=0 max=100 mintext="0" maxtext="100" step=5></slider>
+					</div>
+				</tab>
+			</tabcontrol>
+		</div>
+		
+		<div class="instructions" style="margin-top: 20px; padding: 15px; background-color: #e8f4f8; border-left: 4px solid #2196F3;">
+			<h3>How to use the Panel Inspector:</h3>
+			<ul>
+				<li><strong>Press F12</strong> to toggle the inspector windows</li>
+				<li>The Panel List window shows the hierarchy of all panels</li>
+				<li>Click on any panel in the tree to select it</li>
+				<li>The Style Inspector window shows all applied styles for the selected panel</li>
+				<li>You can toggle pseudo-classes (:hover, :active, :focus) to see how styles change</li>
+				<li>Click on style values to edit them in real-time</li>
+				<li>Use the save button to persist changes back to the source files</li>
+			</ul>
+		</div>
+	</div>
+</root>

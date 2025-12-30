@@ -215,6 +215,12 @@ public partial class RootPanel : Panel
     /// </summary>
     public void ProcessButtonEvent(string button, bool pressed, KeyboardModifiers modifiers = KeyboardModifiers.None)
     {
+        // Check for inspector hotkey first
+        if (PanelInspector.GlobalPanelInspector.ProcessButtonEvent(this, button, pressed, modifiers))
+        {
+            return; // Inspector handled the event
+        }
+
         if (button.StartsWith("mouse"))
         {
             Input.AddMouseButton(button, pressed);
