@@ -149,4 +149,36 @@ public partial class Panel
     /// Whether this panel is capturing the mouse cursor.
     /// </summary>
     public bool HasMouseCapture => MouseCapture == this;
+
+    /// <summary>
+    /// Get the panel at a specific screen position (used for inspector picking)
+    /// </summary>
+    public Panel? GetPanelAt(Vector2 position, bool checkVisible = true, bool checkPointerEvents = true)
+    {
+        if (checkVisible && !IsVisible)
+            return null;
+
+        if (checkPointerEvents && ComputedStyle?.PointerEvents == PointerEvents.None)
+            return null;
+
+        if (!IsInside(position))
+            return null;
+
+        // Check children first (reverse order for z-index)
+        if (_children != null)
+        {
+            for (int i = _children.Count - 1; i >= 0; i--)
+            {
+                var child = _children[i];
+                if (child != null)
+                {
+                    var result = child.GetPanelAt(position, checkVisible, checkPointerEvents);
+                    if (result != null)
+                        return result;
+                }
+            }
+        }
+
+        return this;
+    }
 }
