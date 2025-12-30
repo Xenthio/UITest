@@ -65,4 +65,20 @@ public static class MathX
 	{
 		return radians * (180f / MathF.PI);
 	}
+	
+	/// <summary>
+	/// Inverse linear interpolation - returns t value for a value between min and max
+	/// </summary>
+	public static float LerpInverse(float value, float min, float max, bool clamp = false)
+	{
+		if (Math.Abs(max - min) < float.Epsilon)
+			return 0f;
+			
+		var t = (value - min) / (max - min);
+		
+		if (clamp)
+			t = Math.Clamp(t, 0f, 1f);
+			
+		return t;
+	}
 }

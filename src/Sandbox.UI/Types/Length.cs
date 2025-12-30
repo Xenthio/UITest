@@ -129,6 +129,11 @@ public struct Length
     /// Get fraction value for percentages (0-1 range)
     /// </summary>
     public float GetFraction() => Unit == LengthUnit.Percentage ? Value / 100f : Value;
+    
+    /// <summary>
+    /// Create a length from a fraction (0-1 range) as percentage
+    /// </summary>
+    public static Length Fraction(float value) => new(value * 100f, LengthUnit.Percentage);
 
     /// <summary>
     /// Parse a CSS length string
