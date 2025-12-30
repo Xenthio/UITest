@@ -217,7 +217,7 @@ public partial class RootPanel : Panel
 
         foreach (var panel in styleRuleUpdates)
         {
-            if (!panel.IsValid) continue;
+            if (!panel.IsValid()) continue;
 
             if (panel.Style.BuildRulesInThread())
             {

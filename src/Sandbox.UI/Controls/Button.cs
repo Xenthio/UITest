@@ -160,7 +160,7 @@ public class Button : Panel
 
             IconPanel.Style.Display = DisplayMode.Flex;
             IconPanel.Text = value;
-            SetClass("has-icon", IconPanel.IsValid);
+            SetClass("has-icon", IconPanel.IsValid());
         }
     }
 

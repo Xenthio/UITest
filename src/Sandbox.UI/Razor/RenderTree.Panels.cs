@@ -69,58 +69,9 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 
 		var elementType = element.GetType();
 		var theirProperty = elementType.GetProperty(propertyName);
-		if (theirProperty == null)
+		if ( theirProperty == null )
 		{
-			Console.WriteLine($"{element} does not have property '{propertyName}'");
-			return;
-		}
-		var elementType = element.GetType();
-		var theirProperty = elementType.GetProperty(propertyName);
-		if (theirProperty == null)
-		{
-			Console.WriteLine($"{element} does not have property '{propertyName}'");
-			return;
-		}
-		var elementType = element.GetType();
-		var theirProperty = elementType.GetProperty(propertyName);
-		if (theirProperty == null)
-		{
-			Console.WriteLine($"{element} does not have property '{propertyName}'");
-			return;
-		}
-		var elementType = element.GetType();
-		var theirProperty = elementType.GetProperty(propertyName);
-		if (theirProperty == null)
-		{
-			Console.WriteLine($"{element} does not have property '{propertyName}'");
-			return;
-		}
-		var elementType = element.GetType();
-		var theirProperty = elementType.GetProperty(propertyName);
-		if (theirProperty == null)
-		{
-			Console.WriteLine($"{element} does not have property '{propertyName}'");
-			return;
-		}
-		var elementType = element.GetType();
-		var theirProperty = elementType.GetProperty(propertyName);
-		if (theirProperty == null)
-		{
-			Console.WriteLine($"{element} does not have property '{propertyName}'");
-			return;
-		}
-		var elementType = element.GetType();
-		var theirProperty = elementType.GetProperty(propertyName);
-		if (theirProperty == null)
-		{
-			Console.WriteLine($"{element} does not have property '{propertyName}'");
-			return;
-		}
-		var elementType = element.GetType();
-		var theirProperty = elementType.GetProperty(propertyName);
-		if (theirProperty == null)
-		{
-			Console.WriteLine($"{element} does not have property '{propertyName}'");
+			Log.Warning( $"{element} does not have property '{propertyName}'" );
 			return;
 		}
 

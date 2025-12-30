@@ -9,6 +9,9 @@ public sealed class SourceLocationAttribute : Attribute
     public string SourceFile { get; set; }
     public int SourceLine { get; set; }
     
+    // Alias for compatibility
+    public string FilePath => SourceFile;
+    
     public SourceLocationAttribute(string sourceFile = "", int sourceLine = 0)
     {
         SourceFile = sourceFile;

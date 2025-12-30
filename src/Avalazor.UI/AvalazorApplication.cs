@@ -32,13 +32,6 @@ public static class AvalazorApplication
             // Create the panel - Razor tree building is handled internally by Panel
             var panel = new T();
             
-            // Trigger the initial render tree build if the panel has Razor content
-            if (panel.HasRenderTree)
-            {
-                panel.InternalRenderTree();
-                panel.OnAfterTreeRender(true);
-            }
-            
             // If the panel is a Window, extract window properties
             if (panel is Sandbox.UI.Window window)
             {

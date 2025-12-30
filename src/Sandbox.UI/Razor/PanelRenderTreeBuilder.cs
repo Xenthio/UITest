@@ -258,7 +258,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 		var block = CurrentBlock;
 
 		// we should have a parent block for this to be happening!
-		Assert.NotNull( block );
+		if (block == null) throw new InvalidOperationException("Block cannot be null");
 
 		if ( block.ReferenceClearer != null )
 			return;

@@ -316,9 +316,30 @@ public partial class Panel : IDisposable, IStyleTarget
         // TODO: Implement event system
     }
     
+    public void AddEventListener(string eventName, Action handler)
+    {
+        // TODO: Implement event system
+    }
+    
     public void RemoveEventListener(string eventName, Action<PanelEvent> handler)
     {
         // TODO: Implement event system
+    }
+    
+    public void RemoveEventListener(string eventName)
+    {
+        // TODO: Implement event system
+    }
+    
+    // Template slot handling (stub for S&box compatibility)
+    public void OnTemplateSlot(Sandbox.Html.Node node, string? slotName, Panel panel)
+    {
+        // TODO: Implement template slots
+    }
+    
+    public void OnTemplateSlot(string slotName)
+    {
+        // TODO: Implement template slots
     }
     
     // Parameter change notification (stub for S&box compatibility)

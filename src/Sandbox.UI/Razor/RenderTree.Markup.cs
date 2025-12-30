@@ -29,11 +29,11 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 
 		// already created - these are static so won't ever need changing
 		// but make sure they haven't been deleted and make sure their child order is correct
-		if ( block.MarkupPanels != null && block.MarkupPanels.All( x => x.IsValid ) )
+		if ( block.MarkupPanels != null && block.MarkupPanels.All( x => x.IsValid() ) )
 		{
 			foreach ( var panel in block.MarkupPanels )
 			{
-				Assert.True( panel.Parent == parent );
+				if (panel.Parent != parent) throw new InvalidOperationException("Panel parent mismatch");
 				parent.SetChildIndex( panel, CurrentScope.ChildIndex );
 				CurrentScope.ChildIndex++;
 			}
@@ -111,7 +111,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 		if ( node.NodeType == Sandbox.Html.NodeType.Text )
 		{
 			// Don't bother with empty content
-			var content = textNode.InnerHtml;
+			var content = node.TextContent;
 			if ( string.IsNullOrWhiteSpace( content ) )
 				return null;
 

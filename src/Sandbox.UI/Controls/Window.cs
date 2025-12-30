@@ -259,7 +259,7 @@ public class Window : Panel
         }
 
         // Ensure title bar is first child
-        if (TitleBar != null && TitleBar.IsValid)
+        if (TitleBar != null && TitleBar.IsValid())
         {
             SetChildIndex(TitleBar, 0);
         }
