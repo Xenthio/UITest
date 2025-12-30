@@ -28,15 +28,15 @@ public class NativeWindow : IDisposable
         options.IsEventDriven = false;
 
         // 1. SELECT BACKEND AT COMPILE TIME
-#if WINDOWS
+//#if WINDOWS
         // On Windows, use D3D11 to fix resizing bugs
-        options.API = GraphicsAPI.None;
-        _backend = new D3D11Backend();
-#else
+        //options.API = GraphicsAPI.None;
+        //_backend = new D3D11Backend();
+//#else
         // On Linux/Mac, use OpenGL
         options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(3, 3));
         _backend = new OpenGLBackend();
-#endif
+//#endif
 
         _window = Silk.NET.Windowing.Window.Create(options);
 

@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<!-- <TargetFramework>net8.0-windows</TargetFramework> -->
-		<TargetFrameworks>net8.0-windows;net8.0</TargetFrameworks>
+		<TargetFramework>net8.0</TargetFramework>
 		<!-- Use -windows to ensure Skia/D3D compat -->
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
