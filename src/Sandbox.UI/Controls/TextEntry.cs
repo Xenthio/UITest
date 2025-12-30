@@ -192,4 +192,46 @@ public class TextEntry : Panel
 
         return Text;
     }
+
+    /// <summary>
+    /// Handle character input
+    /// </summary>
+    public override void OnKeyTyped(char k)
+    {
+        if (Disabled)
+            return;
+
+        // Handle backspace
+        if (k == '\b')
+        {
+            if (!string.IsNullOrEmpty(Text))
+            {
+                Text = Text.Substring(0, Text.Length - 1);
+                OnValueChanged();
+            }
+            return;
+        }
+
+        // Handle enter/return
+        if (k == '\n' || k == '\r')
+        {
+            if (!Multiline)
+            {
+                // Blur/unfocus would go here
+                return;
+            }
+        }
+
+        // Don't allow control characters (except newline for multiline)
+        if (char.IsControl(k) && k != '\n')
+            return;
+
+        // Check for numeric only
+        if (Numeric && !char.IsDigit(k) && k != '.' && k != '-')
+            return;
+
+        // Add character to text
+        Text += k;
+        OnValueChanged();
+    }
 }
