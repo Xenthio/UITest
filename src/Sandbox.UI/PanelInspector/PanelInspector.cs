@@ -22,11 +22,15 @@ public class PanelInspector
 	public void Open(RootPanel rootPanel)
 	{
 		targetRootPanel = rootPanel;
+		
+		Console.WriteLine("[PanelInspector] Opening inspector windows...");
 
 		// Create panel list window if it doesn't exist
 		if (panelListWindow == null || !panelListWindow.IsValid())
 		{
+			Console.WriteLine("[PanelInspector] Creating PanelListWindow...");
 			panelListWindow = new PanelListWindow();
+			panelListWindow.Parent = rootPanel; // Add to root panel!
 			panelListWindow.SetTargetRootPanel(rootPanel);
 			panelListWindow.PanelSelected += OnPanelSelected;
 			panelListWindow.PanelHovered += OnPanelHovered;
@@ -34,17 +38,23 @@ public class PanelInspector
 			// Position on left side
 			panelListWindow.Style.Left = 20;
 			panelListWindow.Style.Top = 20;
+			Console.WriteLine($"[PanelInspector] PanelListWindow created, IsValid={panelListWindow.IsValid()}");
 		}
 
 		// Create style inspector window if it doesn't exist
 		if (styleInspectorWindow == null || !styleInspectorWindow.IsValid())
 		{
+			Console.WriteLine("[PanelInspector] Creating StyleInspectorWindow...");
 			styleInspectorWindow = new StyleInspectorWindow();
+			styleInspectorWindow.Parent = rootPanel; // Add to root panel!
 			
 			// Position on right side, next to panel list
 			styleInspectorWindow.Style.Left = 440;
 			styleInspectorWindow.Style.Top = 20;
+			Console.WriteLine($"[PanelInspector] StyleInspectorWindow created, IsValid={styleInspectorWindow.IsValid()}");
 		}
+		
+		Console.WriteLine("[PanelInspector] Inspector windows opened successfully");
 	}
 
 	/// <summary>
