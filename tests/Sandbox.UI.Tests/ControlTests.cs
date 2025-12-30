@@ -174,4 +174,37 @@ public class ControlTests
         Assert.NotNull(checkbox);
         Assert.False(checkbox.Checked);
     }
+
+    [Fact]
+    public void TemplateSlot_BubblesUpToParent()
+    {
+        // Test that template slots bubble up to parent
+        var parent = new TestSlotPanel();
+        var child = new Panel();
+        child.Parent = parent;
+        
+        var node = Html.Node.Parse("<div>test</div>").ChildNodes.First();
+        child.OnTemplateSlot(node, "testslot", child);
+        
+        Assert.True(parent.SlotHandled);
+        Assert.Equal("testslot", parent.SlotName);
+        Assert.Equal(child, parent.SlotPanel);
+    }
+}
+
+/// <summary>
+/// Test panel that handles template slots
+/// </summary>
+class TestSlotPanel : Panel
+{
+    public bool SlotHandled { get; private set; }
+    public string SlotName { get; private set; }
+    public Panel SlotPanel { get; private set; }
+
+    public override void OnTemplateSlot(Html.Node node, string? slotName, Panel panel)
+    {
+        SlotHandled = true;
+        SlotName = slotName;
+        SlotPanel = panel;
+    }
 }

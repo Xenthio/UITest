@@ -340,15 +340,19 @@ public partial class Panel : IDisposable, IStyleTarget
         // TODO: Implement event system
     }
     
-    // Template slot handling (stub for S&box compatibility)
+    // Template slot handling for S&box compatibility
+    // When a child has slot="name", it gets passed to OnTemplateSlot on the parent
+    // which can handle it appropriately (e.g., TabControl handles slot="tab")
     public virtual void OnTemplateSlot(Sandbox.Html.Node node, string? slotName, Panel panel)
     {
-        // TODO: Implement template slots
+        // Bubble up to parent if we don't handle it
+        Parent?.OnTemplateSlot(node, slotName, panel);
     }
     
     public virtual void OnTemplateSlot(string slotName)
     {
-        // TODO: Implement template slots
+        // TODO: Implement parameter-based slot handling
+        // This could be used with [PanelSlot("slotname")] attributes on properties
     }
     
     // Parameter change notification (stub for S&box compatibility)
