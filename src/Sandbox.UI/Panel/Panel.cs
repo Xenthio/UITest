@@ -115,10 +115,6 @@ public partial class Panel : IDisposable, IStyleTarget
         StyleSheet = new StyleSheetCollection(this);
 
         ElementName = GetType().Name.ToLower();
-        
-        // Automatically add the element name as a CSS class (matches S&box behavior)
-        AddClass(ElementName);
-        
         Switch(PseudoClass.Empty, true);
 
         LoadStyleSheet();
