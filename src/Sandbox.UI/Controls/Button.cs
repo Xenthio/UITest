@@ -184,19 +184,6 @@ public class Button : Panel
         CreateEvent(new MousePanelEvent("onclick", this, "mouseleft"));
     }
 
-    /// <summary>
-    /// Handle mouse click - creates onclick event
-    /// </summary>
-    protected override void OnClick(MousePanelEvent e)
-    {
-        base.OnClick(e);
-        
-        if (!Disabled)
-        {
-            CreateEvent("onclick");
-        }
-    }
-
     public override void SetProperty(string name, string value)
     {
         switch (name)
