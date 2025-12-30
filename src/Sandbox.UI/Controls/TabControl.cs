@@ -64,7 +64,8 @@ public class TabControl : Panel
 
     public TabControl()
     {
-        AddClass("tabcontrol");
+        // ElementName is already set to "tabcontrol" by base constructor
+        // and automatically added as a CSS class
         ElementName = "tabcontrol";
 
         TabsContainer = AddChild(new Panel(this, "tabs"));
