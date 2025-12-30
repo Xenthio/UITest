@@ -96,7 +96,7 @@ public partial class Panel : IDisposable, IStyleTarget
     /// <summary>
     /// Whether this panel is valid and not deleted
     /// </summary>
-    public bool IsValid => YogaNode != null && !IsDeleted;
+    public bool IsValid() => YogaNode != null && !IsDeleted;
 
     /// <summary>
     /// Whether this panel is being deleted
@@ -306,6 +306,25 @@ public partial class Panel : IDisposable, IStyleTarget
     {
         Dispose();
     }
-
-    #endregion
+    // Source location tracking (for debugging Razor-generated panels)
+    public string? SourceFile { get; set; }
+    public int SourceLine { get; set; }
+    
+    // Event listener management (stub for S&box compatibility)
+    public void AddEventListener(string eventName, Action<PanelEvent> handler)
+    {
+        // TODO: Implement event system
+    }
+    
+    public void RemoveEventListener(string eventName, Action<PanelEvent> handler)
+    {
+        // TODO: Implement event system
+    }
+    
+    // Parameter change notification (stub for S&box compatibility)
+    public void ParametersChanged(bool firstTime)
+    {
+        // TODO: Implement parameter tracking
+    }
 }
+    #endregion

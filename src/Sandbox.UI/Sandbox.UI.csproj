@@ -31,5 +31,8 @@
       <Link>yoga.dll</Link>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.AspNetCore.Components\Microsoft.AspNetCore.Components.csproj" />
+  </ItemGroup>
 
 </Project>

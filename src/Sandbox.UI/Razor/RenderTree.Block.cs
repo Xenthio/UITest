@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Sandbox.UI.Reflection;
 
 namespace Sandbox.UI;
 
@@ -80,7 +81,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 			{
 				Panel panel = null;
 				if ( elementName == "div" || elementName == "p" || elementName == "span" ) panel ??= new Panel();
-				else panel = Game.TypeLibrary.Create<Panel>( elementName, false );
+				else panel = PanelFactory.Create(elementName);
 				panel ??= new Panel();
 				panel.ElementName = elementName;
 				panel.Parent = parent;

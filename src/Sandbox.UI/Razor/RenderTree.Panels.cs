@@ -67,12 +67,60 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 		if ( scope.Block.CheckCacheValue( HashCode.Combine( element, sequence, propertyName ), 1 ) )
 			return;
 
-		var tl = Game.TypeLibrary.GetType( element.GetType() );
-		if ( tl == null ) return;
-		var theirProperty = tl.GetProperty( propertyName );
-		if ( theirProperty == null )
+		var elementType = element.GetType();
+		var theirProperty = elementType.GetProperty(propertyName);
+		if (theirProperty == null)
 		{
-			Log.Warning( $"{element} does not have property '{propertyName}'" );
+			Console.WriteLine($"{element} does not have property '{propertyName}'");
+			return;
+		}
+		var elementType = element.GetType();
+		var theirProperty = elementType.GetProperty(propertyName);
+		if (theirProperty == null)
+		{
+			Console.WriteLine($"{element} does not have property '{propertyName}'");
+			return;
+		}
+		var elementType = element.GetType();
+		var theirProperty = elementType.GetProperty(propertyName);
+		if (theirProperty == null)
+		{
+			Console.WriteLine($"{element} does not have property '{propertyName}'");
+			return;
+		}
+		var elementType = element.GetType();
+		var theirProperty = elementType.GetProperty(propertyName);
+		if (theirProperty == null)
+		{
+			Console.WriteLine($"{element} does not have property '{propertyName}'");
+			return;
+		}
+		var elementType = element.GetType();
+		var theirProperty = elementType.GetProperty(propertyName);
+		if (theirProperty == null)
+		{
+			Console.WriteLine($"{element} does not have property '{propertyName}'");
+			return;
+		}
+		var elementType = element.GetType();
+		var theirProperty = elementType.GetProperty(propertyName);
+		if (theirProperty == null)
+		{
+			Console.WriteLine($"{element} does not have property '{propertyName}'");
+			return;
+		}
+		var elementType = element.GetType();
+		var theirProperty = elementType.GetProperty(propertyName);
+		if (theirProperty == null)
+		{
+			Console.WriteLine($"{element} does not have property '{propertyName}'");
+			return;
+		}
+		var elementType = element.GetType();
+		var theirProperty = elementType.GetProperty(propertyName);
+		if (theirProperty == null)
+		{
+			Console.WriteLine($"{element} does not have property '{propertyName}'");
 			return;
 		}
 

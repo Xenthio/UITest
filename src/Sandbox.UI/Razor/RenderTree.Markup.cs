@@ -1,4 +1,5 @@
 ﻿using Sandbox.Html;
+using Sandbox.UI.Reflection;
 
 namespace Sandbox.UI;
 
@@ -75,7 +76,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 	{
 		if ( node.NodeType == Sandbox.Html.NodeType.Element )
 		{
-			var panel = Game.TypeLibrary.Create<Panel>( node.Name, false ) ?? new Panel();
+			var panel = PanelFactory.Create(node.Name) ?? new Panel();
 			panel.ElementName = node.Name;
 			panel.Parent = parent;
 			panel.SourceFile = sourceFile;
@@ -107,7 +108,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 			return panel;
 		}
 
-		if ( node is TextNode textNode )
+		if ( node.NodeType == Sandbox.Html.NodeType.Text )
 		{
 			// Don't bother with empty content
 			var content = textNode.InnerHtml;
@@ -121,7 +122,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 			}
 			else
 			{
-				var panel = Game.TypeLibrary.Create<Panel>( "label", false ) ?? new Panel();
+				var panel = PanelFactory.Create("label") ?? new Panel();
 				panel.Parent = parent;
 				panel.SetContent( content );
 
