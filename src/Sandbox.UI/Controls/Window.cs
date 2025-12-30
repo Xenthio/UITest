@@ -225,7 +225,8 @@ public class Window : Panel
             if (WindowContent == null && ChildrenCount > 0)
             {
                 // Create content panel and move all current children into it
-                var contentPanel = new Panel(this, "window-content");
+                var contentPanel = new Panel();
+                contentPanel.AddClass("window-content");
                 var childrenToMove = Children.ToList();
                 
                 foreach (var child in childrenToMove)

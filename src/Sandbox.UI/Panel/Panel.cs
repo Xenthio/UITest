@@ -207,6 +207,15 @@ public partial class Panel : IDisposable, IStyleTarget
                 StyleSelectorsChanged(true, true);
             }
 
+            // Process Razor render tree if dirty
+            InternalTreeBinds();
+            if (razorTreeDirty && HasRenderTree)
+            {
+                bool firstTime = renderTree == null;
+                InternalRenderTree();
+                OnAfterTreeRender(firstTime);
+            }
+
             // Tick styles if dirty
             if (Style.IsDirty)
             {

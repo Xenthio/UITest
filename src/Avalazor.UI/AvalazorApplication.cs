@@ -29,7 +29,7 @@ public static class AvalazorApplication
             // Initialize PanelFactory to register all [Library] and [Alias] types
             PanelFactory.Initialize();
 
-            // Create the panel - Razor tree building is handled internally by Panel
+            // Create the panel
             var panel = new T();
             
             // If the panel is a Window, extract window properties
@@ -46,6 +46,9 @@ public static class AvalazorApplication
             // Wrap in RootPanel
             var rootPanel = new RootPanel();
             rootPanel.AddChild(panel);
+            
+            // Perform initial layout which will trigger Razor tree processing
+            rootPanel.Layout();
 
             Console.WriteLine($"Root panel created: {rootPanel != null}");
             Console.WriteLine($"Component type: {panel.GetType().Name}");
