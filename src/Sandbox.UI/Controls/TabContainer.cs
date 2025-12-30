@@ -229,9 +229,6 @@ public class TabContainer : Panel
                 Button.SetClass("active", value);
                 Page.SetClass("active", value);
                 Page.Style.Display = value ? DisplayMode.Flex : DisplayMode.None;
-                
-                // Mark layout as dirty to trigger redraw
-                Page.YogaNode?.MarkDirty();
             }
         }
     }
