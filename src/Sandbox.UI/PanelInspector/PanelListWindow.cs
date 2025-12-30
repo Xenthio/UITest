@@ -112,10 +112,11 @@ public class PanelListWindow : Window
 			SelectPanel(panel);
 		});
 
-		// Build children
+		// Build children - snapshot the collection first to avoid modification during enumeration
 		if (panel.ChildrenCount > 0)
 		{
-			foreach (var child in panel.Children)
+			var children = panel.Children.ToList(); // Create a snapshot
+			foreach (var child in children)
 			{
 				BuildPanelTree(child, container, depth + 1);
 			}
