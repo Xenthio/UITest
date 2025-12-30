@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 
 namespace Sandbox.UI;
@@ -44,6 +45,8 @@ public partial class RootPanel
         // Handle mouse button clicks
         if (button.StartsWith("mouse") && Hovered != null)
         {
+            Console.WriteLine($"Mouse {button} {(pressed ? "pressed" : "released")} on {Hovered.GetType().Name}");
+            
             if (pressed)
             {
                 // Set active panel on mouse down
@@ -60,6 +63,7 @@ public partial class RootPanel
                 // Trigger click event on mouse up if still over the same panel
                 if (Active == Hovered && Active is Button btn)
                 {
+                    Console.WriteLine($"Triggering Click() on button: {btn.ElementName}");
                     btn.Click();
                 }
                 
@@ -143,6 +147,11 @@ public partial class RootPanel
         }
 
         Hovered = panel;
+        
+        if (panel != null)
+        {
+            Console.WriteLine($"Hovering over: {panel.GetType().Name} at {panel.Box.Rect}");
+        }
 
         // Add hover to new panel
         if (Hovered != null)
