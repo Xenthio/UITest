@@ -76,6 +76,18 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 	{
 		if ( node.NodeType == Sandbox.Html.NodeType.Element )
 		{
+			// Skip HTML document structure elements (html, head, body) that AngleSharp adds
+			// These are wrapper elements created by the parser and not actual UI elements
+			if ( node.Name == "html" || node.Name == "head" || node.Name == "body" )
+			{
+				// Process children but don't create a panel for the wrapper itself
+				foreach ( var e in node.ChildNodes )
+				{
+					CreateNodeMarkup( e, parent );
+				}
+				return null;
+			}
+
 			var panel = PanelFactory.Create(node.Name) ?? new Panel();
 			panel.ElementName = node.Name;
 			panel.Parent = parent;
