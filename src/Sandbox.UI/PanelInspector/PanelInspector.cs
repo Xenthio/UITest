@@ -11,6 +11,19 @@ public class PanelInspector
 	private StyleInspectorWindow? styleInspectorWindow;
 	private RootPanel? targetRootPanel;
 
+	/// <summary>
+	/// Whether to open inspector windows in separate OS windows (true) or as overlays (false).
+	/// When true, requires WindowCreator to be set.
+	/// </summary>
+	public bool UseSeparateWindows { get; set; } = false;
+
+	/// <summary>
+	/// Callback to create a separate OS window for an inspector panel.
+	/// Required when UseSeparateWindows is true.
+	/// The callback should create a native window, add the panel to a RootPanel, and show it.
+	/// </summary>
+	public Action<Window, string>? WindowCreator { get; set; }
+
 	public PanelInspector()
 	{
 	}
@@ -23,14 +36,69 @@ public class PanelInspector
 	{
 		targetRootPanel = rootPanel;
 		
-		Console.WriteLine("[PanelInspector] Opening inspector windows...");
+		Console.WriteLine($"[PanelInspector] Opening inspector windows (UseSeparateWindows={UseSeparateWindows})...");
 
-		// Create panel list window if it doesn't exist
+		if (UseSeparateWindows)
+		{
+			if (WindowCreator == null)
+			{
+				Console.WriteLine("[PanelInspector] ERROR: UseSeparateWindows is true but WindowCreator is not set!");
+				Console.WriteLine("[PanelInspector] Falling back to overlay mode.");
+				OpenAsOverlays(rootPanel);
+				return;
+			}
+			OpenInSeparateWindows(rootPanel);
+		}
+		else
+		{
+			OpenAsOverlays(rootPanel);
+		}
+	}
+
+	private void OpenInSeparateWindows(RootPanel targetRoot)
+	{
+		Console.WriteLine("[PanelInspector] Creating inspector windows as separate OS windows...");
+		
+		// Create Panel List window
 		if (panelListWindow == null || !panelListWindow.IsValid())
 		{
 			Console.WriteLine("[PanelInspector] Creating PanelListWindow...");
 			panelListWindow = new PanelListWindow();
-			panelListWindow.Parent = rootPanel; // Add to root panel!
+			panelListWindow.WindowWidth = 400;
+			panelListWindow.WindowHeight = 600;
+			panelListWindow.SetTargetRootPanel(targetRoot);
+			panelListWindow.PanelSelected += OnPanelSelected;
+			panelListWindow.PanelHovered += OnPanelHovered;
+			
+			// Use the callback to create the OS window
+			WindowCreator?.Invoke(panelListWindow, "Panel Inspector - Hierarchy");
+			Console.WriteLine("[PanelInspector] PanelListWindow created in separate window");
+		}
+
+		// Create Style Inspector window
+		if (styleInspectorWindow == null || !styleInspectorWindow.IsValid())
+		{
+			Console.WriteLine("[PanelInspector] Creating StyleInspectorWindow...");
+			styleInspectorWindow = new StyleInspectorWindow();
+			styleInspectorWindow.WindowWidth = 500;
+			styleInspectorWindow.WindowHeight = 700;
+			
+			// Use the callback to create the OS window
+			WindowCreator?.Invoke(styleInspectorWindow, "Panel Inspector - Styles");
+			Console.WriteLine("[PanelInspector] StyleInspectorWindow created in separate window");
+		}
+		
+		Console.WriteLine("[PanelInspector] Inspector windows opened in separate OS windows");
+	}
+
+	private void OpenAsOverlays(RootPanel rootPanel)
+	{
+		// Original implementation - windows as overlays
+		if (panelListWindow == null || !panelListWindow.IsValid())
+		{
+			Console.WriteLine("[PanelInspector] Creating PanelListWindow as overlay...");
+			panelListWindow = new PanelListWindow();
+			panelListWindow.Parent = rootPanel;
 			panelListWindow.SetTargetRootPanel(rootPanel);
 			panelListWindow.PanelSelected += OnPanelSelected;
 			panelListWindow.PanelHovered += OnPanelHovered;
@@ -41,12 +109,11 @@ public class PanelInspector
 			Console.WriteLine($"[PanelInspector] PanelListWindow created, IsValid={panelListWindow.IsValid()}");
 		}
 
-		// Create style inspector window if it doesn't exist
 		if (styleInspectorWindow == null || !styleInspectorWindow.IsValid())
 		{
-			Console.WriteLine("[PanelInspector] Creating StyleInspectorWindow...");
+			Console.WriteLine("[PanelInspector] Creating StyleInspectorWindow as overlay...");
 			styleInspectorWindow = new StyleInspectorWindow();
-			styleInspectorWindow.Parent = rootPanel; // Add to root panel!
+			styleInspectorWindow.Parent = rootPanel;
 			
 			// Position on right side, next to panel list
 			styleInspectorWindow.Style.Left = 440;
@@ -54,7 +121,7 @@ public class PanelInspector
 			Console.WriteLine($"[PanelInspector] StyleInspectorWindow created, IsValid={styleInspectorWindow.IsValid()}");
 		}
 		
-		Console.WriteLine("[PanelInspector] Inspector windows opened successfully");
+		Console.WriteLine("[PanelInspector] Inspector windows opened as overlays");
 	}
 
 	/// <summary>

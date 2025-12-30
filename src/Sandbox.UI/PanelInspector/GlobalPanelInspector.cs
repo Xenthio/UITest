@@ -25,6 +25,17 @@ public static class GlobalPanelInspector
 	public static string InspectorHotkey { get; set; } = "f12";
 
 	/// <summary>
+	/// Whether to open inspector windows in separate OS windows (default: false - uses overlays)
+	/// </summary>
+	public static bool UseSeparateWindows { get; set; } = false;
+
+	/// <summary>
+	/// Callback to create separate OS windows for inspector panels.
+	/// Required when UseSeparateWindows is true.
+	/// </summary>
+	public static Action<Window, string>? WindowCreator { get; set; }
+
+	/// <summary>
 	/// Process button events to check for inspector hotkey.
 	/// Should be called from RootPanel.ProcessButtonEvent
 	/// </summary>
@@ -46,7 +57,11 @@ public static class GlobalPanelInspector
 		
 		if (_inspector == null)
 		{
-			_inspector = new PanelInspector();
+			_inspector = new PanelInspector
+			{
+				UseSeparateWindows = UseSeparateWindows,
+				WindowCreator = WindowCreator
+			};
 		}
 
 		_inspector.Toggle(rootPanel);
