@@ -117,7 +117,8 @@ public class TabControl : Panel
             // Move tabs to content area and register them
             foreach (var tab in tabs)
             {
-                // Remove from parent
+                // Setting Parent to null removes from current parent
+                // (internally calls RemoveChild on old parent)
                 tab.Parent = null;
                 
                 // Add to content area

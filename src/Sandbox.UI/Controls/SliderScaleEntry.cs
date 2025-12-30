@@ -84,6 +84,8 @@ public class SliderScaleEntry : Panel
     /// </summary>
     public event Action<float>? ValueChanged;
 
+    private bool _isUpdating = false;
+
     public SliderScaleEntry()
     {
         AddClass("sliderentry");
@@ -112,22 +114,42 @@ public class SliderScaleEntry : Panel
 
     private void OnSliderChanged(float value)
     {
-        if (TextEntry != null)
+        if (_isUpdating) return;
+        
+        _isUpdating = true;
+        try
         {
-            TextEntry.Value = value.ToString(TextEntry.NumberFormat);
+            if (TextEntry != null)
+            {
+                TextEntry.Value = value.ToString(TextEntry.NumberFormat);
+            }
+            OnValueChanged(value);
         }
-        OnValueChanged(value);
+        finally
+        {
+            _isUpdating = false;
+        }
     }
 
     private void OnEntryChanged(string value)
     {
-        if (float.TryParse(value, out float floatValue))
+        if (_isUpdating) return;
+        
+        _isUpdating = true;
+        try
         {
-            if (Slider != null)
+            if (float.TryParse(value, out float floatValue))
             {
-                Slider.Value = floatValue;
+                if (Slider != null)
+                {
+                    Slider.Value = floatValue;
+                }
+                OnValueChanged(floatValue);
             }
-            OnValueChanged(floatValue);
+        }
+        finally
+        {
+            _isUpdating = false;
         }
     }
 
