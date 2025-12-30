@@ -9,6 +9,7 @@ public abstract partial class RenderTreeBuilder
 	public abstract void OpenElement( int sequence, string elementName );
 	public abstract void OpenElement( int sequence, string elementName, object key = null );
 	public abstract void AddStyleDefinitions( int sequence, string styles );
+	public abstract void AddAttribute( int sequence, string name, object value );
 	public abstract void AddAttribute<T>( int sequence, Action<T> value ) where T : IComponent;
 	public abstract void CloseElement();
 	public abstract void AddContent<T>( int sequence, T content );
