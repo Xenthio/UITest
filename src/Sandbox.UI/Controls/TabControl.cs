@@ -68,7 +68,10 @@ public class TabControl : Panel
         ElementName = "tabcontrol";
 
         TabsContainer = AddChild(new Panel(this, "tabs"));
+        TabsContainer.AddClass("tabs");
+        
         SheetContainer = AddChild(new Panel(this, "sheets"));
+        SheetContainer.AddClass("sheets");
     }
 
     public override void SetProperty(string name, string value)
@@ -200,6 +203,7 @@ public class TabControl : Panel
 
             Button = new Button();
             Button.Text = title;
+            Button.AddClass("button");
             if (!string.IsNullOrEmpty(icon))
             {
                 Button.Icon = icon;

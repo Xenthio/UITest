@@ -190,6 +190,38 @@ public class ControlTests
         Assert.Equal("testslot", parent.SlotName);
         Assert.Equal(child, parent.SlotPanel);
     }
+
+    [Fact]
+    public void TabControl_HasProperCssClasses()
+    {
+        // Test that TabControl has proper CSS classes for styling
+        var tabControl = new TabControl();
+        
+        // TabControl should have tabcontrol class
+        Assert.True(tabControl.HasClass("tabcontrol"));
+        
+        // TabsContainer should have tabs class
+        Assert.NotNull(tabControl.TabsContainer);
+        Assert.True(tabControl.TabsContainer.HasClass("tabs"));
+        
+        // SheetContainer should have sheets class
+        Assert.NotNull(tabControl.SheetContainer);
+        Assert.True(tabControl.SheetContainer.HasClass("sheets"));
+    }
+
+    [Fact]
+    public void TabControl_TabButtons_HaveProperClass()
+    {
+        // Test that tab buttons get proper CSS class
+        var tabControl = new TabControl();
+        var tabPanel = new Panel();
+        
+        var tabInfo = tabControl.AddTab(tabPanel, "test", "Test Tab", null);
+        
+        // Button should have button class for styling
+        Assert.NotNull(tabInfo.Button);
+        Assert.True(tabInfo.Button.HasClass("button"));
+    }
 }
 
 /// <summary>
