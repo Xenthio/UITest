@@ -45,12 +45,12 @@ public class Window : Panel
     /// Position of the in-window panel (for floating window UI elements)
     /// Not the same as the native window position
     /// </summary>
-    public Vector2 Position { get; set; } = new Vector2(22, 22);
+    public Vector2 Position { get; set; } = Vector2.Zero;
 
     /// <summary>
     /// Size of the in-window panel (for floating window UI elements)
     /// </summary>
-    public Vector2 Size { get; set; }
+    public Vector2 Size { get; set; } = Vector2.Zero;
 
     /// <summary>
     /// Minimum size of the in-window panel
@@ -142,8 +142,13 @@ public class Window : Panel
         AddClass("window");
         ElementName = "window";
 
+        // Fill the entire root panel by default
         Style.Position = PositionMode.Absolute;
         Style.FlexDirection = FlexDirection.Column;
+        Style.Left = 0;
+        Style.Top = 0;
+        Style.Width = Length.Percent(100);
+        Style.Height = Length.Percent(100);
 
         // Don't create TitleBar here - let CreateTitleBar handle it
         // This allows for truly optional custom title bar
@@ -554,10 +559,24 @@ public class Window : Panel
     {
         base.Tick();
 
-        // Update position
-        Style.Position = PositionMode.Absolute;
-        Style.Left = Position.x;
-        Style.Top = Position.y;
+        // Only apply position/size override if explicitly set (non-zero)
+        // This allows floating window behavior when needed
+        if (Position != Vector2.Zero || Size != Vector2.Zero)
+        {
+            Style.Position = PositionMode.Absolute;
+            
+            if (Position != Vector2.Zero)
+            {
+                Style.Left = Position.x;
+                Style.Top = Position.y;
+            }
+            
+            if (Size != Vector2.Zero)
+            {
+                Style.Width = Size.x;
+                Style.Height = Size.y;
+            }
+        }
 
         // Update classes
         SetClass("minimised", IsMinimised);
