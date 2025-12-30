@@ -58,9 +58,18 @@ public class Window : Panel
     public Vector2 MinSize { get; set; } = new Vector2(100, 50);
 
     /// <summary>
-    /// Whether the window has a title bar
+    /// Whether to use custom chrome (in-window title bar).
+    /// When false (default), no title bar is drawn.
+    /// When true, draws a title bar inside the window.
+    /// Can also be controlled via CSS: --custom-chrome: true;
     /// </summary>
-    public bool HasTitleBar { get; set; } = true;
+    public bool HasCustomChrome { get; set; } = false;
+    
+    /// <summary>
+    /// Whether the window has a title bar (legacy property, use HasCustomChrome instead)
+    /// </summary>
+    [Obsolete("Use HasCustomChrome instead")]
+    public bool HasTitleBar { get; set; } = false;
 
     /// <summary>
     /// Whether the window has control buttons
@@ -322,6 +331,12 @@ public class Window : Panel
             HasTitleBar = hasTitleBarAttr == "true" || hasTitleBarAttr == "1";
         }
 
+        var hasCustomChromeAttr = GetAttribute("hascustomchrome");
+        if (!string.IsNullOrEmpty(hasCustomChromeAttr))
+        {
+            HasCustomChrome = hasCustomChromeAttr == "true" || hasCustomChromeAttr == "1";
+        }
+
         // Check for size and position attributes
         var widthAttr = GetAttribute("width");
         if (!string.IsNullOrEmpty(widthAttr) && float.TryParse(widthAttr, out float width))
@@ -362,11 +377,22 @@ public class Window : Panel
     }
 
     /// <summary>
-    /// Create and configure the title bar with controls
+    /// Create and configure the title bar with controls.
+    /// Only creates title bar if HasCustomChrome is true OR if theme CSS sets --custom-chrome: true
     /// </summary>
     public void CreateTitleBar()
     {
-        if (!HasTitleBar) return;
+        // Check if theme requests custom chrome via CSS custom property
+        bool themeRequestsChrome = false;
+        if (ComputedStyle != null)
+        {
+            // Check for --custom-chrome CSS variable
+            var customChromeVar = ComputedStyle.GetCustomProperty("--custom-chrome");
+            themeRequestsChrome = customChromeVar == "true" || customChromeVar == "1";
+        }
+
+        // Don't create title bar unless explicitly requested
+        if (!HasCustomChrome && !HasTitleBar && !themeRequestsChrome) return;
 
         // Create TitleBar if it doesn't exist
         if (TitleBar == null)
@@ -612,6 +638,22 @@ public class Window : Panel
                     CreateTitleBar();
                 }
                 else if (!HasTitleBar && TitleBar != null)
+                {
+                    TitleBar.Delete();
+                    TitleBar = null;
+                }
+                return;
+
+            case "hascustomchrome":
+                HasCustomChrome = value == "true" || value == "1";
+                SetClass("customchrome", HasCustomChrome);
+                
+                // Dynamically create or remove title bar
+                if (HasCustomChrome && TitleBar == null)
+                {
+                    CreateTitleBar();
+                }
+                else if (!HasCustomChrome && TitleBar != null)
                 {
                     TitleBar.Delete();
                     TitleBar = null;
