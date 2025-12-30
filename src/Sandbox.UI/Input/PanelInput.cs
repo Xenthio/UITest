@@ -146,6 +146,13 @@ internal class PanelInput
 
 		var inside = panel.IsInside(pos);
 
+		// DEBUG: Log hover checks
+		if (inside)
+		{
+			var pointerEvents = panel.ComputedStyle.PointerEvents;
+			Console.WriteLine($"CheckHover: {panel.GetType().Name} at {panel.Box.Rect} - inside=true, pointerEvents={pointerEvents}");
+		}
+
 		if (inside && panel.ComputedStyle.PointerEvents != PointerEvents.None)
 		{
 			current = panel;
@@ -208,6 +215,8 @@ internal class PanelInput
 		private void OnPressed(Panel? hovered)
 		{
 			Active = hovered;
+
+			Console.WriteLine($"OnPressed: {ButtonName}, hovered={hovered?.GetType().Name}");
 
 			if (Active == null)
 				return;
