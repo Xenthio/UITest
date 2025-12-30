@@ -60,7 +60,7 @@ public class Button : Panel
             Text = text;
 
         if (action != null)
-            Clicked += action;
+            AddEventListener("onclick", action);
     }
 
     public Button(string? text, string? icon) : this()
@@ -75,7 +75,7 @@ public class Button : Panel
     public Button(string? text, string? icon, Action? onClick) : this(text, icon)
     {
         if (onClick != null)
-            Clicked += onClick;
+            AddEventListener("onclick", onClick);
     }
 
     public Button(string? text, string? icon, string? className, Action? onClick) : this(text, icon, onClick)
@@ -177,21 +177,15 @@ public class Button : Panel
     }
 
     /// <summary>
-    /// Click event handler - called when the button is clicked
-    /// </summary>
-    public event Action? Clicked;
-
-    /// <summary>
     /// Imitate the button being clicked.
     /// </summary>
     public void Click()
     {
-        Clicked?.Invoke();
-        CreateEvent("onclick");
+        CreateEvent(new MousePanelEvent("onclick", this, "mouseleft"));
     }
 
     /// <summary>
-    /// Handle mouse click
+    /// Handle mouse click - creates onclick event
     /// </summary>
     protected override void OnClick(MousePanelEvent e)
     {
@@ -199,11 +193,8 @@ public class Button : Panel
         
         if (!Disabled)
         {
-            Clicked?.Invoke();
             CreateEvent("onclick");
         }
-        
-        e.StopPropagation();
     }
 
     public override void SetProperty(string name, string value)

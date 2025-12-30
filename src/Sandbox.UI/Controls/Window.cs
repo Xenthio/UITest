@@ -417,7 +417,7 @@ public class Window : Panel
                     ControlsMinimise.AddClass("control");
                     ControlsMinimise.AddClass("minimisebutton");
                     ControlsMinimise.Text = "0"; // Marlett font character
-                    ControlsMinimise.Clicked += () => Minimise();
+                    ControlsMinimise.AddEventListener("onclick", () => Minimise());
                 }
 
                 if (HasMaximise)
@@ -426,7 +426,7 @@ public class Window : Panel
                     ControlsMaximise.AddClass("control");
                     ControlsMaximise.AddClass("maximisebutton");
                     ControlsMaximise.Text = "1"; // Marlett font character
-                    ControlsMaximise.Clicked += () => Maximise();
+                    ControlsMaximise.AddEventListener("onclick", () => Maximise());
                 }
 
                 if (HasClose)
@@ -435,7 +435,7 @@ public class Window : Panel
                     ControlsClose.AddClass("control");
                     ControlsClose.AddClass("closebutton");
                     ControlsClose.Text = "r"; // Marlett font character
-                    ControlsClose.Clicked += () => Close();
+                    ControlsClose.AddEventListener("onclick", () => Close());
                 }
             }
         }
