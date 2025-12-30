@@ -242,11 +242,10 @@ internal class PanelInput
 
 			if (canClick && ButtonName == "mouseleft")
 			{
-				// Trigger click on buttons
-				if (Active is Button btn)
-				{
-					btn.Click();
-				}
+				// Create onclick event for the active panel
+				var clickEvent = new MousePanelEvent("onclick", Active, ButtonName);
+				Active.CreateEvent(clickEvent);
+				Active.ProcessPendingEvents();
 			}
 
 			Active.Switch(PseudoClass.Active, false);
