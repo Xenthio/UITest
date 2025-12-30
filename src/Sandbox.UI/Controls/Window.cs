@@ -10,7 +10,7 @@ namespace Sandbox.UI;
 public class Window : Panel
 {
     private string _title = "Window";
-    private object? _nativeWindow; // Reference to the native window (e.g., AvalazorWindow)
+    private INativeWindow? _nativeWindow; // Reference to the native window interface
 
     /// <summary>
     /// The window title displayed in the native window title bar and optional in-window title bar
@@ -183,26 +183,36 @@ public class Window : Panel
     /// Sets a reference to the native window for dynamic updates.
     /// Called by the application framework.
     /// </summary>
-    public void SetNativeWindow(object nativeWindow)
+    public void SetNativeWindow(INativeWindow nativeWindow)
     {
         _nativeWindow = nativeWindow;
         UpdateNativeWindowTitle();
+        UpdateNativeWindowPosition();
+        UpdateNativeWindowSize();
     }
 
     /// <summary>
-    /// Updates the native window title if possible
+    /// Updates the native window title if a native window is set
     /// </summary>
     private void UpdateNativeWindowTitle()
     {
-        // Try to update the native window title through reflection to avoid direct dependency
-        if (_nativeWindow != null)
-        {
-            var setTitleMethod = _nativeWindow.GetType().GetMethod("SetTitle");
-            if (setTitleMethod != null)
-            {
-                setTitleMethod.Invoke(_nativeWindow, new object[] { Title });
-            }
-        }
+        _nativeWindow?.SetTitle(Title);
+    }
+
+    /// <summary>
+    /// Updates the native window position if a native window is set
+    /// </summary>
+    private void UpdateNativeWindowPosition()
+    {
+        _nativeWindow?.SetPosition((int)Position.x, (int)Position.y);
+    }
+
+    /// <summary>
+    /// Updates the native window size if a native window is set
+    /// </summary>
+    private void UpdateNativeWindowSize()
+    {
+        _nativeWindow?.SetSize(WindowWidth, WindowHeight);
     }
 
     /// <summary>
@@ -298,12 +308,14 @@ public class Window : Panel
         if (!string.IsNullOrEmpty(windowWidthAttr) && int.TryParse(windowWidthAttr, out int ww))
         {
             WindowWidth = ww;
+            UpdateNativeWindowSize();
         }
 
         var windowHeightAttr = GetAttribute("windowheight");
         if (!string.IsNullOrEmpty(windowHeightAttr) && int.TryParse(windowHeightAttr, out int wh))
         {
             WindowHeight = wh;
+            UpdateNativeWindowSize();
         }
 
         // Check for window control flags
@@ -354,12 +366,16 @@ public class Window : Panel
         if (!string.IsNullOrEmpty(xAttr) && float.TryParse(xAttr, out float x))
         {
             Position = new Vector2(x, Position.y);
+            // If native window is set, update its position
+            UpdateNativeWindowPosition();
         }
 
         var yAttr = GetAttribute("y");
         if (!string.IsNullOrEmpty(yAttr) && float.TryParse(yAttr, out float y))
         {
             Position = new Vector2(Position.x, y);
+            // If native window is set, update its position
+            UpdateNativeWindowPosition();
         }
 
         // Check for draggable and resizable
@@ -620,12 +636,18 @@ public class Window : Panel
 
             case "windowwidth":
                 if (int.TryParse(value, out int ww))
+                {
                     WindowWidth = ww;
+                    UpdateNativeWindowSize();
+                }
                 return;
 
             case "windowheight":
                 if (int.TryParse(value, out int wh))
+                {
                     WindowHeight = wh;
+                    UpdateNativeWindowSize();
+                }
                 return;
 
             case "hastitlebar":
@@ -686,12 +708,19 @@ public class Window : Panel
 
             case "x":
                 if (float.TryParse(value, out float x))
+                {
                     Position = new Vector2(x, Position.y);
+                    UpdateNativeWindowPosition();
+                }
                 return;
 
             case "y":
                 if (float.TryParse(value, out float y))
+                {
                     Position = new Vector2(Position.x, y);
+                    UpdateNativeWindowPosition();
+                }
+                return;
                 return;
 
             case "minwidth":
