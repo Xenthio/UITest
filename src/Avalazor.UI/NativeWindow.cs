@@ -24,9 +24,6 @@ public class NativeWindow : IDisposable
     private GRGlInterface? _grGlInterface;
     private RootPanel? _rootPanel;
     private SkiaPanelRenderer? _renderer;
-    private uint _framebuffer;
-    private uint _texture;
-    private uint _renderbuffer;
     private bool _needsLayout = true;
     private Vector2D<int> _lastSize;
     private bool _disposed = false;
@@ -137,24 +134,10 @@ public class NativeWindow : IDisposable
     {
         if (_gl == null || _grContext == null) return;
 
-        // Create FBO for rendering
-        _framebuffer = _gl.GenFramebuffer();
-        _gl.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer);
-
-        // Create backing texture
-        _texture = _gl.GenTexture();
-        _gl.BindTexture(TextureTarget.Texture2D, _texture);
-        _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-        _gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _texture, 0);
-
-        // Create Skia render target
-        var info = new GRBackendRenderTarget(width, height, 0, 8, new GRGlFramebufferInfo(_framebuffer, (uint)InternalFormat.Rgba8));
-        _surface = SKSurface.Create(_grContext, info, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
-
-        // Unbind
-        _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        // Create Skia render target directly on the default framebuffer (0)
+        var glInfo = new GRGlFramebufferInfo(0, (uint)InternalFormat.Rgba8);
+        var renderTarget = new GRBackendRenderTarget(width, height, 0, 8, glInfo);
+        _surface = SKSurface.Create(_grContext, renderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
     }
 
     private void OnRender(double deltaTime)
@@ -170,6 +153,9 @@ public class NativeWindow : IDisposable
             _lastSize = currentSize;
             _needsLayout = true;
             
+            // Update viewport
+            _gl.Viewport(0, 0, (uint)currentSize.X, (uint)currentSize.Y);
+
             // Recreate render target if needed
             RecreateRenderTarget(currentSize.X, currentSize.Y);
         }
@@ -204,19 +190,11 @@ public class NativeWindow : IDisposable
 
         canvas.Flush();
         _grContext.Flush();
-
-        // Blit to screen
-        _gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _framebuffer);
-        _gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-        _gl.BlitFramebuffer(
-            0, 0, currentSize.X, currentSize.Y,
-            0, 0, currentSize.X, currentSize.Y,
-            ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
-        _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }
 
     private void OnResize(Vector2D<int> size)
     {
+        _lastSize = size;
         if (_gl != null)
         {
             _gl.Viewport(0, 0, (uint)size.X, (uint)size.Y);
@@ -240,22 +218,6 @@ public class NativeWindow : IDisposable
         // Clean up old resources
         _surface?.Dispose();
         _surface = null;
-
-        if (_framebuffer != 0)
-        {
-            _gl.DeleteFramebuffer(_framebuffer);
-            _framebuffer = 0;
-        }
-        if (_texture != 0)
-        {
-            _gl.DeleteTexture(_texture);
-            _texture = 0;
-        }
-        if (_renderbuffer != 0)
-        {
-            _gl.DeleteRenderbuffer(_renderbuffer);
-            _renderbuffer = 0;
-        }
 
         // Reset the GRContext state to clear any cached GPU resource references
         _grContext.ResetContext();
@@ -284,13 +246,6 @@ public class NativeWindow : IDisposable
         _surface?.Dispose();
         _surface = null;
         
-        if (_gl != null)
-        {
-            if (_framebuffer != 0) _gl.DeleteFramebuffer(_framebuffer);
-            if (_texture != 0) _gl.DeleteTexture(_texture);
-            if (_renderbuffer != 0) _gl.DeleteRenderbuffer(_renderbuffer);
-        }
-
         _grContext?.Dispose();
         _grContext = null;
         _grGlInterface?.Dispose();
