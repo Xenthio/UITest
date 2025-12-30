@@ -110,7 +110,9 @@ public class StyleRow : Panel
 	{
 		newValue = newValue.TrimEnd(';', ' ');
 		
-		if (newValue.Contains(';'))
+		// Don't accept values with semicolons (except in valid contexts like data URIs)
+		// This is a simplified check - a full CSS parser would be better
+		if (newValue.Contains(';') && !newValue.Contains("data:"))
 			return;
 
 		property.Value = newValue;

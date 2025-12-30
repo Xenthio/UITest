@@ -10,6 +10,7 @@ public class StyleInspectorWindow : Window
 	private Panel? contentContainer;
 	private Panel? pseudoClassToolbar;
 	private Panel? stylesContainer;
+	private PanelHighlight? selectedHighlight;
 	
 	private Button? hoverButton;
 	private Button? activeButton;
@@ -80,6 +81,24 @@ public class StyleInspectorWindow : Window
 	public void SetSelectedPanel(Panel? panel)
 	{
 		selectedPanel = panel;
+		
+		// Update the selected highlight
+		if (selectedHighlight == null && panel != null)
+		{
+			var root = panel.FindRootPanel();
+			if (root != null)
+			{
+				selectedHighlight = new PanelHighlight(root);
+			}
+		}
+		
+		if (selectedHighlight != null)
+		{
+			// Yellow/orange color for selected
+			var selectedColor = new Color(1.0f, 0.6f, 0.0f, 0.9f);
+			selectedHighlight.SetTarget(panel, selectedColor);
+		}
+		
 		Rebuild();
 	}
 
@@ -147,7 +166,7 @@ public class StyleInspectorWindow : Window
 
 	private void BuildStyleBlock(IStyleBlock block)
 	{
-		if (stylesContainer == null) return;
+		if (stylesContainer == null || block == null) return;
 
 		// Block container
 		var blockContainer = new Panel(stylesContainer);

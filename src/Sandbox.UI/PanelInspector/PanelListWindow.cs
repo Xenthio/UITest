@@ -17,6 +17,7 @@ public class PanelListWindow : Window
 	private RootPanel? targetRootPanel;
 	private Panel? selectedPanel;
 	private Panel? hoveredPanel;
+	private PickerOverlay? pickerOverlay;
 	private bool pickerActive;
 
 	public event Action<Panel?>? PanelSelected;
@@ -68,6 +69,14 @@ public class PanelListWindow : Window
 	public void SetTargetRootPanel(RootPanel? root)
 	{
 		targetRootPanel = root;
+		
+		// Create picker overlay if needed
+		if (root != null && pickerOverlay == null)
+		{
+			pickerOverlay = new PickerOverlay(root);
+			pickerOverlay.Deactivate(); // Start inactive
+		}
+		
 		Rebuild();
 	}
 
@@ -123,35 +132,51 @@ public class PanelListWindow : Window
 	{
 		pickerActive = !pickerActive;
 		pickerButton?.SetClass("active", pickerActive);
+		
+		if (pickerActive && targetRootPanel != null && pickerOverlay != null)
+		{
+			// Activate picker overlay
+			pickerOverlay.Activate(targetRootPanel, OnPickerPanelClicked);
+		}
+		else if (pickerOverlay != null)
+		{
+			// Deactivate picker overlay
+			pickerOverlay.Deactivate();
+		}
+	}
+
+	private void OnPickerPanelClicked(Panel? panel)
+	{
+		// Deactivate picker mode
+		pickerActive = false;
+		pickerButton?.SetClass("active", false);
+		pickerOverlay?.Deactivate();
+		
+		if (panel == null) return; // Cancelled via Escape key
+		
+		// Select the panel
+		SelectPanel(panel);
+		
+		// Rebuild tree to show selection
+		Rebuild();
+		
+		// Scroll to the selected panel in the tree
+		// TODO: Implement scroll-to-selected functionality
 	}
 
 	public override void Tick()
 	{
 		base.Tick();
-
-		// Handle picker mode
-		if (pickerActive && targetRootPanel != null)
-		{
-			var mousePos = targetRootPanel.MousePos;
-			var panelAtMouse = targetRootPanel.GetPanelAt(mousePos, true, false);
-			
-			if (panelAtMouse != hoveredPanel)
-			{
-				hoveredPanel = panelAtMouse;
-				PanelHovered?.Invoke(hoveredPanel);
-			}
-
-			// Click to select in picker mode
-			// This is simplified - in a real implementation you'd handle mouse input properly
-		}
-
-		// Auto-refresh tree periodically (simplified approach)
-		// In production you'd use dirty flags or events
+		
+		// Rebuild tree if needed (simplified - should use dirty flags)
+		// Auto-refresh periodically to show dynamic panel changes
 	}
 
 	public override void OnDeleted()
 	{
 		base.OnDeleted();
 		pickerActive = false;
+		pickerOverlay?.Delete();
+		pickerOverlay = null;
 	}
 }
