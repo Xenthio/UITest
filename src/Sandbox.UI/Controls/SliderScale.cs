@@ -98,12 +98,12 @@ public class SliderScale : Panel
 
         Label = AddChild(new Label());
         Label.Style.Display = DisplayMode.None;
-        // Note: AcceptsFocus not available yet
+        // TODO: AcceptsFocus = true; (not available yet in base Panel)
 
         SliderArea = AddChild(new Panel(this, "sliderarea"));
 
         SliderControl = SliderArea.AddChild(new Panel(this, "slider"));
-        // Note: AcceptsFocus not available yet
+        // TODO: AcceptsFocus = true; (not available yet in base Panel)
 
         Track = SliderControl.AddChild(new Panel(this, "track"));
         TrackInner = Track.AddChild(new Panel(this, "inner"));
@@ -218,9 +218,7 @@ public class SliderScale : Panel
     {
         base.Tick();
 
-        // Update focus class
-        // Note: HasFocus not available yet
-        // if (Label != null && SliderControl != null && Thumb != null)
-        //     Label.SetClass("focus", SliderControl.HasFocus || Thumb.HasFocus || Label.HasFocus);
+        // TODO: Update focus class when HasFocus is available
+        // Example: Label.SetClass("focus", SliderControl.HasFocus || Thumb.HasFocus || Label.HasFocus);
     }
 }

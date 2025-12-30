@@ -17,6 +17,7 @@ public class Resizer : Panel
         AddChild(new Label("", "rs-b"));
     }
 
-    // Note: Mouse event handling for resizing would need to be implemented
-    // in the actual window or by the renderer when mouse events are supported
+    // TODO: Implement mouse event handling for resizing functionality
+    // This will require OnMouseDown, OnMouseUp, OnMouseMove overrides
+    // to communicate with parent Window for resize operations
 }

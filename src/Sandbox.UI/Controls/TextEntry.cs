@@ -108,7 +108,7 @@ public class TextEntry : Panel
         AddClass("textentry");
         ElementName = "textentry";
 
-        // Note: AcceptsFocus = true; not available yet in base Panel
+        // TODO: AcceptsFocus = true; (not available yet in base Panel)
         Label = AddChild(new Label("", "content-label"));
     }
 

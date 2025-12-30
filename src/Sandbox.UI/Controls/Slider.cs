@@ -88,7 +88,7 @@ public class Slider : Panel
         AddClass("sliderroot");
         ElementName = "slider";
 
-        // Note: AcceptsFocus not available yet
+        // TODO: AcceptsFocus = true; (not available yet in base Panel)
         
         Track = AddChild(new Panel(this, "track"));
         TrackInner = Track.AddChild(new Panel(this, "inner"));
