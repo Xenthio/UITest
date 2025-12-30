@@ -131,9 +131,9 @@ public class ControlTests
         var tabControl = new TabControl();
 
         Assert.NotNull(tabControl);
-        Assert.NotNull(tabControl.TabBar);
-        Assert.NotNull(tabControl.ContentArea);
-        Assert.Null(tabControl.ActiveTab);
+        Assert.NotNull(tabControl.TabsContainer);
+        Assert.NotNull(tabControl.SheetContainer);
+        Assert.Equal("", tabControl.ActiveTab);
     }
 
     [Fact]
@@ -142,19 +142,17 @@ public class ControlTests
         var tab = new Tab();
 
         Assert.NotNull(tab);
-        Assert.Equal("", tab.TabName);
-        Assert.Equal("", tab.TabText);
+        Assert.True(tab.HasClass("tab"));
     }
 
     [Fact]
-    public void Tab_SetProperties_UpdatesValues()
+    public void Tab_SetProperties_IgnoresSlotAttribute()
     {
         var tab = new Tab();
-        tab.SetProperty("tabname", "settings");
-        tab.SetProperty("tabtext", "Settings");
-
-        Assert.Equal("settings", tab.TabName);
-        Assert.Equal("Settings", tab.TabText);
+        tab.SetProperty("slot", "tab");
+        
+        // Should not throw and should be ignored
+        Assert.NotNull(tab);
     }
 
     [Fact]

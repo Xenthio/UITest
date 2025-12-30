@@ -341,12 +341,12 @@ public partial class Panel : IDisposable, IStyleTarget
     }
     
     // Template slot handling (stub for S&box compatibility)
-    public void OnTemplateSlot(Sandbox.Html.Node node, string? slotName, Panel panel)
+    public virtual void OnTemplateSlot(Sandbox.Html.Node node, string? slotName, Panel panel)
     {
         // TODO: Implement template slots
     }
     
-    public void OnTemplateSlot(string slotName)
+    public virtual void OnTemplateSlot(string slotName)
     {
         // TODO: Implement template slots
     }

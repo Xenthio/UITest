@@ -53,6 +53,18 @@ public class Node
     
     public string TextContent => _node.TextContent;
     
+    /// <summary>
+    /// Get an attribute value by name
+    /// </summary>
+    public string GetAttribute(string name, string defaultValue = null)
+    {
+        var element = _node as IElement;
+        if (element == null) return defaultValue;
+        
+        var attr = element.Attributes.FirstOrDefault(a => a.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        return attr?.Value ?? defaultValue;
+    }
+    
     private Node(INode node)
     {
         _node = node;
