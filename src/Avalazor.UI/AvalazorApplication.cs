@@ -89,7 +89,7 @@ public static class AvalazorApplication
     {
         var indent = new string(' ', depth * 2);
         var text = panel is Label label ? $" Text='{label.Text}'" : "";
-        Console.WriteLine($"{indent}{panel.GetType().Name} (ElementName={panel.ElementName}, Children={panel.ChildrenCount}){text}");
+        Console.WriteLine($"{indent}{panel.GetType().Name} (ElementName={panel.ElementName}, Children={panel.ChildrenCount}){text}, classes=[{string.Join(", ", panel.Classes)}]");
         foreach (var child in panel.Children)
         {
             PrintPanelTree(child, depth + 1);
