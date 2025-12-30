@@ -8,6 +8,11 @@
     <NoWarn>BL0006;CS0649;CS0414</NoWarn>
   </PropertyGroup>
 
+  <!-- Define WINDOWS symbol when targeting Windows -->
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <!-- Core rendering dependencies -->
     <PackageReference Include="SkiaSharp" Version="2.88.7" />
