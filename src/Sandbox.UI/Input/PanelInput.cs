@@ -141,6 +141,9 @@ internal class PanelInput
 		if (panel.ComputedStyle == null)
 			return false;
 
+		// Transform using this panel's local matrix (like S&box does)
+		pos = panel.GetTransformPosition(pos);
+
 		var inside = panel.IsInside(pos);
 
 		if (inside && panel.ComputedStyle.PointerEvents != PointerEvents.None)
@@ -149,18 +152,29 @@ internal class PanelInput
 			found = true;
 		}
 
+		// If we're outside and this panel has overflow hidden we can avoid testing against the children
+		if (!inside && (panel.ComputedStyle?.Overflow ?? OverflowMode.Visible) != OverflowMode.Visible)
+		{
+			return found;
+		}
+
 		// No children
 		if (panel.ChildrenCount == 0)
 		{
 			return found;
 		}
 
-		// Check children in reverse order for proper z-ordering
-		var children = panel.Children.ToList();
-		for (int i = children.Count - 1; i >= 0; i--)
+		// Check children with proper z-ordering (using render order index like S&box)
+		int topIndex = -10000;
+		
+		foreach (var child in panel.Children)
 		{
-			if (CheckHover(children[i], pos, ref current))
+			var index = child.GetRenderOrderIndex();
+			if (index < topIndex) continue;
+
+			if (CheckHover(child, pos, ref current))
 			{
+				topIndex = index;
 				found = true;
 			}
 		}

@@ -24,6 +24,19 @@ public partial class Panel
     }
 
     /// <summary>
+    /// Called by <see cref="PanelInput.CheckHover(Panel, Vector2, ref Panel)" /> to transform
+    /// the current mouse position using the panel's LocalMatrix (by default). This can be overriden for special cases.
+    /// </summary>
+    /// <param name="pos"></param>
+    /// <returns></returns>
+    public virtual Vector2 GetTransformPosition(Vector2 pos)
+    {
+        // TODO: Implement LocalMatrix transform when we add transform support
+        // return LocalMatrix?.Transform(pos) ?? pos;
+        return pos;
+    }
+
+    /// <summary>
     /// Whether given screen position is within this panel.
     /// </summary>
     /// <param name="pos">The position to test, in screen coordinates.</param>
