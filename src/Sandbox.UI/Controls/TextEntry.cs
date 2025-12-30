@@ -168,6 +168,7 @@ public class TextEntry : Panel
     /// </summary>
     protected virtual void OnValueChanged()
     {
+        CreateValueEvent("value", Text);
         OnTextEdited?.Invoke(Text);
     }
 
