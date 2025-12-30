@@ -1,17 +1,21 @@
 using Silk.NET.Windowing;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using Silk.NET.Input;
 using SkiaSharp;
 using Sandbox.UI;
 using Sandbox.UI.Skia;
+using SysVector2 = System.Numerics.Vector2;
+using UIVector2 = Sandbox.UI.Vector2;
 
 namespace Avalazor.UI;
 
 /// <summary>
-/// Main application window using Silk.NET for cross-platform windowing
-/// Uses Sandbox.UI for panel system and Sandbox.UI.Skia for rendering
+/// Native window implementation using Silk.NET for cross-platform windowing.
+/// Uses Sandbox.UI for panel system and Sandbox.UI.Skia for rendering.
+/// This is the actual native OS window that hosts the UI.
 /// </summary>
-public class AvalazorWindow : IDisposable
+public class NativeWindow : IDisposable
 {
     private readonly IWindow _window;
     private GL? _gl;
@@ -20,12 +24,12 @@ public class AvalazorWindow : IDisposable
     private GRGlInterface? _grGlInterface;
     private RootPanel? _rootPanel;
     private SkiaPanelRenderer? _renderer;
-    private uint _framebuffer;
-    private uint _texture;
-    private uint _renderbuffer;
     private bool _needsLayout = true;
     private Vector2D<int> _lastSize;
     private bool _disposed = false;
+    private IInputContext? _input;
+    private IMouse? _mouse;
+    private IKeyboard? _keyboard;
 
     public RootPanel? RootPanel
     {
@@ -38,7 +42,7 @@ public class AvalazorWindow : IDisposable
         }
     }
 
-    public AvalazorWindow(int width = 1280, int height = 720, string title = "Avalazor Application")
+    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor Application")
     {
         var options = WindowOptions.Default;
         options.Size = new Vector2D<int>(width, height);
@@ -57,6 +61,28 @@ public class AvalazorWindow : IDisposable
     public void Run()
     {
         _window.Run();
+    }
+
+    /// <summary>
+    /// Set the native window title
+    /// </summary>
+    public void SetTitle(string title)
+    {
+        if (_window != null)
+        {
+            _window.Title = title;
+        }
+    }
+
+    /// <summary>
+    /// Set the native window size
+    /// </summary>
+    public void SetSize(int width, int height)
+    {
+        if (_window != null)
+        {
+            _window.Size = new Vector2D<int>(width, height);
+        }
     }
 
     private void OnLoad()
@@ -79,30 +105,39 @@ public class AvalazorWindow : IDisposable
 
         // Create render target
         CreateRenderTarget(_window.Size.X, _window.Size.Y);
+
+        // Initialize input handling
+        _input = _window.CreateInput();
+        
+        // Wire up mouse events
+        foreach (var mouse in _input.Mice)
+        {
+            _mouse = mouse;
+            _mouse.MouseDown += OnMouseDown;
+            _mouse.MouseUp += OnMouseUp;
+            _mouse.Scroll += OnMouseScroll;
+            break; // Use first mouse
+        }
+
+        // Wire up keyboard events
+        foreach (var keyboard in _input.Keyboards)
+        {
+            _keyboard = keyboard;
+            _keyboard.KeyDown += OnKeyDown;
+            _keyboard.KeyUp += OnKeyUp;
+            _keyboard.KeyChar += OnKeyChar;
+            break; // Use first keyboard
+        }
     }
 
     private unsafe void CreateRenderTarget(int width, int height)
     {
         if (_gl == null || _grContext == null) return;
 
-        // Create FBO for rendering
-        _framebuffer = _gl.GenFramebuffer();
-        _gl.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer);
-
-        // Create backing texture
-        _texture = _gl.GenTexture();
-        _gl.BindTexture(TextureTarget.Texture2D, _texture);
-        _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-        _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-        _gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _texture, 0);
-
-        // Create Skia render target
-        var info = new GRBackendRenderTarget(width, height, 0, 8, new GRGlFramebufferInfo(_framebuffer, (uint)InternalFormat.Rgba8));
-        _surface = SKSurface.Create(_grContext, info, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
-
-        // Unbind
-        _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        // Create Skia render target directly on the default framebuffer (0)
+        var glInfo = new GRGlFramebufferInfo(0, (uint)InternalFormat.Rgba8);
+        var renderTarget = new GRBackendRenderTarget(width, height, 0, 8, glInfo);
+        _surface = SKSurface.Create(_grContext, renderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
     }
 
     private void OnRender(double deltaTime)
@@ -118,6 +153,9 @@ public class AvalazorWindow : IDisposable
             _lastSize = currentSize;
             _needsLayout = true;
             
+            // Update viewport
+            _gl.Viewport(0, 0, (uint)currentSize.X, (uint)currentSize.Y);
+
             // Recreate render target if needed
             RecreateRenderTarget(currentSize.X, currentSize.Y);
         }
@@ -131,6 +169,10 @@ public class AvalazorWindow : IDisposable
 
         // Set panel bounds to window size BEFORE invalidating layout
         _rootPanel.PanelBounds = new Rect(0, 0, currentSize.X, currentSize.Y);
+
+        // Update input for root panel
+        var mousePos = _mouse != null ? new UIVector2(_mouse.Position.X, _mouse.Position.Y) : UIVector2.Zero;
+        _rootPanel.UpdateInput(mousePos, _mouse != null);
 
         // Force full re-layout when size changes or panel is new
         if (_needsLayout)
@@ -148,19 +190,11 @@ public class AvalazorWindow : IDisposable
 
         canvas.Flush();
         _grContext.Flush();
-
-        // Blit to screen
-        _gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, _framebuffer);
-        _gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-        _gl.BlitFramebuffer(
-            0, 0, currentSize.X, currentSize.Y,
-            0, 0, currentSize.X, currentSize.Y,
-            ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
-        _gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }
 
     private void OnResize(Vector2D<int> size)
     {
+        _lastSize = size;
         if (_gl != null)
         {
             _gl.Viewport(0, 0, (uint)size.X, (uint)size.Y);
@@ -184,22 +218,6 @@ public class AvalazorWindow : IDisposable
         // Clean up old resources
         _surface?.Dispose();
         _surface = null;
-
-        if (_framebuffer != 0)
-        {
-            _gl.DeleteFramebuffer(_framebuffer);
-            _framebuffer = 0;
-        }
-        if (_texture != 0)
-        {
-            _gl.DeleteTexture(_texture);
-            _texture = 0;
-        }
-        if (_renderbuffer != 0)
-        {
-            _gl.DeleteRenderbuffer(_renderbuffer);
-            _renderbuffer = 0;
-        }
 
         // Reset the GRContext state to clear any cached GPU resource references
         _grContext.ResetContext();
@@ -228,21 +246,99 @@ public class AvalazorWindow : IDisposable
         _surface?.Dispose();
         _surface = null;
         
-        if (_gl != null)
-        {
-            if (_framebuffer != 0) _gl.DeleteFramebuffer(_framebuffer);
-            if (_texture != 0) _gl.DeleteTexture(_texture);
-            if (_renderbuffer != 0) _gl.DeleteRenderbuffer(_renderbuffer);
-        }
-
         _grContext?.Dispose();
         _grContext = null;
         _grGlInterface?.Dispose();
         _grGlInterface = null;
         _gl?.Dispose();
         _gl = null;
+        _input?.Dispose();
+        _input = null;
         
         _disposed = true;
+    }
+
+    private void OnMouseDown(IMouse mouse, MouseButton button)
+    {
+        if (_rootPanel == null) return;
+        
+        var buttonName = button switch
+        {
+            MouseButton.Left => "mouseleft",
+            MouseButton.Right => "mouseright",
+            MouseButton.Middle => "mousemiddle",
+            _ => $"mouse{(int)button}"
+        };
+
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessButtonEvent(buttonName, true, modifiers);
+    }
+
+    private void OnMouseUp(IMouse mouse, MouseButton button)
+    {
+        if (_rootPanel == null) return;
+        
+        var buttonName = button switch
+        {
+            MouseButton.Left => "mouseleft",
+            MouseButton.Right => "mouseright",
+            MouseButton.Middle => "mousemiddle",
+            _ => $"mouse{(int)button}"
+        };
+
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessButtonEvent(buttonName, false, modifiers);
+    }
+
+    private void OnMouseScroll(IMouse mouse, ScrollWheel scroll)
+    {
+        if (_rootPanel == null) return;
+        
+        var delta = new UIVector2(scroll.X, scroll.Y);
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessMouseWheel(delta, modifiers);
+    }
+
+    private void OnKeyDown(IKeyboard keyboard, Key key, int scancode)
+    {
+        if (_rootPanel == null) return;
+        
+        var buttonName = key.ToString().ToLower();
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessButtonEvent(buttonName, true, modifiers);
+    }
+
+    private void OnKeyUp(IKeyboard keyboard, Key key, int scancode)
+    {
+        if (_rootPanel == null) return;
+        
+        var buttonName = key.ToString().ToLower();
+        var modifiers = GetKeyboardModifiers();
+        _rootPanel.ProcessButtonEvent(buttonName, false, modifiers);
+    }
+
+    private void OnKeyChar(IKeyboard keyboard, char character)
+    {
+        if (_rootPanel == null) return;
+        _rootPanel.ProcessCharTyped(character);
+    }
+
+    private KeyboardModifiers GetKeyboardModifiers()
+    {
+        if (_keyboard == null) return KeyboardModifiers.None;
+
+        var modifiers = KeyboardModifiers.None;
+        
+        if (_keyboard.IsKeyPressed(Key.ShiftLeft) || _keyboard.IsKeyPressed(Key.ShiftRight))
+            modifiers |= KeyboardModifiers.Shift;
+            
+        if (_keyboard.IsKeyPressed(Key.ControlLeft) || _keyboard.IsKeyPressed(Key.ControlRight))
+            modifiers |= KeyboardModifiers.Ctrl;
+            
+        if (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight))
+            modifiers |= KeyboardModifiers.Alt;
+
+        return modifiers;
     }
 
     public void Dispose()

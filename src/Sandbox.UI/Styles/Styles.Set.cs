@@ -84,6 +84,43 @@ namespace Sandbox.UI
 				// Handle font-smooth with never/always aliases
 				case "font-smooth":
 					return SetFontSmooth( value );
+
+				// S&box-specific cases that need custom method handlers
+				case "flex-direction":
+					return SetFlexDirection( value );
+
+				case "border-radius":
+					return SetBorderRadius( value );
+
+				case "justify-content":
+					return SetJustifyContent( value );
+
+				case "flex-wrap":
+					return SetFlexWrap( value );
+
+				case "display":
+					return SetDisplay( value );
+
+				case "pointer-events":
+					return SetPointerEvents( value );
+
+				case "position":
+					return SetPosition( value );
+
+				case "text-align":
+					return SetTextAlign( value );
+
+				case "text-overflow":
+					return SetTextOverflow( value );
+
+				case "word-break":
+					return SetWordBreak( value );
+
+				case "white-space":
+					return SetWhiteSpace( value );
+
+				case "object-fit":
+					return SetObjectFit( value );
 			}
 
 			return base.Set( property, value );
@@ -312,6 +349,303 @@ namespace Sandbox.UI
 				default:
 					return false;
 			}
+		}
+
+		/// <summary>
+		/// Parse flex-direction values
+		/// Based on s&box's SetFlexDirection implementation
+		/// </summary>
+		private bool SetFlexDirection( string value )
+		{
+			switch ( value )
+			{
+				case "column":
+					FlexDirection = UI.FlexDirection.Column;
+					return true;
+				case "column-reverse":
+					FlexDirection = UI.FlexDirection.ColumnReverse;
+					return true;
+				case "row":
+					FlexDirection = UI.FlexDirection.Row;
+					return true;
+				case "row-reverse":
+					FlexDirection = UI.FlexDirection.RowReverse;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse border-radius shorthand
+		/// Based on s&box's SetBorderRadius implementation
+		/// </summary>
+		private bool SetBorderRadius( string value )
+		{
+			var parts = value.Split( new[] { ' ', ',' }, System.StringSplitOptions.RemoveEmptyEntries );
+
+			if ( parts.Length == 0 )
+				return false;
+
+			var lengths = parts.Select( part => Length.Parse( part ) ).ToList();
+
+			if ( lengths.Any( l => !l.HasValue ) )
+				return false;
+
+			switch ( lengths.Count )
+			{
+				case 1: // All corners
+					BorderTopLeftRadius = lengths[0];
+					BorderTopRightRadius = lengths[0];
+					BorderBottomRightRadius = lengths[0];
+					BorderBottomLeftRadius = lengths[0];
+					return true;
+
+				case 2: // Top-left/bottom-right, top-right/bottom-left
+					BorderTopLeftRadius = lengths[0];
+					BorderTopRightRadius = lengths[1];
+					BorderBottomRightRadius = lengths[0];
+					BorderBottomLeftRadius = lengths[1];
+					return true;
+
+				case 3: // Top-left, top-right/bottom-left, bottom-right
+					BorderTopLeftRadius = lengths[0];
+					BorderTopRightRadius = lengths[1];
+					BorderBottomRightRadius = lengths[2];
+					BorderBottomLeftRadius = lengths[1];
+					return true;
+
+				case 4: // Top-left, top-right, bottom-right, bottom-left
+					BorderTopLeftRadius = lengths[0];
+					BorderTopRightRadius = lengths[1];
+					BorderBottomRightRadius = lengths[2];
+					BorderBottomLeftRadius = lengths[3];
+					return true;
+
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse justify-content values
+		/// Based on s&box's SetJustifyContent implementation
+		/// </summary>
+		private bool SetJustifyContent( string value )
+		{
+			switch ( value )
+			{
+				case "flex-start":
+					JustifyContent = UI.Justify.FlexStart;
+					return true;
+				case "center":
+					JustifyContent = UI.Justify.Center;
+					return true;
+				case "flex-end":
+					JustifyContent = UI.Justify.FlexEnd;
+					return true;
+				case "space-between":
+					JustifyContent = UI.Justify.SpaceBetween;
+					return true;
+				case "space-around":
+					JustifyContent = UI.Justify.SpaceAround;
+					return true;
+				case "space-evenly":
+					JustifyContent = UI.Justify.SpaceEvenly;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse flex-wrap values
+		/// Based on s&box's SetFlexWrap implementation
+		/// </summary>
+		private bool SetFlexWrap( string value )
+		{
+			switch ( value )
+			{
+				case "nowrap":
+					FlexWrap = Wrap.NoWrap;
+					return true;
+				case "wrap":
+					FlexWrap = Wrap.Wrap;
+					return true;
+				case "wrap-reverse":
+					FlexWrap = Wrap.WrapReverse;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse display mode values
+		/// Based on s&box's SetDisplay implementation
+		/// </summary>
+		private bool SetDisplay( string value )
+		{
+			switch ( value )
+			{
+				case "none":
+					Display = DisplayMode.None;
+					return true;
+				case "flex":
+					Display = DisplayMode.Flex;
+					return true;
+				case "contents":
+					Display = DisplayMode.Contents;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse pointer-events values
+		/// Based on s&box's SetPointerEvents implementation
+		/// </summary>
+		private bool SetPointerEvents( string value )
+		{
+			switch ( value )
+			{
+				case "auto":
+					PointerEvents = null;
+					return true;
+				case "none":
+					PointerEvents = UI.PointerEvents.None;
+					return true;
+				case "all":
+					PointerEvents = UI.PointerEvents.All;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse position mode values
+		/// Based on s&box's SetPosition implementation
+		/// </summary>
+		private bool SetPosition( string value )
+		{
+			switch ( value )
+			{
+				case "static":
+					Position = PositionMode.Static;
+					return true;
+				case "absolute":
+					Position = PositionMode.Absolute;
+					return true;
+				case "relative":
+					Position = PositionMode.Relative;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse text-align values
+		/// Based on s&box's SetTextAlign implementation
+		/// </summary>
+		private bool SetTextAlign( string value )
+		{
+			switch ( value )
+			{
+				case "center":
+					TextAlign = UI.TextAlign.Center;
+					return true;
+				case "left":
+					TextAlign = UI.TextAlign.Left;
+					return true;
+				case "right":
+					TextAlign = UI.TextAlign.Right;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse text-overflow values
+		/// Based on s&box's SetTextOverflow implementation
+		/// </summary>
+		private bool SetTextOverflow( string value )
+		{
+			switch ( value )
+			{
+				case "ellipsis":
+					TextOverflow = UI.TextOverflow.Ellipsis;
+					return true;
+				case "clip":
+					TextOverflow = UI.TextOverflow.Clip;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse word-break values
+		/// Based on s&box's SetWordBreak implementation
+		/// </summary>
+		private bool SetWordBreak( string value )
+		{
+			switch ( value )
+			{
+				case "normal":
+					WordBreak = UI.WordBreak.Normal;
+					return true;
+				case "break-all":
+					WordBreak = UI.WordBreak.BreakAll;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse white-space values
+		/// Based on s&box's SetWhiteSpace implementation
+		/// </summary>
+		private bool SetWhiteSpace( string value )
+		{
+			switch ( value )
+			{
+				case "normal":
+					WhiteSpace = UI.WhiteSpace.Normal;
+					return true;
+				case "nowrap":
+					WhiteSpace = UI.WhiteSpace.NoWrap;
+					return true;
+				case "pre-line":
+					WhiteSpace = UI.WhiteSpace.PreLine;
+					return true;
+				case "pre":
+					WhiteSpace = UI.WhiteSpace.Pre;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse object-fit values
+		/// Based on s&box's SetObjectFit implementation
+		/// </summary>
+		private bool SetObjectFit( string value )
+		{
+			value = value.Trim();
+
+			if ( System.Enum.TryParse<ObjectFit>( value, true, out var objectFit ) )
+			{
+				ObjectFit = objectFit;
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

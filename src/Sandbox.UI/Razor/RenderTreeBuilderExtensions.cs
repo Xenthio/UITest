@@ -1,40 +1,49 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Rendering;
+﻿using Microsoft.AspNetCore.Components.Rendering;
+using Sandbox.UI;
 
-namespace Microsoft.AspNetCore.Components.Rendering;
+namespace Microsoft.AspNetCore.Components;
 
-/// <summary>
-/// Extension methods for RenderTreeBuilder to support s&box-compatible Razor code generation
-/// Based on s&box's Sandbox.UI extensions (MIT licensed)
-/// </summary>
-public static class RenderTreeBuilderExtensions
+public static class RazorExtensions
 {
-    /// <summary>
-    /// Add location information for debugging (s&box compatibility - noop)
-    /// </summary>
-    public static void AddLocation(this RenderTreeBuilder builder, string filename, int line, int column)
-    {
-        // In s&box, this adds source location information for debugging
-        // This is a no-op for compatibility
-    }
+	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, Action<PanelEvent> value)
+	{
+		if (self is not PanelRenderTreeBuilder ptb) return;
 
-    /// <summary>
-    /// Open an element with optional sourceLineIndex parameter (s&box compatibility)
-    /// </summary>
-    public static void OpenElement(this RenderTreeBuilder builder, int sequence, string elementName, int? sourceLineIndex)
-    {
-        // The third parameter is for s&box's source tracking
-        // Standard Blazor's OpenElement only takes 2 parameters
-        builder.OpenElement(sequence, elementName);
-    }
+		ptb.AddPanelEventAttribute(sequence, attrName, value);
+	}
 
-    /// <summary>
-    /// Open a component with type parameter (s&box compatibility)
-    /// </summary>
-    public static void OpenElement<T>(this RenderTreeBuilder builder, int sequence, int? sourceLineIndex) where T : IComponent
-    {
-        // This is s&box's way of opening components
-        // In standard Blazor, we use OpenComponent
-        builder.OpenComponent<T>(sequence);
-    }
+	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, Func<Task> value)
+	{
+		if (self is not PanelRenderTreeBuilder ptb) return;
+
+		ptb.AddAttributeAction(sequence, attrName, value);
+	}
+
+	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, Action value)
+	{
+		if (self is not PanelRenderTreeBuilder ptb) return;
+
+		ptb.AddAttributeAction(sequence, attrName, value);
+	}
+
+	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, object value)
+	{
+		if (self is not PanelRenderTreeBuilder ptb) return;
+
+		ptb.AddAttributeObject(sequence, attrName, value);
+	}
+
+	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, string value)
+	{
+		if (self is not PanelRenderTreeBuilder ptb) return;
+
+		ptb.AddAttributeString(sequence, attrName, value);
+	}
+
+	public static void AddAttribute<T>(this RenderTreeBuilder self, int sequence, object value, Action<T> setter)
+	{
+		if (self is not PanelRenderTreeBuilder ptb) return;
+
+		ptb.AddAttributeWithSetter<T>(sequence, value, setter);
+	}
 }

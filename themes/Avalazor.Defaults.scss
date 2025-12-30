@@ -5,11 +5,11 @@
  * This matches s&box's behavior where everything is flexbox by default.
  */
 
-* {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    box-sizing: border-box;
+* { 
+}
+
+.window {
+    pointer-events: all;
 }
 
 /* Text elements should use inline display */

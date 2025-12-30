@@ -96,7 +96,7 @@ public partial class Panel : IDisposable, IStyleTarget
     /// <summary>
     /// Whether this panel is valid and not deleted
     /// </summary>
-    public bool IsValid => YogaNode != null && !IsDeleted;
+    public bool IsValid() => YogaNode != null && !IsDeleted;
 
     /// <summary>
     /// Whether this panel is being deleted
@@ -207,6 +207,15 @@ public partial class Panel : IDisposable, IStyleTarget
                 StyleSelectorsChanged(true, true);
             }
 
+            // Process Razor render tree if dirty
+            InternalTreeBinds();
+            if (razorTreeDirty && HasRenderTree)
+            {
+                bool firstTime = renderTree == null;
+                InternalRenderTree();
+                OnAfterTreeRender(firstTime);
+            }
+
             // Tick styles if dirty
             if (Style.IsDirty)
             {
@@ -306,6 +315,50 @@ public partial class Panel : IDisposable, IStyleTarget
     {
         Dispose();
     }
-
-    #endregion
+    // Source location tracking (for debugging Razor-generated panels)
+    public string? SourceFile { get; set; }
+    public int SourceLine { get; set; }
+    
+    // Event listener management (stub for S&box compatibility)
+    public void AddEventListener(string eventName, Action<PanelEvent> handler)
+    {
+        // TODO: Implement event system
+    }
+    
+    public void AddEventListener(string eventName, Action handler)
+    {
+        // TODO: Implement event system
+    }
+    
+    public void RemoveEventListener(string eventName, Action<PanelEvent> handler)
+    {
+        // TODO: Implement event system
+    }
+    
+    public void RemoveEventListener(string eventName)
+    {
+        // TODO: Implement event system
+    }
+    
+    // Template slot handling for S&box compatibility
+    // When a child has slot="name", it gets passed to OnTemplateSlot on the parent
+    // which can handle it appropriately (e.g., TabContainer handles slot="tab")
+    public virtual void OnTemplateSlot(Sandbox.Html.Node node, string? slotName, Panel panel)
+    {
+        // Bubble up to parent if we don't handle it
+        Parent?.OnTemplateSlot(node, slotName, panel);
+    }
+    
+    public virtual void OnTemplateSlot(string slotName)
+    {
+        // TODO: Implement parameter-based slot handling
+        // This could be used with [PanelSlot("slotname")] attributes on properties
+    }
+    
+    // Parameter change notification (stub for S&box compatibility)
+    public void ParametersChanged(bool firstTime)
+    {
+        // TODO: Implement parameter tracking
+    }
 }
+    #endregion

@@ -43,6 +43,19 @@ public partial class Styles : BaseStyles
 		// Nothing
 	}
 
+	/// <summary>
+	/// Get the value of a CSS custom property (CSS variable).
+	/// Custom properties start with -- (e.g., --custom-chrome)
+	/// </summary>
+	public string? GetCustomProperty(string propertyName)
+	{
+		if (RawValues.TryGetValue(propertyName, out var value))
+		{
+			return value.Value;
+		}
+		return null;
+	}
+
 	public Length? Padding
 	{
 		set

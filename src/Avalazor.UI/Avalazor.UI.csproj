@@ -25,7 +25,6 @@
     <PackageReference Include="Silk.NET.OpenGL" Version="2.21.0" />
     
     <!-- Blazor components for Razor support -->
-    <PackageReference Include="Microsoft.AspNetCore.Components" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
   </ItemGroup>
@@ -33,6 +32,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Sandbox.UI\Sandbox.UI.csproj" />
     <ProjectReference Include="..\Sandbox.UI.Skia\Sandbox.UI.Skia.csproj" />
+    <ProjectReference Include="..\Microsoft.AspNetCore.Components\Microsoft.AspNetCore.Components.csproj" />
   </ItemGroup>
 
 </Project>
