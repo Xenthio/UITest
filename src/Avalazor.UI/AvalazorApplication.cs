@@ -13,7 +13,7 @@ public static class AvalazorApplication
 {
     public static void Run(RootPanel rootPanel, int width = 1280, int height = 720, string title = "Avalazor Application")
     {
-        using var window = new AvalazorWindow(width, height, title);
+        using var window = new NativeWindow(width, height, title);
         window.RootPanel = rootPanel;
         window.Run();
     }
@@ -21,6 +21,7 @@ public static class AvalazorApplication
     /// <summary>
     /// Run a Panel-derived Razor component as the root of the application.
     /// This properly processes the Razor render tree to create child panels.
+    /// If the panel is a Window, extracts window properties for native window creation.
     /// </summary>
     public static void RunPanel<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : Panel, new()
     {
@@ -39,6 +40,17 @@ public static class AvalazorApplication
             var renderer = new PanelRazorRenderer(serviceProvider);
             renderer.BuildPanelRenderTree(panel);
             
+            // If the panel is a Window, extract window properties
+            if (panel is Sandbox.UI.Window window)
+            {
+                // Use window properties for native window configuration
+                width = window.WindowWidth > 0 ? window.WindowWidth : width;
+                height = window.WindowHeight > 0 ? window.WindowHeight : height;
+                title = !string.IsNullOrEmpty(window.Title) ? window.Title : title;
+                
+                Console.WriteLine($"Creating native window from Window properties: {width}x{height}, Title: '{title}'");
+            }
+            
             // Wrap in RootPanel
             var rootPanel = new RootPanel();
             rootPanel.AddChild(panel);
@@ -49,7 +61,17 @@ public static class AvalazorApplication
             
             PrintPanelTree(rootPanel, 0);
 
-            Run(rootPanel, width, height, title);
+            // Create and configure native window
+            var nativeWindow = new NativeWindow(width, height, title);
+            
+            // If panel is a Window, give it a reference to the native window
+            if (panel is Sandbox.UI.Window win)
+            {
+                win.SetNativeWindow(nativeWindow);
+            }
+            
+            nativeWindow.RootPanel = rootPanel;
+            nativeWindow.Run();
         }
         catch (Exception ex)
         {

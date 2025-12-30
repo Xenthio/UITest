@@ -8,10 +8,11 @@ using Sandbox.UI.Skia;
 namespace Avalazor.UI;
 
 /// <summary>
-/// Main application window using Silk.NET for cross-platform windowing
-/// Uses Sandbox.UI for panel system and Sandbox.UI.Skia for rendering
+/// Native window implementation using Silk.NET for cross-platform windowing.
+/// Uses Sandbox.UI for panel system and Sandbox.UI.Skia for rendering.
+/// This is the actual native OS window that hosts the UI.
 /// </summary>
-public class AvalazorWindow : IDisposable
+public class NativeWindow : IDisposable
 {
     private readonly IWindow _window;
     private GL? _gl;
@@ -38,7 +39,7 @@ public class AvalazorWindow : IDisposable
         }
     }
 
-    public AvalazorWindow(int width = 1280, int height = 720, string title = "Avalazor Application")
+    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor Application")
     {
         var options = WindowOptions.Default;
         options.Size = new Vector2D<int>(width, height);
@@ -57,6 +58,28 @@ public class AvalazorWindow : IDisposable
     public void Run()
     {
         _window.Run();
+    }
+
+    /// <summary>
+    /// Set the native window title
+    /// </summary>
+    public void SetTitle(string title)
+    {
+        if (_window != null)
+        {
+            _window.Title = title;
+        }
+    }
+
+    /// <summary>
+    /// Set the native window size
+    /// </summary>
+    public void SetSize(int width, int height)
+    {
+        if (_window != null)
+        {
+            _window.Size = new Vector2D<int>(width, height);
+        }
     }
 
     private void OnLoad()

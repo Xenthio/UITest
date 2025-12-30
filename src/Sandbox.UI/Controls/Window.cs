@@ -1,34 +1,59 @@
 namespace Sandbox.UI;
 
 /// <summary>
-/// A window panel with title bar, dragging, resizing, and window controls.
+/// Base class for windows in the application.
+/// Derive from this class to create windows that can interact with the native window system.
+/// Manages window properties like title, size, and controls, and creates the appropriate UI structure.
 /// Based on XGUI-3's Window implementation.
 /// </summary>
 [Library("window")]
 public class Window : Panel
 {
-    /// <summary>
-    /// The window title
-    /// </summary>
-    public string Title { get; set; } = "Window";
+    private string _title = "Window";
+    private object? _nativeWindow; // Reference to the native window (e.g., AvalazorWindow)
 
     /// <summary>
-    /// The title bar of the window
+    /// The window title displayed in the native window title bar and optional in-window title bar
+    /// </summary>
+    public string Title
+    {
+        get => _title;
+        set
+        {
+            if (_title == value) return;
+            _title = value;
+            OnTitleChanged();
+        }
+    }
+
+    /// <summary>
+    /// The title bar of the window (if HasTitleBar is true)
     /// </summary>
     public TitleBar? TitleBar { get; set; }
 
     /// <summary>
-    /// Position of the window (absolute positioning)
+    /// Initial width of the native window (used when creating the window)
+    /// </summary>
+    public int WindowWidth { get; set; } = 1280;
+
+    /// <summary>
+    /// Initial height of the native window (used when creating the window)
+    /// </summary>
+    public int WindowHeight { get; set; } = 720;
+
+    /// <summary>
+    /// Position of the in-window panel (for floating window UI elements)
+    /// Not the same as the native window position
     /// </summary>
     public Vector2 Position { get; set; } = new Vector2(22, 22);
 
     /// <summary>
-    /// Size of the window
+    /// Size of the in-window panel (for floating window UI elements)
     /// </summary>
     public Vector2 Size { get; set; }
 
     /// <summary>
-    /// Minimum size of the window
+    /// Minimum size of the in-window panel
     /// </summary>
     public Vector2 MinSize { get; set; } = new Vector2(100, 50);
 
@@ -125,6 +150,48 @@ public class Window : Panel
     }
 
     /// <summary>
+    /// Called when the window title changes.
+    /// Override this to handle title updates in the native window.
+    /// </summary>
+    protected virtual void OnTitleChanged()
+    {
+        // Update the title bar if it exists
+        if (TitleBar != null)
+        {
+            TitleBar.SetTitle(Title);
+        }
+
+        // Update the native window title if we have a reference
+        UpdateNativeWindowTitle();
+    }
+
+    /// <summary>
+    /// Sets a reference to the native window for dynamic updates.
+    /// Called by the application framework.
+    /// </summary>
+    public void SetNativeWindow(object nativeWindow)
+    {
+        _nativeWindow = nativeWindow;
+        UpdateNativeWindowTitle();
+    }
+
+    /// <summary>
+    /// Updates the native window title if possible
+    /// </summary>
+    private void UpdateNativeWindowTitle()
+    {
+        // Try to update the native window title through reflection to avoid direct dependency
+        if (_nativeWindow != null)
+        {
+            var setTitleMethod = _nativeWindow.GetType().GetMethod("SetTitle");
+            if (setTitleMethod != null)
+            {
+                setTitleMethod.Invoke(_nativeWindow, new object[] { Title });
+            }
+        }
+    }
+
+    /// <summary>
     /// Create a content panel for the window
     /// </summary>
     public Panel CreateWindowContentPanel()
@@ -200,7 +267,7 @@ public class Window : Panel
 
     /// <summary>
     /// Process attributes from the root element in Razor markup.
-    /// This allows declarative property binding like &lt;root title="Hello" hasminimise="true"&gt;
+    /// This allows declarative property binding like &lt;root title="Hello" windowwidth="800"&gt;
     /// </summary>
     private void ProcessRootElementAttributes()
     {
@@ -209,6 +276,19 @@ public class Window : Panel
         if (!string.IsNullOrEmpty(titleAttr))
         {
             Title = titleAttr;
+        }
+
+        // Check for native window size attributes
+        var windowWidthAttr = GetAttribute("windowwidth");
+        if (!string.IsNullOrEmpty(windowWidthAttr) && int.TryParse(windowWidthAttr, out int ww))
+        {
+            WindowWidth = ww;
+        }
+
+        var windowHeightAttr = GetAttribute("windowheight");
+        if (!string.IsNullOrEmpty(windowHeightAttr) && int.TryParse(windowHeightAttr, out int wh))
+        {
+            WindowHeight = wh;
         }
 
         // Check for window control flags
@@ -490,8 +570,16 @@ public class Window : Panel
         {
             case "title":
                 Title = value;
-                if (TitleBar != null)
-                    TitleBar.SetTitle(value);
+                return;
+
+            case "windowwidth":
+                if (int.TryParse(value, out int ww))
+                    WindowWidth = ww;
+                return;
+
+            case "windowheight":
+                if (int.TryParse(value, out int wh))
+                    WindowHeight = wh;
                 return;
 
             case "hastitlebar":
