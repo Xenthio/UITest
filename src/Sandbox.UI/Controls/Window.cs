@@ -186,6 +186,19 @@ public class Window : Panel
     public void SetNativeWindow(INativeWindow nativeWindow)
     {
         _nativeWindow = nativeWindow;
+        
+        // When native window is set, clear any panel positioning that was applied during initial layout
+        // (since position/size should control native window, not panel styles)
+        if (Position != Vector2.Zero)
+        {
+            // Reset panel position styles - fill the entire root panel instead
+            Style.Position = PositionMode.Absolute;
+            Style.Left = 0;
+            Style.Top = 0;
+            Style.Width = Length.Percent(100);
+            Style.Height = Length.Percent(100);
+        }
+        
         UpdateNativeWindowTitle();
         UpdateNativeWindowPosition();
         UpdateNativeWindowSize();
