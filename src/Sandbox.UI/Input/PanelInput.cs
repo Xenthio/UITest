@@ -18,6 +18,7 @@ internal class PanelInput
 	public Panel? Active { get; private set; }
 
 	internal MouseButtonState[] MouseStates;
+	private Vector2 _lastMousePosition;
 
 	public PanelInput()
 	{
@@ -45,6 +46,7 @@ internal class PanelInput
 	internal void Tick(IEnumerable<RootPanel> panels, Vector2 mousePosition, bool mouseIsActive)
 	{
 		bool hoveredAny = false;
+		bool mouseMoved = _lastMousePosition != mousePosition;
 
 		if (mouseIsActive)
 		{
@@ -62,6 +64,17 @@ internal class PanelInput
 		{
 			SetHovered(null);
 		}
+
+		// Dispatch onmousemove event if mouse moved and we have an active panel
+		if (mouseMoved && Active != null)
+		{
+			var mouseMoveEvent = new MousePanelEvent("onmousemove", Active, "mouseleft");
+			mouseMoveEvent.LocalPosition = mousePosition;
+			Active.CreateEvent(mouseMoveEvent);
+			Active.ProcessPendingEvents();
+		}
+
+		_lastMousePosition = mousePosition;
 	}
 
 	public void AddMouseButton(string button, bool down)
@@ -229,6 +242,11 @@ internal class PanelInput
 			{
 				Active.Focus();
 			}
+
+			// Create and dispatch onmousedown event
+			var mouseDownEvent = new MousePanelEvent("onmousedown", Active, ButtonName);
+			Active.CreateEvent(mouseDownEvent);
+			Active.ProcessPendingEvents();
 
 			Active.OnButtonEvent(new ButtonEvent(ButtonName, true));
 		}
