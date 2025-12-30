@@ -200,11 +200,15 @@ public class Window : Panel
     }
 
     /// <summary>
-    /// Updates the native window position if a native window is set
+    /// Updates the native window position if a native window is set and position was explicitly set
     /// </summary>
     private void UpdateNativeWindowPosition()
     {
-        _nativeWindow?.SetPosition((int)Position.x, (int)Position.y);
+        // Only set position if it was explicitly specified (not default Vector2.Zero)
+        if (_nativeWindow != null && Position != Vector2.Zero)
+        {
+            _nativeWindow.SetPosition((int)Position.x, (int)Position.y);
+        }
     }
 
     /// <summary>
@@ -275,8 +279,9 @@ public class Window : Panel
                 AutoFocus = false;
             }
 
-            // Apply initial size if set
-            if (Size != Vector2.Zero)
+            // Apply initial size if set and no native window
+            // (with native window, size is controlled via windowwidth/windowheight)
+            if (_nativeWindow == null && Size != Vector2.Zero)
             {
                 Style.Width = Size.x;
                 Style.Height = Size.y;
@@ -602,8 +607,9 @@ public class Window : Panel
         base.Tick();
 
         // Only apply position/size override if explicitly set (non-zero)
-        // This allows floating window behavior when needed
-        if (Position != Vector2.Zero || Size != Vector2.Zero)
+        // Apply position and size to style for floating window behavior
+        // BUT only if there's no native window (for window-in-window scenarios)
+        if (_nativeWindow == null && (Position != Vector2.Zero || Size != Vector2.Zero))
         {
             Style.Position = PositionMode.Absolute;
             
