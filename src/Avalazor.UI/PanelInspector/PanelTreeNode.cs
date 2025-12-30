@@ -1,4 +1,6 @@
-namespace Sandbox.UI.PanelInspector;
+using Sandbox.UI;
+
+namespace Avalazor.UI.PanelInspector;
 
 /// <summary>
 /// Represents a panel node in the inspector tree view.

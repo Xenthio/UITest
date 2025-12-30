@@ -7,6 +7,12 @@ namespace Sandbox.UI;
 public partial class RootPanel : Panel
 {
     /// <summary>
+    /// Optional callback for processing button events before normal handling.
+    /// Used by Panel Inspector to intercept F12 key. Returns true if event was handled.
+    /// </summary>
+    public static Func<RootPanel, string, bool, KeyboardModifiers, bool>? ButtonEventInterceptor { get; set; }
+
+    /// <summary>
     /// Bounds of the panel (size and position on screen)
     /// </summary>
     public Rect PanelBounds { get; set; } = new Rect(0, 0, 512, 512);
@@ -215,10 +221,13 @@ public partial class RootPanel : Panel
     /// </summary>
     public void ProcessButtonEvent(string button, bool pressed, KeyboardModifiers modifiers = KeyboardModifiers.None)
     {
-        // Check for inspector hotkey first
-        if (PanelInspector.GlobalPanelInspector.ProcessButtonEvent(this, button, pressed, modifiers))
+        // Check if there's an interceptor (e.g., Panel Inspector)
+        if (ButtonEventInterceptor != null)
         {
-            return; // Inspector handled the event
+            if (ButtonEventInterceptor.Invoke(this, button, pressed, modifiers))
+            {
+                return; // Event was handled by interceptor
+            }
         }
 
         if (button.StartsWith("mouse"))

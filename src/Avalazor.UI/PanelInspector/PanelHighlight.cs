@@ -1,4 +1,6 @@
-namespace Sandbox.UI.PanelInspector;
+using Sandbox.UI;
+
+namespace Avalazor.UI.PanelInspector;
 
 /// <summary>
 /// Visual highlight that shows a border around the currently inspected panel.
@@ -22,7 +24,7 @@ public class PanelHighlight : Panel
 		Style.BackgroundColor = new Color(0.0f, 0.8f, 1.0f, 0.1f); // Light cyan overlay
 		
 		highlightColor = new Color(0.0f, 0.8f, 1.0f, 0.9f);
-		IsVisible = false;
+		Style.Display = DisplayMode.None;
 	}
 
 	public void SetTarget(Panel? panel, Color? color = null)
@@ -36,7 +38,7 @@ public class PanelHighlight : Panel
 			Style.BackgroundColor = new Color(highlightColor.r, highlightColor.g, highlightColor.b, 0.1f);
 		}
 		
-		IsVisible = panel != null && panel.IsValid();
+		Style.Display = (panel != null && panel.IsValid()) ? DisplayMode.Flex : DisplayMode.None;
 		UpdatePosition();
 	}
 
@@ -46,7 +48,7 @@ public class PanelHighlight : Panel
 		
 		if (targetPanel == null || !targetPanel.IsValid())
 		{
-			IsVisible = false;
+			Style.Display = DisplayMode.None;
 			return;
 		}
 		

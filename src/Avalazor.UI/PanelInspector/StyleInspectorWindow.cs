@@ -1,4 +1,6 @@
-namespace Sandbox.UI.PanelInspector;
+using Sandbox.UI;
+
+namespace Avalazor.UI.PanelInspector;
 
 /// <summary>
 /// Window that shows style properties for the selected panel.

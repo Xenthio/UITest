@@ -1,6 +1,8 @@
+using Sandbox.UI;
+
 using System.Numerics;
 
-namespace Sandbox.UI.PanelInspector;
+namespace Avalazor.UI.PanelInspector;
 
 /// <summary>
 /// Inspector window that shows the panel hierarchy.

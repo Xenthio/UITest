@@ -1,4 +1,6 @@
-namespace Sandbox.UI.PanelInspector;
+using Sandbox.UI;
+
+namespace Avalazor.UI.PanelInspector;
 
 /// <summary>
 /// Represents a single style property row in the style inspector.
@@ -44,14 +46,14 @@ public class StyleRow : Panel
 		saveButton.Parent = buttonContainer;
 		saveButton.Text = "💾";
 		saveButton.AddClass("icon-button");
-		saveButton.IsVisible = property.Value != property.OriginalValue;
+		saveButton.Style.Display = (property.Value != property.OriginalValue) ? DisplayMode.Flex : DisplayMode.None;
 		saveButton.OnClick += SaveChanges;
 
 		restoreButton = new Button();
 		restoreButton.Parent = buttonContainer;
 		restoreButton.Text = "↶";
 		restoreButton.AddClass("icon-button");
-		restoreButton.IsVisible = property.Value != property.OriginalValue;
+		restoreButton.Style.Display = (property.Value != property.OriginalValue) ? DisplayMode.Flex : DisplayMode.None;
 		restoreButton.OnClick += RestoreValue;
 
 		// Property name
@@ -82,7 +84,7 @@ public class StyleRow : Panel
 		if (isEditing || valueLabel == null) return;
 		
 		isEditing = true;
-		valueLabel.IsVisible = false;
+		valueLabel.Style.Display = DisplayMode.None;
 
 		valueEditor = new TextEntry();
 		valueEditor.Parent = this;
@@ -102,7 +104,7 @@ public class StyleRow : Panel
 		
 		valueEditor.Delete();
 		valueEditor = null;
-		valueLabel.IsVisible = true;
+		valueLabel.Style.Display = DisplayMode.Flex;
 		isEditing = false;
 	}
 
@@ -126,10 +128,10 @@ public class StyleRow : Panel
 			nameLabel.SetClass("invalid", !property.IsValid);
 
 		if (saveButton != null)
-			saveButton.IsVisible = property.Value != property.OriginalValue;
+			saveButton.Style.Display = (property.Value != property.OriginalValue) ? DisplayMode.Flex : DisplayMode.None;
 
 		if (restoreButton != null)
-			restoreButton.IsVisible = property.Value != property.OriginalValue;
+			restoreButton.Style.Display = (property.Value != property.OriginalValue) ? DisplayMode.Flex : DisplayMode.None;
 	}
 
 	private void SaveChanges()
@@ -167,8 +169,8 @@ public class StyleRow : Panel
 			property.OriginalValue = property.Value;
 			styleBlock.SetRawValue(property.Name, property.Value, property.Value);
 
-			if (saveButton != null) saveButton.IsVisible = false;
-			if (restoreButton != null) restoreButton.IsVisible = false;
+			if (saveButton != null) saveButton.Style.Display = DisplayMode.None;
+			if (restoreButton != null) restoreButton.Style.Display = DisplayMode.None;
 		}
 		catch (System.Exception ex)
 		{
@@ -180,7 +182,7 @@ public class StyleRow : Panel
 	{
 		UpdateValue(property.OriginalValue);
 		
-		if (saveButton != null) saveButton.IsVisible = false;
-		if (restoreButton != null) restoreButton.IsVisible = false;
+		if (saveButton != null) saveButton.Style.Display = DisplayMode.None;
+		if (restoreButton != null) restoreButton.Style.Display = DisplayMode.None;
 	}
 }

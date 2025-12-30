@@ -1,6 +1,8 @@
+using Sandbox.UI;
+
 using System.Numerics;
 
-namespace Sandbox.UI.PanelInspector;
+namespace Avalazor.UI.PanelInspector;
 
 /// <summary>
 /// Overlay panel that shows visual feedback for the element picker.
@@ -38,13 +40,13 @@ public class PickerOverlay : Panel
 		this.targetRootPanel = rootPanel;
 		this.onPanelClicked = onPanelClicked;
 		isActive = true;
-		IsVisible = true;
+		Style.Display = DisplayMode.Flex;
 	}
 
 	public void Deactivate()
 	{
 		isActive = false;
-		IsVisible = false;
+		Style.Display = DisplayMode.None;
 		highlightedPanel = null;
 		highlight?.SetTarget(null);
 	}
@@ -75,7 +77,7 @@ public class PickerOverlay : Panel
 		}
 	}
 
-	private Panel? FindPanelAtPosition(Panel root, Vector2 position)
+	private Panel? FindPanelAtPosition(Panel root, Sandbox.UI.Vector2 position)
 	{
 		// Don't pick inspector windows or the overlay itself
 		var panel = root.GetPanelAt(position, true, false);

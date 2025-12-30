@@ -1,5 +1,5 @@
 using Sandbox.UI;
-using Sandbox.UI.PanelInspector;
+using Avalazor.UI.PanelInspector;
 
 namespace Avalazor.UI;
 

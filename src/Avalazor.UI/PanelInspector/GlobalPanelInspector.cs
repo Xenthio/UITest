@@ -1,4 +1,6 @@
-namespace Sandbox.UI.PanelInspector;
+using Sandbox.UI;
+
+namespace Avalazor.UI.PanelInspector;
 
 /// <summary>
 /// Global panel inspector that can be activated via keyboard shortcut (F12).
@@ -9,6 +11,12 @@ public static class GlobalPanelInspector
 	private static PanelInspector? _inspector;
 	private static RootPanel? _currentRootPanel;
 	private static bool _isEnabled = true;
+
+	static GlobalPanelInspector()
+	{
+		// Register our interceptor with RootPanel
+		RootPanel.ButtonEventInterceptor = ProcessButtonEvent;
+	}
 
 	/// <summary>
 	/// Enable or disable the global inspector hotkey
