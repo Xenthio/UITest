@@ -126,9 +126,9 @@ public class ControlTests
     }
 
     [Fact]
-    public void TabControl_InitializesCorrectly()
+    public void TabContainer_InitializesCorrectly()
     {
-        var tabControl = new TabControl();
+        var tabControl = new TabContainer();
 
         Assert.NotNull(tabControl);
         Assert.NotNull(tabControl.TabsContainer);
@@ -192,12 +192,12 @@ public class ControlTests
     }
 
     [Fact]
-    public void TabControl_HasProperCssClasses()
+    public void TabContainer_HasProperCssClasses()
     {
-        // Test that TabControl has proper CSS classes for styling
-        var tabControl = new TabControl();
+        // Test that TabContainer has proper CSS classes for styling
+        var tabControl = new TabContainer();
         
-        // TabControl should have tabcontrol class
+        // TabContainer should have tabcontrol class
         Assert.True(tabControl.HasClass("tabcontrol"));
         
         // TabsContainer should have tabs class
@@ -210,10 +210,10 @@ public class ControlTests
     }
 
     [Fact]
-    public void TabControl_TabButtons_HaveProperClass()
+    public void TabContainer_TabButtons_HaveProperClass()
     {
         // Test that tab buttons get proper CSS class
-        var tabControl = new TabControl();
+        var tabControl = new TabContainer();
         var tabPanel = new Panel();
         
         var tabInfo = tabControl.AddTab(tabPanel, "test", "Test Tab", null);

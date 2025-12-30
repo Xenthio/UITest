@@ -7,8 +7,8 @@ namespace Sandbox.UI;
 /// You can position the tabs by adding the class tabs-bottom, tabs-left, tabs-right (default is tabs-top)
 /// Based on XGUI-3 TabContainer.
 /// </summary>
-[Library("tabcontrol"), Alias("tabcontainer", "tabs")]
-public class TabControl : Panel
+[Library("tabcontainer"), Alias("tabcontrol", "tabs")]
+public class TabContainer : Panel
 {
     /// <summary>
     /// A control housing the tabs
@@ -62,11 +62,13 @@ public class TabControl : Panel
         }
     }
 
-    public TabControl()
+    public TabContainer()
     {
-        // ElementName is already set to "tabcontrol" by base constructor
-        // and automatically added as a CSS class
-        ElementName = "tabcontrol";
+        // Manually add the tabcontainer class to match XGUI-3's TabContainer pattern
+        // Note: XGUI-3's CSS uses PascalCase (.TabContainer) but their C# uses lowercase
+        // We add both for compatibility
+        AddClass("tabcontainer");
+        AddClass("TabContainer");  // PascalCase for XGUI-3 CSS compatibility
 
         TabsContainer = AddChild(new Panel(this, "tabs"));
         TabsContainer.AddClass("tabs");
@@ -192,14 +194,14 @@ public class TabControl : Panel
     /// </summary>
     public class TabInfo
     {
-        private TabControl Parent;
+        private TabContainer Parent;
         public Button Button { get; protected set; }
         public Panel Page { get; protected set; }
         public string TabName { get; set; } = "";
 
-        public TabInfo(TabControl tabControl, string title, string icon, Panel panel)
+        public TabInfo(TabContainer tabContainer, string title, string icon, Panel panel)
         {
-            Parent = tabControl;
+            Parent = tabContainer;
             Page = panel;
 
             Button = new Button();
@@ -210,7 +212,7 @@ public class TabControl : Panel
                 Button.Icon = icon;
             }
             Button.OnClick += () => Parent?.SwitchTab(this, true);
-            Button.Parent = tabControl.TabsContainer;
+            Button.Parent = tabContainer.TabsContainer;
         }
 
         private bool active;

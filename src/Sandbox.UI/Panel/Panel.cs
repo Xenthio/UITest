@@ -342,7 +342,7 @@ public partial class Panel : IDisposable, IStyleTarget
     
     // Template slot handling for S&box compatibility
     // When a child has slot="name", it gets passed to OnTemplateSlot on the parent
-    // which can handle it appropriately (e.g., TabControl handles slot="tab")
+    // which can handle it appropriately (e.g., TabContainer handles slot="tab")
     public virtual void OnTemplateSlot(Sandbox.Html.Node node, string? slotName, Panel panel)
     {
         // Bubble up to parent if we don't handle it

@@ -1,7 +1,7 @@
 namespace Sandbox.UI;
 
 /// <summary>
-/// A single tab content panel within a TabControl.
+/// A single tab content panel within a TabContainer.
 /// The tab markup should include slot="tab" and attributes for tabname, tabtext, and optionally tabicon.
 /// Based on XGUI-3 pattern.
 /// </summary>
@@ -16,7 +16,7 @@ public class Tab : Panel
 
     public override void SetProperty(string name, string value)
     {
-        // Tab properties are handled by TabControl.OnTemplateSlot
+        // Tab properties are handled by TabContainer.OnTemplateSlot
         // We just pass through to base for standard properties
         if (name == "slot")
         {
