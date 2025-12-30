@@ -4,22 +4,8 @@
 @* @using XGUI; *@
 @attribute [StyleSheet( "/themes/XGUI/DefaultStyles/OliveGreen.scss" )]
 @inherits Window
-@code {
-    public XGUIPortTest()
-    {
-        // Configure native window properties
-        Title = "XGUI Port Test - Hello World";
-        WindowWidth = 800;
-        WindowHeight = 600;
-        
-        // Configure window controls
-        HasMinimise = true;
-        HasMaximise = true;
-        HasClose = true;
-    }
-}
 
-<root>
+<root title="XGUI Port Test - Hello World" windowwidth="800" windowheight="600" hasminimise="true" hasmaximise="true">
 	Hello, I am a window!
 	<button>okay</button>
         <tabcontrol>
