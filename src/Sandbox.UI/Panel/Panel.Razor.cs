@@ -3,91 +3,118 @@ using Microsoft.AspNetCore.Components.Rendering;
 
 namespace Sandbox.UI;
 
-/// <summary>
-/// Panel partial class: Razor/Blazor integration methods
-/// Based on s&box's Panel.Razor.cs
-/// </summary>
 public partial class Panel
 {
     /// <summary>
-    /// If true, the panel will render its tree if the hash changes.
+    /// true when the tree should be re-rendered next frame.
     /// </summary>
-    public bool IsRazorTreeable { get; private set; }
+    bool razorTreeDirty = true;
+    string? razorLastTreeChecksum = null;
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
-    /// Get a checksum based on files used to generate the render tree.
-    /// Override this if the component uses resources that may change.
-    /// </summary>
-    protected virtual string GetRenderTreeChecksum() => GetType().FullName ?? "unknown";
-
-    /// <summary>
-    /// Build the Razor render tree for this panel.
-    /// This is called by the Razor compiler for .razor components that inherit Panel.
-    /// </summary>
-    protected virtual void BuildRenderTree(RenderTreeBuilder builder)
-    {
-        // Base implementation does nothing - subclasses override this
-    }
-
-    /// <summary>
-    /// Build a hash of data that affects the render tree.
-    /// If this hash changes, the tree is rebuilt.
-    /// Override this to make the component reactive to state changes.
-    /// </summary>
-    protected virtual int BuildHash() => 0;
-
-    /// <summary>
-    /// Called after the render tree has been built.
-    /// </summary>
-    protected virtual void OnAfterTreeRender(bool firstTime)
-    {
-    }
-
-    /// <summary>
-    /// Called when a parameter is set on the panel.
-    /// </summary>
-    public virtual void OnParameterSet()
-    {
-    }
-
-    /// <summary>
-    /// Force a state change and rebuild the tree.
+    /// For razor panels, call when the state of the render tree has changed such that
+    /// it would be a good idea to re-render the tree. You would usually not need to call
+    /// this manually.
     /// </summary>
     public void StateHasChanged()
     {
-        _needsTreeRebuild = true;
-    }
-
-    private bool _needsTreeRebuild = true;
-    private int _lastHash;
-
-    /// <summary>
-    /// Rebuild the render tree if needed.
-    /// </summary>
-    internal void RebuildRenderTreeIfNeeded()
-    {
-        if (!IsRazorTreeable) return;
-
-        var hash = BuildHash();
-        if (!_needsTreeRebuild && hash == _lastHash) return;
-
-        _lastHash = hash;
-        _needsTreeRebuild = false;
-
-        // Clear existing children
-        DeleteChildren();
-
-        // Build new tree
-        // Note: In the real implementation, this would use Razor's rendering pipeline
-        // For now, we rely on external rendering (RazorRenderer)
+        razorTreeDirty = true;
     }
 
     /// <summary>
-    /// Mark this panel as a Razor panel that has a render tree.
-    /// Called by the Razor compiler.
+    /// Overridden/implemented by Razor templating, contains render tree checksum to determine when the render tree content has changed.
     /// </summary>
-    protected void InitializeRazorPanel()
+    protected virtual string? GetRenderTreeChecksum() => ChildContent == null ? null : "1";
+    
+    internal bool HasRenderTree => GetRenderTreeChecksum() is not null;
+
+    /// <summary>
+    /// Overridden/implemented by Razor templating to build a render tree.
+    /// </summary>
+    protected virtual void BuildRenderTree(RenderTreeBuilder tree)
     {
-        IsRazorTreeable = true;
+        ChildContent?.Invoke(tree);
+    }
+
+    int previousHash;
+
+    /// <summary>
+    /// By overriding this you can return a hash of variables used by the Razor layout, which
+    /// will cause a rebuild when changed. This is useful when your layout uses a global variable
+    /// because by adding it to a HashCode.Combine here you can easily trigger a build when it changes.
+    /// </summary>
+    protected virtual int BuildHash()
+    {
+        return 0;
+    }
+
+    /// <summary>
+    /// A RenderFragment has been set on us, so our tree has potential changes now.
+    /// Lets update and see.
+    /// </summary>
+    public void OnRenderFragmentChanged(Panel upTo)
+    {
+        if (upTo == this)
+            return;
+
+        razorTreeDirty = true;
+        Parent?.OnRenderFragmentChanged(upTo);
+    }
+
+    internal void InternalTreeBinds()
+    {
+        try
+        {
+            var hash = BuildHash();
+            if (previousHash != hash)
+            {
+                previousHash = hash;
+                razorTreeDirty = true;
+            }
+        }
+        catch (System.Exception e)
+        {
+            Console.WriteLine($"Error calculating hash on {GetType()} - {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Build the render tree if needed. Returns true if the tree was rebuilt.
+    /// </summary>
+    internal bool InternalRenderTree()
+    {
+        if (!HasRenderTree)
+            return false;
+
+        var checksum = GetRenderTreeChecksum();
+
+        if (!razorTreeDirty && razorLastTreeChecksum == checksum)
+            return false;
+
+        razorTreeDirty = false;
+        razorLastTreeChecksum = checksum;
+
+        // Let subclasses/renderers handle the actual tree building
+        // This will be called by the application framework
+        return true;
+    }
+
+    /// <summary>
+    /// Called after the razor tree has been created/rendered.
+    /// </summary>
+    protected virtual void OnAfterTreeRender(bool firstTime)
+    {
+
+    }
+
+    /// <summary>
+    /// Delete all children generated by the Razor render tree.
+    /// </summary>
+    internal void ClearRenderTree()
+    {
+        // This will be implemented by the framework to clean up
+        // Razor-generated children
     }
 }

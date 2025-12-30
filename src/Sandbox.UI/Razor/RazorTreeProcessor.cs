@@ -1,29 +1,22 @@
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.RenderTree;
 using AngleSharp.Html.Parser;
-using Sandbox.UI;
 using Sandbox.UI.Reflection;
 using System.Reflection;
 
-namespace Avalazor.UI;
+namespace Sandbox.UI.Razor;
 
 /// <summary>
-/// Renders the BuildRenderTree output of a Panel-derived Razor component into child panels.
-/// This processes the RenderTreeBuilder output and converts HTML elements to Panel children.
+/// Processes the Blazor RenderTree from Panel components and creates child panels.
+/// This is the bridge between Blazor's Razor rendering and Sandbox.UI's Panel tree.
+/// Adapted from S&box's PanelRenderTreeBuilder approach but using standard Blazor runtime.
 /// </summary>
-public class PanelRazorRenderer
+public class RazorTreeProcessor
 {
-    private readonly IServiceProvider _serviceProvider;
-
-    public PanelRazorRenderer(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
-
     /// <summary>
     /// Build the render tree for a Panel and populate its children from the Razor markup.
     /// </summary>
-    public void BuildPanelRenderTree(Panel panel)
+    public static void BuildPanelRenderTree(Panel panel)
     {
         // Create a RenderTreeBuilder to capture the output
         using var builder = new RenderTreeBuilder();
@@ -70,9 +63,25 @@ public class PanelRazorRenderer
         {
             Console.WriteLine($"BuildRenderTree method not found on {panel.GetType().Name}");
         }
+        
+        // Call OnAfterTreeRender for the panel
+        try
+        {
+            var afterRenderMethod = panel.GetType().GetMethod("OnAfterTreeRender",
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            
+            if (afterRenderMethod != null)
+            {
+                afterRenderMethod.Invoke(panel, new object[] { true });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error calling OnAfterTreeRender: {ex.Message}");
+        }
     }
 
-    private void TryProcessBuilderFrames(Panel panel, RenderTreeBuilder builder)
+    private static void TryProcessBuilderFrames(Panel panel, RenderTreeBuilder builder)
     {
         try
         {
@@ -110,7 +119,7 @@ public class PanelRazorRenderer
         }
     }
 
-    private void ProcessFrames(Panel panel, ArrayRange<RenderTreeFrame> frames)
+    private static void ProcessFrames(Panel panel, ArrayRange<RenderTreeFrame> frames)
     {
         for (int i = 0; i < frames.Count; i++)
         {
@@ -150,7 +159,7 @@ public class PanelRazorRenderer
         }
     }
 
-    private void ProcessFrameArray(Panel panel, RenderTreeFrame[] frames)
+    private static void ProcessFrameArray(Panel panel, RenderTreeFrame[] frames)
     {
         for (int i = 0; i < frames.Length; i++)
         {
@@ -190,7 +199,7 @@ public class PanelRazorRenderer
         }
     }
 
-    private Panel? ParseMarkupToPanel(string html)
+    private static Panel? ParseMarkupToPanel(string html)
     {
         if (string.IsNullOrWhiteSpace(html))
             return null;
@@ -214,7 +223,7 @@ public class PanelRazorRenderer
         }
     }
 
-    private Panel? ConvertNodeToPanel(AngleSharp.Dom.IElement? element)
+    private static Panel? ConvertNodeToPanel(AngleSharp.Dom.IElement? element)
     {
         if (element == null)
             return null;
@@ -223,6 +232,11 @@ public class PanelRazorRenderer
         var panel = CreatePanelForElement(element.TagName);
         
         // Set attributes
+        foreach (var attr in element.Attributes)
+        {
+            panel.SetProperty(attr.Name, attr.Value);
+        }
+        
         if (element.HasAttribute("class"))
         {
             var className = element.GetAttribute("class");
@@ -277,7 +291,7 @@ public class PanelRazorRenderer
         return panel;
     }
 
-    private Panel CreatePanelForElement(string elementName)
+    private static Panel CreatePanelForElement(string elementName)
     {
         var lowerName = elementName.ToLower();
         
@@ -313,7 +327,7 @@ public class PanelRazorRenderer
         return panel;
     }
 
-    private Label CreateStyledLabel(string elementName, float fontSize, int fontWeight)
+    private static Label CreateStyledLabel(string elementName, float fontSize, int fontWeight)
     {
         var label = new Label { ElementName = elementName };
         label.Style.FontSize = Length.Pixels(fontSize);
@@ -321,7 +335,7 @@ public class PanelRazorRenderer
         return label;
     }
 
-    private void ParseInlineStyle(Panel panel, string styleString)
+    private static void ParseInlineStyle(Panel panel, string styleString)
     {
         var styles = styleString.Split(';', StringSplitOptions.RemoveEmptyEntries);
         foreach (var style in styles)
@@ -410,7 +424,7 @@ public class PanelRazorRenderer
         }
     }
 
-    private Color ParseColor(string value)
+    private static Color ParseColor(string value)
     {
         value = value.Trim().ToLower();
         
@@ -447,7 +461,7 @@ public class PanelRazorRenderer
         };
     }
 
-    private Length ParseLength(string value)
+    private static Length ParseLength(string value)
     {
         value = value.Trim().ToLower();
         

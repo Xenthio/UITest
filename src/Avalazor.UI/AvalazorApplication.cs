@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.DependencyInjection;
 using Sandbox.UI;
 using Sandbox.UI.Reflection;
 
@@ -29,16 +28,10 @@ public static class AvalazorApplication
         {
             // Initialize PanelFactory to register all [Library] and [Alias] types
             PanelFactory.Initialize();
-            
-            // Set up DI for Blazor components
-            var services = new ServiceCollection();
-            services.AddLogging();
-            var serviceProvider = services.BuildServiceProvider();
 
-            // Create the panel and use RazorRenderer to build its render tree
+            // Create the panel and build its render tree
             var panel = new T();
-            var renderer = new PanelRazorRenderer(serviceProvider);
-            renderer.BuildPanelRenderTree(panel);
+            Sandbox.UI.Razor.RazorTreeProcessor.BuildPanelRenderTree(panel);
             
             // If the panel is a Window, extract window properties
             if (panel is Sandbox.UI.Window window)
@@ -81,43 +74,13 @@ public static class AvalazorApplication
     }
 
     /// <summary>
-    /// Run a Blazor IComponent as the root of the application (legacy support).
-    /// For new code, prefer RunPanel with Panel-derived Razor components.
+    /// [DEPRECATED] Run a Blazor IComponent as the root of the application.
+    /// This method is no longer supported. Use RunPanel with Panel-derived Razor components instead.
     /// </summary>
+    [Obsolete("Use RunPanel<T> instead with Panel-derived components")]
     public static void RunComponent<T>(int width = 1280, int height = 720, string title = "Avalazor Application") where T : IComponent
     {
-        try
-        {
-            // Set up DI for Blazor components
-            var services = new ServiceCollection();
-            services.AddLogging();
-            var serviceProvider = services.BuildServiceProvider();
-
-            // Create renderer and render the component directly
-            var renderer = new RazorRenderer(serviceProvider);
-            var rootPanel = renderer.RenderComponent<T>().GetAwaiter().GetResult();
-
-            Console.WriteLine($"Root panel created: {rootPanel != null}");
-            Console.WriteLine($"Root panel type: {rootPanel?.GetType().Name}");
-            Console.WriteLine($"Root panel children: {rootPanel?.ChildrenCount ?? 0}");
-            
-            if (rootPanel != null)
-            {
-                PrintPanelTree(rootPanel, 0);
-            }
-
-            if (rootPanel == null)
-            {
-                throw new InvalidOperationException("Failed to create root panel from component");
-            }
-
-            Run(rootPanel, width, height, title);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error in RunComponent: {ex}");
-            throw;
-        }
+        throw new NotSupportedException("RunComponent is no longer supported. Use RunPanel<T> with Panel-derived components instead.");
     }
     
     private static void PrintPanelTree(Panel panel, int depth)
