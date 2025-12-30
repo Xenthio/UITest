@@ -31,6 +31,13 @@ public class PanelListWindow : Window
 		WindowWidth = 400;
 		WindowHeight = 600;
 		
+		// Add inspector window classes
+		AddClass("inspector-window");
+		AddClass("panel-list-window");
+		
+		// Load stylesheet
+		StyleSheet.Load("/src/Avalazor.UI/PanelInspector/PanelInspector.scss");
+		
 		BuildUI();
 	}
 
@@ -39,11 +46,6 @@ public class PanelListWindow : Window
 		// Create toolbar
 		var toolbar = new Panel(this);
 		toolbar.AddClass("toolbar");
-		toolbar.Style.FlexDirection = FlexDirection.Row;
-		toolbar.Style.PaddingLeft = 4;
-		toolbar.Style.PaddingRight = 4;
-		toolbar.Style.PaddingTop = 4;
-		toolbar.Style.PaddingBottom = 4;
 
 		filterInput = new TextEntry();
 		filterInput.Parent = toolbar;
@@ -102,9 +104,6 @@ public class PanelListWindow : Window
 		var nodeContainer = new Panel(container);
 		nodeContainer.AddClass("node-row");
 		nodeContainer.Style.PaddingLeft = depth * 20;
-		nodeContainer.Style.PaddingTop = 4;
-		nodeContainer.Style.PaddingRight = 4;
-		nodeContainer.Style.PaddingBottom = 4;
 
 		var node = new PanelTreeNode(panel, nodeContainer);
 		

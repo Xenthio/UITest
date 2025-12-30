@@ -30,53 +30,39 @@ public class StyleRow : Panel
 
 	private void BuildUI()
 	{
-		Style.FlexDirection = FlexDirection.Row;
-		Style.PaddingLeft = 4;
-		Style.PaddingRight = 4;
-		Style.PaddingTop = 4;
-		Style.PaddingBottom = 4;
-		Style.AlignItems = Align.Center;
+		// Mark as invalid if needed
+		SetClass("invalid", !property.IsValid);
+		
+		// Property name
+		nameLabel = new Label($"{property.Name}");
+		nameLabel.Parent = this;
+		nameLabel.AddClass("property-name");
+		
+		var colonLabel = new Label(":");
+		colonLabel.Parent = this;
+		colonLabel.AddClass("property-colon");
+
+		// Property value (editable)
+		valueLabel = new Label(property.Value ?? "");
+		valueLabel.Parent = this;
+		valueLabel.AddClass("property-value");
+		valueLabel.AddEventListener("onclick", (PanelEvent e) => StartEditing());
 
 		// Action buttons container
 		var buttonContainer = new Panel(this);
-		buttonContainer.Style.FlexDirection = FlexDirection.Row;
-		buttonContainer.Style.Width = 60;
+		buttonContainer.AddClass("button-container");
 
 		saveButton = new Button();
 		saveButton.Parent = buttonContainer;
-		saveButton.Text = "💾";
-		saveButton.AddClass("icon-button");
+		saveButton.Text = "Save";
 		saveButton.Style.Display = (property.Value != property.OriginalValue) ? DisplayMode.Flex : DisplayMode.None;
 		saveButton.OnClick += SaveChanges;
 
 		restoreButton = new Button();
 		restoreButton.Parent = buttonContainer;
-		restoreButton.Text = "↶";
-		restoreButton.AddClass("icon-button");
+		restoreButton.Text = "Restore";
 		restoreButton.Style.Display = (property.Value != property.OriginalValue) ? DisplayMode.Flex : DisplayMode.None;
 		restoreButton.OnClick += RestoreValue;
-
-		// Property name
-		nameLabel = new Label($"{property.Name}:");
-		nameLabel.Parent = this;
-		nameLabel.AddClass("property-name");
-		nameLabel.Style.Width = 150;
-		nameLabel.SetClass("invalid", !property.IsValid);
-
-		// Property value
-		valueLabel = new Label($"{property.Value};");
-		valueLabel.Parent = this;
-		valueLabel.AddClass("property-value");
-		valueLabel.Style.FlexGrow = 1;
-		valueLabel.AddEventListener("onclick", (PanelEvent e) => StartEditing());
-
-		// Invalid indicator
-		if (!property.IsValid)
-		{
-			var warningLabel = new Label("⚠️");
-			warningLabel.Parent = this;
-			warningLabel.AddClass("warning-icon");
-		}
 	}
 
 	private void StartEditing()

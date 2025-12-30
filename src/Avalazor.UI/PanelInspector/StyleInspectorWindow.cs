@@ -24,6 +24,13 @@ public class StyleInspectorWindow : Window
 		WindowWidth = 500;
 		WindowHeight = 700;
 		
+		// Add inspector window classes
+		AddClass("inspector-window");
+		AddClass("style-inspector-window");
+		
+		// Load stylesheet
+		StyleSheet.Load("/src/Avalazor.UI/PanelInspector/PanelInspector.scss");
+		
 		BuildUI();
 	}
 
@@ -32,11 +39,7 @@ public class StyleInspectorWindow : Window
 		// Pseudo-class toolbar
 		pseudoClassToolbar = new Panel(this);
 		pseudoClassToolbar.AddClass("toolbar");
-		pseudoClassToolbar.Style.FlexDirection = FlexDirection.Row;
-		pseudoClassToolbar.Style.PaddingLeft = 4;
-		pseudoClassToolbar.Style.PaddingRight = 4;
-		pseudoClassToolbar.Style.PaddingTop = 4;
-		pseudoClassToolbar.Style.PaddingBottom = 4;
+		pseudoClassToolbar.AddClass("pseudo-class-toolbar");
 
 		hoverButton = CreatePseudoClassButton(":hover", PseudoClass.Hover);
 		activeButton = CreatePseudoClassButton(":active", PseudoClass.Active);
@@ -45,9 +48,6 @@ public class StyleInspectorWindow : Window
 		// Styles container (scrollable)
 		stylesContainer = new Panel(this);
 		stylesContainer.AddClass("styles-container");
-		stylesContainer.Style.FlexGrow = 1;
-		stylesContainer.Style.Overflow = OverflowMode.Scroll;
-		stylesContainer.Style.PaddingLeft = 8;
 		stylesContainer.Style.PaddingRight = 8;
 		stylesContainer.Style.PaddingTop = 8;
 		stylesContainer.Style.PaddingBottom = 8;
