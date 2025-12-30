@@ -29,9 +29,15 @@ public static class AvalazorApplication
             // Initialize PanelFactory to register all [Library] and [Alias] types
             PanelFactory.Initialize();
 
-            // Create the panel and build its render tree
+            // Create the panel - Razor tree building is handled internally by Panel
             var panel = new T();
-            Sandbox.UI.Razor.RazorTreeProcessor.BuildPanelRenderTree(panel);
+            
+            // Trigger the initial render tree build if the panel has Razor content
+            if (panel.HasRenderTree)
+            {
+                panel.InternalRenderTree();
+                panel.OnAfterTreeRender(true);
+            }
             
             // If the panel is a Window, extract window properties
             if (panel is Sandbox.UI.Window window)
