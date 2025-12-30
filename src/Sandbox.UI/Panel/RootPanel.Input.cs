@@ -45,8 +45,6 @@ public partial class RootPanel
         // Handle mouse button clicks
         if (button.StartsWith("mouse") && Hovered != null)
         {
-            Console.WriteLine($"Mouse {button} {(pressed ? "pressed" : "released")} on {Hovered.GetType().Name}");
-            
             if (pressed)
             {
                 // Set active panel on mouse down
@@ -63,7 +61,6 @@ public partial class RootPanel
                 // Trigger click event on mouse up if still over the same panel
                 if (Active == Hovered && Active is Button btn)
                 {
-                    Console.WriteLine($"Triggering Click() on button: {btn.ElementName}");
                     btn.Click();
                 }
                 
@@ -120,10 +117,13 @@ public partial class RootPanel
         if (panel.ComputedStyle == null) return;
 
         // Check if mouse is within this panel
-        if (!panel.IsInside(mousePos)) return;
-
-        // This panel is under the mouse
-        hoveredPanel = panel;
+        var inside = panel.IsInside(mousePos);
+        
+        // Only consider this panel for hover if pointer-events is not "none"
+        if (inside && panel.ComputedStyle.PointerEvents != PointerEvents.None)
+        {
+            hoveredPanel = panel;
+        }
 
         // Check children (in reverse order for proper z-ordering)
         if (panel.ChildrenCount > 0)
@@ -147,11 +147,6 @@ public partial class RootPanel
         }
 
         Hovered = panel;
-        
-        if (panel != null)
-        {
-            Console.WriteLine($"Hovering over: {panel.GetType().Name} at {panel.Box.Rect}");
-        }
 
         // Add hover to new panel
         if (Hovered != null)
