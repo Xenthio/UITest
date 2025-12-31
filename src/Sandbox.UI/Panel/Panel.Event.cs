@@ -68,11 +68,6 @@ public partial class Panel
         foreach (var e in events)
         {
             OnEvent(e);
-            
-            if (e.Propagate && Parent != null)
-            {
-                Parent.CreateEvent(e);
-            }
         }
     }
 

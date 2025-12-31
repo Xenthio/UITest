@@ -162,6 +162,8 @@ internal class PanelInput
 		// Check pointer-events (matches S&box - defaults to None via property getter)
 		if (inside && panel.ComputedStyle.PointerEvents != PointerEvents.None)
 		{
+			// Debug: Log what panel is being set as current
+			// System.Console.WriteLine($"CheckHover: Setting current to {panel.GetType().Name} (was {current?.GetType().Name})");
 			current = panel;
 			found = true;
 		}
