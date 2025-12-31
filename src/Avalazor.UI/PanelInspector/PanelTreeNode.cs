@@ -44,7 +44,9 @@ public class PanelTreeNode : Panel
 		if (!string.IsNullOrEmpty(TargetPanel.Id))
 			desc += $" id=\"{TargetPanel.Id}\"";
 
-		var classes = string.Join(" ", TargetPanel.Classes);
+		// Create a snapshot of classes to avoid collection modification errors
+		var classesArray = TargetPanel.Classes?.ToArray() ?? Array.Empty<string>();
+		var classes = string.Join(" ", classesArray);
 		if (!string.IsNullOrEmpty(classes))
 			desc += $" class=\"{classes}\"";
 
