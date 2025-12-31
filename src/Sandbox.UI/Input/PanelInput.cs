@@ -238,10 +238,8 @@ internal class PanelInput
 
 			Active.Switch(PseudoClass.Active, true);
 
-			if (Active.AcceptsFocus)
-			{
-				Active.Focus();
-			}
+			// Always call Focus() - it will walk up to find a focusable parent (matches S&box)
+			Active.Focus();
 
 			// Create and dispatch onmousedown event
 			var mouseDownEvent = new MousePanelEvent("onmousedown", Active, ButtonName);
