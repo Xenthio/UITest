@@ -20,6 +20,7 @@ public partial class Panel
     {
         public string EventName;
         public Action<PanelEvent>? Action;
+        public Action? BaseAction;
         public Panel? Panel;
         public Panel? Context;
     }
@@ -107,6 +108,7 @@ public partial class Panel
                 if (string.Equals(listener.EventName, e.Name, StringComparison.OrdinalIgnoreCase))
                 {
                     listener.Action?.Invoke(e);
+                    listener.BaseAction?.Invoke();
                 }
             }
         }

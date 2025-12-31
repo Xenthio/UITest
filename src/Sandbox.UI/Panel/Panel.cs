@@ -338,7 +338,16 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     
     public void AddEventListener(string eventName, Action handler)
     {
-        AddEventListener(eventName, (e) => handler());
+        EventListeners ??= new List<EventCallback>();
+
+        var ev = new EventCallback
+        {
+            EventName = eventName.ToLower(),
+            BaseAction = handler,
+            Panel = this
+        };
+
+        EventListeners.Add(ev);
     }
     
     public void RemoveEventListener(string eventName, Action<PanelEvent> handler)
