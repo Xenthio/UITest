@@ -181,14 +181,14 @@ public class SliderScale : Panel
     }
 
     /// <summary>
-    /// Convert a screen position to a value. The value is clamped, but not snapped.
+    /// Convert mouse position to slider value. Uses the mouse position relative to SliderControl.
     /// </summary>
-    public virtual float ScreenPosToValue(Vector2 pos)
+    public virtual float MousePosToValue()
     {
         if (SliderControl == null || Thumb == null)
             return Value;
 
-        var localPos = SliderControl.ScreenPositionToPanelPosition(pos);
+        var localPos = SliderControl.MousePosition;
         var thumbSize = Thumb.Box.Rect.Width * 0.5f;
         var normalized = MathX.LerpInverse(localPos.x, thumbSize, SliderControl.Box.Rect.Width - thumbSize, true);
         var scaled = MathX.LerpTo(MinValue, MaxValue, normalized, true);
@@ -204,7 +204,7 @@ public class SliderScale : Panel
 
         if (!HasActive) return;
 
-        Value = ScreenPosToValue(e.LocalPosition + Box.Rect.Position);
+        Value = MousePosToValue();
         UpdateSliderPositions();
         e.StopPropagation();
     }
@@ -216,7 +216,7 @@ public class SliderScale : Panel
     {
         base.OnMouseDown(e);
 
-        Value = ScreenPosToValue(e.LocalPosition + Box.Rect.Position);
+        Value = MousePosToValue();
         UpdateSliderPositions();
         e.StopPropagation();
     }
