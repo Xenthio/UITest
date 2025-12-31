@@ -39,19 +39,15 @@ public class Button : Panel
 
         IconPanel = AddChild(new IconPanel("people", "icon"));
         IconPanel.Style.Display = DisplayMode.None;
-        IconPanel.Style.PointerEvents = PointerEvents.None; // Don't intercept clicks
 
         RightColumn = AddChild(new Panel(this, "button-right-column"));
         RightColumn.Style.Display = DisplayMode.None;
-        RightColumn.Style.PointerEvents = PointerEvents.None; // Don't intercept clicks
 
         TextLabel = RightColumn.AddChild(new Label("Empty Label", "button-label button-text"));
         TextLabel.Style.Display = DisplayMode.None;
-        TextLabel.Style.PointerEvents = PointerEvents.None; // Don't intercept clicks
 
         HelpLabel = RightColumn.AddChild(new Label("", "button-help"));
         HelpLabel.Style.Display = DisplayMode.None;
-        HelpLabel.Style.PointerEvents = PointerEvents.None; // Don't intercept clicks
     }
 
     public Button(string? text, Action? action = default) : this()
@@ -60,7 +56,7 @@ public class Button : Panel
             Text = text;
 
         if (action != null)
-            OnClick += action;
+            AddEventListener("onclick", action);
     }
 
     public Button(string? text, string? icon) : this()
@@ -75,7 +71,7 @@ public class Button : Panel
     public Button(string? text, string? icon, Action? onClick) : this(text, icon)
     {
         if (onClick != null)
-            OnClick += onClick;
+            AddEventListener("onclick", onClick);
     }
 
     public Button(string? text, string? icon, string? className, Action? onClick) : this(text, icon, onClick)
@@ -177,16 +173,11 @@ public class Button : Panel
     }
 
     /// <summary>
-    /// Click event handler
-    /// </summary>
-    public event Action? OnClick;
-
-    /// <summary>
     /// Imitate the button being clicked.
     /// </summary>
     public void Click()
     {
-        OnClick?.Invoke();
+        CreateEvent(new MousePanelEvent("onclick", this, "mouseleft"));
     }
 
     public override void SetProperty(string name, string value)

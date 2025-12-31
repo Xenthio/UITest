@@ -25,7 +25,7 @@ public class TextEntry : Panel
         set
         {
             _disabled = value;
-            // Note: AcceptsFocus not implemented in base Panel yet
+            AcceptsFocus = !value;
             SetClass("disabled", value);
         }
     }
@@ -108,7 +108,7 @@ public class TextEntry : Panel
         AddClass("textentry");
         ElementName = "textentry";
 
-        // TODO: AcceptsFocus = true; (not available yet in base Panel)
+        AcceptsFocus = true;
         Label = AddChild(new Label("", "content-label"));
     }
 
@@ -168,6 +168,7 @@ public class TextEntry : Panel
     /// </summary>
     protected virtual void OnValueChanged()
     {
+        CreateValueEvent("value", Text);
         OnTextEdited?.Invoke(Text);
     }
 
@@ -190,5 +191,105 @@ public class TextEntry : Panel
         }
 
         return Text;
+    }
+
+    /// <summary>
+    /// Handle character input
+    /// </summary>
+    public override void OnKeyTyped(char k)
+    {
+        if (Disabled)
+            return;
+
+        // Handle backspace
+        if (k == '\b')
+        {
+            if (!string.IsNullOrEmpty(Text))
+            {
+                Text = Text.Substring(0, Text.Length - 1);
+                OnValueChanged();
+            }
+            return;
+        }
+
+        // Handle enter/return
+        if (k == '\n' || k == '\r')
+        {
+            if (!Multiline)
+            {
+                // Blur/unfocus would go here
+                return;
+            }
+        }
+
+        // Don't allow control characters (except newline for multiline)
+        if (char.IsControl(k) && k != '\n')
+            return;
+
+        // Check for numeric only
+        if (Numeric && !char.IsDigit(k) && k != '.' && k != '-')
+            return;
+
+        // Add character to text
+        Text += k;
+        OnValueChanged();
+    }
+
+    /// <summary>
+    /// Handle keyboard button events (backspace, delete, arrow keys, etc.)
+    /// Based on S&box TextEntry.OnButtonTyped
+    /// </summary>
+    public override void OnButtonTyped(ButtonEvent e)
+    {
+        if (Disabled)
+            return;
+
+        e.StopPropagation = true;
+
+        var button = e.Button;
+
+        // Handle backspace
+        if (button == "backspace")
+        {
+            if (!string.IsNullOrEmpty(Text))
+            {
+                Text = Text.Substring(0, Text.Length - 1);
+                OnValueChanged();
+            }
+            return;
+        }
+
+        // Handle delete
+        if (button == "delete")
+        {
+            // For now, just treat as backspace for simplicity
+            // Full implementation would handle caret position
+            return;
+        }
+
+        // Handle enter/return
+        if (button == "enter" || button == "keypadenter")
+        {
+            if (Multiline)
+            {
+                OnKeyTyped('\n');
+                return;
+            }
+
+            Blur();
+            CreateEvent("onsubmit", Text);
+            return;
+        }
+
+        // Handle escape
+        if (button == "escape")
+        {
+            Blur();
+            CreateEvent("oncancel");
+            return;
+        }
+
+        // Let parent handle other keys
+        base.OnButtonTyped(e);
     }
 }

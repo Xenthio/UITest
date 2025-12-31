@@ -7,7 +7,7 @@ using UIVector2 = Sandbox.UI.Vector2;
 
 namespace Avalazor.UI;
 
-public class NativeWindow : IDisposable
+public class NativeWindow : INativeWindow, IDisposable
 {
     private readonly IWindow _window;
     private IGraphicsBackend _backend;
@@ -110,6 +110,32 @@ public class NativeWindow : IDisposable
         OnClosing();
         _window?.Dispose();
         _disposed = true;
+    }
+
+    // --- Public API for Window control ---
+    
+    /// <summary>
+    /// Set the native window title
+    /// </summary>
+    public void SetTitle(string title)
+    {
+        _window.Title = title;
+    }
+
+    /// <summary>
+    /// Set the native window position
+    /// </summary>
+    public void SetPosition(int x, int y)
+    {
+        _window.Position = new Vector2D<int>(x, y);
+    }
+
+    /// <summary>
+    /// Set the native window size
+    /// </summary>
+    public void SetSize(int width, int height)
+    {
+        _window.Size = new Vector2D<int>(width, height);
     }
 
     // --- Input Helpers ---

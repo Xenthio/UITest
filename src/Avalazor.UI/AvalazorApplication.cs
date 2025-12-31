@@ -32,23 +32,22 @@ public static class AvalazorApplication
             // Create the panel
             var panel = new T();
             
-            // If the panel is a Window, extract window properties
-            if (panel is Sandbox.UI.Window window)
-            {
-                // Use window properties for native window configuration
-                width = window.WindowWidth > 0 ? window.WindowWidth : width;
-                height = window.WindowHeight > 0 ? window.WindowHeight : height;
-                title = !string.IsNullOrEmpty(window.Title) ? window.Title : title;
-                
-                Console.WriteLine($"Creating native window from Window properties: {width}x{height}, Title: '{title}'");
-            }
-            
             // Wrap in RootPanel
             var rootPanel = new RootPanel();
             rootPanel.AddChild(panel);
             
             // Perform initial layout which will trigger Razor tree processing
             rootPanel.Layout();
+
+            // Re-read window properties AFTER layout (Razor attributes are now processed)
+            if (panel is Sandbox.UI.Window windowPanel)
+            {
+                width = windowPanel.WindowWidth > 0 ? windowPanel.WindowWidth : width;
+                height = windowPanel.WindowHeight > 0 ? windowPanel.WindowHeight : height;
+                title = !string.IsNullOrEmpty(windowPanel.Title) ? windowPanel.Title : title;
+                
+                Console.WriteLine($"Creating native window from Window properties (after layout): {width}x{height}, Title: '{title}'");
+            }
 
             Console.WriteLine($"Root panel created: {rootPanel != null}");
             Console.WriteLine($"Component type: {panel.GetType().Name}");

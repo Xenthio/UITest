@@ -10,7 +10,7 @@ namespace Sandbox.UI;
 public class Window : Panel
 {
     private string _title = "Window";
-    private object? _nativeWindow; // Reference to the native window (e.g., AvalazorWindow)
+    private INativeWindow? _nativeWindow; // Reference to the native window interface
 
     /// <summary>
     /// The window title displayed in the native window title bar and optional in-window title bar
@@ -183,26 +183,53 @@ public class Window : Panel
     /// Sets a reference to the native window for dynamic updates.
     /// Called by the application framework.
     /// </summary>
-    public void SetNativeWindow(object nativeWindow)
+    public void SetNativeWindow(INativeWindow nativeWindow)
     {
         _nativeWindow = nativeWindow;
+        
+        // When native window is set, clear any panel positioning that was applied during initial layout
+        // (since position/size should control native window, not panel styles)
+        if (Position != Vector2.Zero)
+        {
+            // Reset panel position styles - fill the entire root panel instead
+            Style.Position = PositionMode.Absolute;
+            Style.Left = 0;
+            Style.Top = 0;
+            Style.Width = Length.Percent(100);
+            Style.Height = Length.Percent(100);
+        }
+        
         UpdateNativeWindowTitle();
+        UpdateNativeWindowPosition();
+        UpdateNativeWindowSize();
     }
 
     /// <summary>
-    /// Updates the native window title if possible
+    /// Updates the native window title if a native window is set
     /// </summary>
     private void UpdateNativeWindowTitle()
     {
-        // Try to update the native window title through reflection to avoid direct dependency
-        if (_nativeWindow != null)
+        _nativeWindow?.SetTitle(Title);
+    }
+
+    /// <summary>
+    /// Updates the native window position if a native window is set and position was explicitly set
+    /// </summary>
+    private void UpdateNativeWindowPosition()
+    {
+        // Only set position if it was explicitly specified (not default Vector2.Zero)
+        if (_nativeWindow != null && Position != Vector2.Zero)
         {
-            var setTitleMethod = _nativeWindow.GetType().GetMethod("SetTitle");
-            if (setTitleMethod != null)
-            {
-                setTitleMethod.Invoke(_nativeWindow, new object[] { Title });
-            }
+            _nativeWindow.SetPosition((int)Position.x, (int)Position.y);
         }
+    }
+
+    /// <summary>
+    /// Updates the native window size if a native window is set
+    /// </summary>
+    private void UpdateNativeWindowSize()
+    {
+        _nativeWindow?.SetSize(WindowWidth, WindowHeight);
     }
 
     /// <summary>
@@ -265,8 +292,9 @@ public class Window : Panel
                 AutoFocus = false;
             }
 
-            // Apply initial size if set
-            if (Size != Vector2.Zero)
+            // Apply initial size if set and no native window
+            // (with native window, size is controlled via windowwidth/windowheight)
+            if (_nativeWindow == null && Size != Vector2.Zero)
             {
                 Style.Width = Size.x;
                 Style.Height = Size.y;
@@ -298,12 +326,14 @@ public class Window : Panel
         if (!string.IsNullOrEmpty(windowWidthAttr) && int.TryParse(windowWidthAttr, out int ww))
         {
             WindowWidth = ww;
+            UpdateNativeWindowSize();
         }
 
         var windowHeightAttr = GetAttribute("windowheight");
         if (!string.IsNullOrEmpty(windowHeightAttr) && int.TryParse(windowHeightAttr, out int wh))
         {
             WindowHeight = wh;
+            UpdateNativeWindowSize();
         }
 
         // Check for window control flags
@@ -354,12 +384,16 @@ public class Window : Panel
         if (!string.IsNullOrEmpty(xAttr) && float.TryParse(xAttr, out float x))
         {
             Position = new Vector2(x, Position.y);
+            // If native window is set, update its position
+            UpdateNativeWindowPosition();
         }
 
         var yAttr = GetAttribute("y");
         if (!string.IsNullOrEmpty(yAttr) && float.TryParse(yAttr, out float y))
         {
             Position = new Vector2(Position.x, y);
+            // If native window is set, update its position
+            UpdateNativeWindowPosition();
         }
 
         // Check for draggable and resizable
@@ -417,7 +451,7 @@ public class Window : Panel
                     ControlsMinimise.AddClass("control");
                     ControlsMinimise.AddClass("minimisebutton");
                     ControlsMinimise.Text = "0"; // Marlett font character
-                    ControlsMinimise.OnClick += () => Minimise();
+                    ControlsMinimise.AddEventListener("onclick", () => Minimise());
                 }
 
                 if (HasMaximise)
@@ -426,7 +460,7 @@ public class Window : Panel
                     ControlsMaximise.AddClass("control");
                     ControlsMaximise.AddClass("maximisebutton");
                     ControlsMaximise.Text = "1"; // Marlett font character
-                    ControlsMaximise.OnClick += () => Maximise();
+                    ControlsMaximise.AddEventListener("onclick", () => Maximise());
                 }
 
                 if (HasClose)
@@ -435,7 +469,7 @@ public class Window : Panel
                     ControlsClose.AddClass("control");
                     ControlsClose.AddClass("closebutton");
                     ControlsClose.Text = "r"; // Marlett font character
-                    ControlsClose.OnClick += () => Close();
+                    ControlsClose.AddEventListener("onclick", () => Close());
                 }
             }
         }
@@ -586,8 +620,9 @@ public class Window : Panel
         base.Tick();
 
         // Only apply position/size override if explicitly set (non-zero)
-        // This allows floating window behavior when needed
-        if (Position != Vector2.Zero || Size != Vector2.Zero)
+        // Apply position and size to style for floating window behavior
+        // BUT only if there's no native window (for window-in-window scenarios)
+        if (_nativeWindow == null && (Position != Vector2.Zero || Size != Vector2.Zero))
         {
             Style.Position = PositionMode.Absolute;
             
@@ -620,12 +655,18 @@ public class Window : Panel
 
             case "windowwidth":
                 if (int.TryParse(value, out int ww))
+                {
                     WindowWidth = ww;
+                    UpdateNativeWindowSize();
+                }
                 return;
 
             case "windowheight":
                 if (int.TryParse(value, out int wh))
+                {
                     WindowHeight = wh;
+                    UpdateNativeWindowSize();
+                }
                 return;
 
             case "hastitlebar":
@@ -686,12 +727,19 @@ public class Window : Panel
 
             case "x":
                 if (float.TryParse(value, out float x))
+                {
                     Position = new Vector2(x, Position.y);
+                    UpdateNativeWindowPosition();
+                }
                 return;
 
             case "y":
                 if (float.TryParse(value, out float y))
+                {
                     Position = new Vector2(Position.x, y);
+                    UpdateNativeWindowPosition();
+                }
+                return;
                 return;
 
             case "minwidth":

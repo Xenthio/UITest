@@ -77,7 +77,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 
 		public Panel FindOrCreateElement( string elementName, Panel parent )
 		{
-			if ( !ElementPanel.IsValid() )
+			if ( ElementPanel == null || !ElementPanel.IsValid() )
 			{
 				Panel panel = null;
 				if ( elementName == "div" || elementName == "p" || elementName == "span" ) panel ??= new Panel();

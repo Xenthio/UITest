@@ -104,11 +104,13 @@ public class SliderScaleEntry : Panel
         if (Slider != null)
         {
             Slider.ValueChanged += OnSliderChanged;
+            Slider.AddEventListener("value.changed", (e) => OnSliderChanged(Slider.Value));
         }
 
         if (TextEntry != null)
         {
             TextEntry.OnTextEdited += OnEntryChanged;
+            TextEntry.AddEventListener("value.changed", (e) => OnEntryChanged(TextEntry.Value));
         }
     }
 
@@ -155,6 +157,7 @@ public class SliderScaleEntry : Panel
 
     protected virtual void OnValueChanged(float value)
     {
+        CreateValueEvent("value", value);
         ValueChanged?.Invoke(value);
     }
 

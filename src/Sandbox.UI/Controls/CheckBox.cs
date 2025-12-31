@@ -100,14 +100,19 @@ public class CheckBox : Panel
     public virtual void OnValueChanged()
     {
         UpdateState();
+        CreateEvent("onchange", Checked);
+        CreateValueEvent("checked", Checked);
+        CreateValueEvent("value", Checked);
         ValueChanged?.Invoke(Checked);
 
         if (Checked)
         {
+            CreateEvent("onchecked");
             OnChecked?.Invoke();
         }
         else
         {
+            CreateEvent("onunchecked");
             OnUnchecked?.Invoke();
         }
     }
@@ -127,8 +132,19 @@ public class CheckBox : Panel
         SetClass("checked", Checked);
     }
 
-    // Note: Mouse click handling would be implemented by the renderer
-    // For now, this provides the programmatic API
+    /// <summary>
+    /// Handle mouse click to toggle checkbox
+    /// </summary>
+    protected override void OnClick(MousePanelEvent e)
+    {
+        base.OnClick(e);
+        Checked = !Checked;
+        e.StopPropagation();
+    }
+
+    /// <summary>
+    /// Toggle the checkbox state
+    /// </summary>
     public void Toggle()
     {
         Checked = !Checked;
