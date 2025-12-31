@@ -23,6 +23,7 @@
 			padding: 6px 12px;
 			border-radius: 2px;
 			cursor: pointer;
+			pointer-events: all;
 			
 			&:hover {
 				background-color: #1177bb;
@@ -70,6 +71,7 @@
 		cursor: pointer;
 		min-height: 24px;
 		border-bottom: 1px solid #2d2d2d;
+		pointer-events: all;
 		
 		&:hover {
 			background-color: #2a2d2e;
@@ -86,6 +88,7 @@
 	
 	.tree-node {
 		flex-grow: 1;
+		pointer-events: all;
 		
 		label {
 			color: #cccccc;
@@ -197,6 +200,7 @@
 			border-radius: 2px;
 			font-size: 11px;
 			cursor: pointer;
+			pointer-events: all;
 			
 			&:hover {
 				background-color: #1177bb;
@@ -207,6 +211,7 @@
 	.pseudo-class-toolbar {
 		.pseudo-button {
 			background-color: #3c3c3c;
+			pointer-events: all;
 			
 			&.active {
 				background-color: #007acc;
