@@ -57,12 +57,12 @@ public class PanelListWindow : Window
 		pickerButton.Parent = toolbar;
 		pickerButton.Text = "Pick";
 		pickerButton.AddClass("picker-button");
-		pickerButton.OnClick += TogglePicker;
+		pickerButton.AddEventListener("onclick", TogglePicker);
 
 		refreshButton = new Button();
 		refreshButton.Parent = toolbar;
 		refreshButton.Text = "Refresh";
-		refreshButton.OnClick += Rebuild;
+		refreshButton.AddEventListener("onclick", Rebuild);
 
 		// Create tree container
 		treeContainer = new Panel(this);

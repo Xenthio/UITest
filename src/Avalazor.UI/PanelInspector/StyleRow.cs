@@ -56,13 +56,13 @@ public class StyleRow : Panel
 		saveButton.Parent = buttonContainer;
 		saveButton.Text = "Save";
 		saveButton.Style.Display = (property.Value != property.OriginalValue) ? DisplayMode.Flex : DisplayMode.None;
-		saveButton.OnClick += SaveChanges;
+		saveButton.AddEventListener("onclick", SaveChanges);
 
 		restoreButton = new Button();
 		restoreButton.Parent = buttonContainer;
 		restoreButton.Text = "Restore";
 		restoreButton.Style.Display = (property.Value != property.OriginalValue) ? DisplayMode.Flex : DisplayMode.None;
-		restoreButton.OnClick += RestoreValue;
+		restoreButton.AddEventListener("onclick", RestoreValue);
 	}
 
 	private void StartEditing()

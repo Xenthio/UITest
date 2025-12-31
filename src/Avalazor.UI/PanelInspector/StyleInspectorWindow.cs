@@ -60,7 +60,7 @@ public class StyleInspectorWindow : Window
 		button.Parent = pseudoClassToolbar;
 		button.Text = label;
 		button.AddClass("pseudo-class-button");
-		button.OnClick += () => TogglePseudoClass(pseudoClass, button);
+		button.AddEventListener("onclick", () => TogglePseudoClass(pseudoClass, button));
 		return button;
 	}
 
