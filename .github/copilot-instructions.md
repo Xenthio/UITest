@@ -102,7 +102,8 @@ Every UI component is a `Panel` (in `Sandbox.UI`).
 - **Threading**: UI operations should generally happen on the main thread.
 - **Native Dependencies**: The project requires the native Yoga library. The build script should handle this, but be aware of `Avalazor.UI/Native`.
 - **S&box Compatibility**: Many APIs mirror S&box's UI system. If you know S&box UI, you know Fazor.
-- **Porting Strategy**: When implementing features or fixing bugs, prefer porting code directly from S&box (https://github.com/Facepunch/sbox-public) (specifically `Sandbox.Engine/Systems/UI`) whenever possible. Maintain the same class names, method signatures, and behavior to ensure compatibility and ease of porting. Some controls may come from XGUI-3 (https://github.com/Xenthio/XGUI-3)
+- **Porting Strategy**: When implementing features or fixing bugs, prefer porting code directly from S&box (https://github.com/Facepunch/sbox-public) (specifically `Sandbox.Engine/Systems/UI`) whenever possible. Maintain the same class names, method signatures, and behavior to ensure compatibility and ease of porting. Some controls may come from XGUI-3 (https://github.com/Xenthio/XGUI-3).
+- **Fix considerations**: When fixing bugs and changing something from s&box, consider "Is it like that in S&box?" and check the S&box source, if it isn't, the problem you're trying to fix might lie elsewhere, possibly from something else that doesn't match s&box.
 
 ## 🔍 Debugging
 - **Panel Inspector**: There is a `PanelInspector` (ported from XGUI) available for debugging UI layout and styles.
