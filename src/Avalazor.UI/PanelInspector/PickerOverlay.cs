@@ -1,6 +1,8 @@
 using Sandbox.UI;
-
 using System.Numerics;
+
+// Use System.Numerics.Vector2 to avoid ambiguity with Sandbox.UI.Vector2
+using Vector2 = System.Numerics.Vector2;
 
 namespace Avalazor.UI.PanelInspector;
 
@@ -77,7 +79,7 @@ public class PickerOverlay : Panel
 		}
 	}
 
-	private Panel? FindPanelAtPosition(Panel root, System.Numerics.Vector2 position)
+	private Panel? FindPanelAtPosition(Panel root, Vector2 position)
 	{
 		// Don't pick inspector windows or the overlay itself
 		var panel = root.GetPanelAt(position, true, false);
