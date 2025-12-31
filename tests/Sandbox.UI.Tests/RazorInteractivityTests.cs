@@ -10,37 +10,6 @@ namespace Sandbox.UI.Tests;
 /// </summary>
 public class RazorInteractivityTests
 {
-    /// <summary>
-    /// Test component for @onclick
-    /// </summary>
-    private class TestOnClickComponent : Panel
-    {
-        public int ClickCount { get; private set; }
-        public Button? TestButton { get; private set; }
-
-        protected override void BuildRenderTree(RenderTreeBuilder builder)
-        {
-            builder.OpenElement<Button>(0);
-            builder.AddAttribute(1, "onclick", () => ClickCount++);
-            builder.CloseElement();
-        }
-    }
-
-    /// <summary>
-    /// Test component for @ref
-    /// </summary>
-    private class TestRefComponent : Panel
-    {
-        public Button? ButtonRef { get; private set; }
-
-        protected override void BuildRenderTree(RenderTreeBuilder builder)
-        {
-            builder.OpenElement<Button>(0);
-            builder.AddReferenceCapture<Button>(1, ButtonRef, value => ButtonRef = value);
-            builder.CloseElement();
-        }
-    }
-
     [Fact]
     public void OnClick_EventHandlerWorks()
     {
