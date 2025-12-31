@@ -1,4 +1,5 @@
 using SkiaSharp;
+using System.Collections.Concurrent;
 
 namespace Sandbox.UI.Skia;
 
@@ -13,7 +14,8 @@ public class SkiaPanelRenderer : IPanelRenderer
     // Cache typefaces to avoid recreation each frame (which can cause font rendering issues on resize).
     // This cache is bounded by the finite number of font family/style combinations used by the application.
     // Typefaces are long-lived resources and should not be frequently created/destroyed.
-    private static readonly Dictionary<(string family, SKFontStyle style), SKTypeface> _typefaceCache = new();
+    // Use ConcurrentDictionary for thread safety when multiple windows are rendering simultaneously.
+    private static readonly ConcurrentDictionary<(string family, SKFontStyle style), SKTypeface> _typefaceCache = new();
 
     public Rect Screen { get; private set; }
 
@@ -464,12 +466,7 @@ public class SkiaPanelRenderer : IPanelRenderer
     private static SKTypeface GetCachedTypeface(string fontFamily, SKFontStyle fontStyle)
     {
         var key = (fontFamily, fontStyle);
-        if (!_typefaceCache.TryGetValue(key, out var typeface))
-        {
-            typeface = SKTypeface.FromFamilyName(fontFamily, fontStyle);
-            _typefaceCache[key] = typeface;
-        }
-        return typeface;
+        return _typefaceCache.GetOrAdd(key, k => SKTypeface.FromFamilyName(k.family, k.style));
     }
 
     private void DrawImage(SKCanvas canvas, Image image, ref RenderState state)
