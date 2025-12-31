@@ -95,6 +95,11 @@ public partial class Panel
             if (e.Is("onmousemove")) OnMouseMove(mpe);
             if (e.Is("onmouseover")) OnMouseOver(mpe);
             if (e.Is("onmouseout")) OnMouseOut(mpe);
+
+            if (!e.Is("onmousemove"))
+            {
+                razorTreeDirty = true;
+            }
         }
 
         if (!e.Propagate)
@@ -105,11 +110,10 @@ public partial class Panel
         {
             foreach (var listener in EventListeners.ToList())
             {
-                if (string.Equals(listener.EventName, e.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    listener.Action?.Invoke(e);
-                    listener.BaseAction?.Invoke();
-                }
+                if (!e.Is(listener.EventName)) continue;
+
+                listener.Action?.Invoke(e);
+                listener.BaseAction?.Invoke();
             }
         }
 
