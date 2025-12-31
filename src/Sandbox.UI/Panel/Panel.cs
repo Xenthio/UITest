@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Components;
+
 namespace Sandbox.UI;
 
 /// <summary>
 /// A simple User Interface panel. Can be styled with CSS.
 /// Based on s&box's Panel from engine/Sandbox.Engine/Systems/UI/Panel/Panel.cs
 /// </summary>
-public partial class Panel : IDisposable, IStyleTarget
+public partial class Panel : IDisposable, IStyleTarget, IComponent
 {
     /// <summary>
     /// The element name. This is typically the type name lowercased.

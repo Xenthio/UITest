@@ -57,7 +57,7 @@ public partial class Panel
     /// <summary>
     /// Process pending events
     /// </summary>
-    internal void ProcessPendingEvents()
+    public void ProcessPendingEvents()
     {
         if (PendingEvents == null || PendingEvents.Count == 0)
             return;

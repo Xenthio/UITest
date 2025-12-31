@@ -75,8 +75,7 @@
 
 		<div class="margin column">
 			<label>Select Theme:</label>
-			@* <combobox default="OliveGreen" @ref="ThemeComboBox"> *@
-			<combobox default="OliveGreen"> 
+			<combobox default="OliveGreen" @ref="ThemeComboBox"> 
 				@foreach (string i in GetThemes())
 				{
 					<option value="combo">@i.Replace(".scss", "")</option>
