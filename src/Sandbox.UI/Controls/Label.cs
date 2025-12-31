@@ -55,6 +55,33 @@ public partial class Label : Panel
     }
 
     /// <summary>
+    /// Process text according to white-space style property.
+    /// Based on s&box's FixedText method from engine/Sandbox.Engine/Systems/UI/Engine/TextBlock.cs
+    /// </summary>
+    public string ProcessWhiteSpace(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+
+        var whiteSpace = ComputedStyle?.WhiteSpace;
+
+        // Replace various newline formats with paragraph separator (U+2029)
+        // This prevents them from rendering as boxes with crosses
+        text = text.Replace("\r\n", "\u2029");
+        text = text.Replace('\n', '\u2029');
+
+        // Apply white-space processing based on style
+        text = whiteSpace switch
+        {
+            WhiteSpace.Normal or WhiteSpace.NoWrap => text.CollapseWhiteSpace(),
+            WhiteSpace.PreLine => text.CollapseSpacesAndPreserveLines(),
+            WhiteSpace.Pre => text,
+            _ => text.CollapseWhiteSpace() // Default to Normal behavior
+        };
+
+        return text;
+    }
+
+    /// <summary>
     /// Text to display on the label.
     /// </summary>
     public virtual string? Text
