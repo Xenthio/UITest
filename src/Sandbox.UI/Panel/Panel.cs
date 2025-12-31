@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Components;
+
 namespace Sandbox.UI;
 
 /// <summary>
 /// A simple User Interface panel. Can be styled with CSS.
 /// Based on s&box's Panel from engine/Sandbox.Engine/Systems/UI/Panel/Panel.cs
 /// </summary>
-public partial class Panel : IDisposable, IStyleTarget
+public partial class Panel : IDisposable, IStyleTarget, IComponent
 {
     /// <summary>
     /// The element name. This is typically the type name lowercased.
@@ -336,7 +338,16 @@ public partial class Panel : IDisposable, IStyleTarget
     
     public void AddEventListener(string eventName, Action handler)
     {
-        AddEventListener(eventName, (e) => handler());
+        EventListeners ??= new List<EventCallback>();
+
+        var ev = new EventCallback
+        {
+            EventName = eventName.ToLower(),
+            BaseAction = handler,
+            Panel = this
+        };
+
+        EventListeners.Add(ev);
     }
     
     public void RemoveEventListener(string eventName, Action<PanelEvent> handler)

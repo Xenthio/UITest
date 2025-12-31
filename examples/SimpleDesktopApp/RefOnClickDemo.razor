@@ -1,0 +1,157 @@
+@namespace SimpleDesktopApp
+@using System
+@using Sandbox.UI
+@attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
+@inherits Window
+
+<root title="@@ref and @@onclick Demo" hasminimise="true" hasmaximise="true" hasclose="true" windowwidth="600" windowheight="500" style="flex-direction: column;">
+    <div class="window-content" style="flex-direction: column; padding: 20px;">
+        <h2>@@ref and @@onclick Demo</h2>
+        <label>This demonstrates both @("@ref") and @("@onclick") working correctly.</label>
+        
+        <div style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1); flex-direction: column;">
+            <h3>@@onclick Examples</h3>
+            
+            <div style="margin: 10px 0;">
+                <button @onclick="@IncrementSimple">
+                    Simple Click: @simpleCount
+                </button>
+            </div>
+            
+            <div style="margin: 10px 0;">
+                <button @onclick="@(() => lambdaCount++)">
+                    Lambda Click: @lambdaCount
+                </button>
+            </div>
+            
+            <div style="margin: 10px 0;">
+                <button @onclick="@HandleClickWithEvent">
+                    @($"Event Click: {eventCount} (last button: {lastButtonPressed})")
+                </button>
+            </div>
+        </div>
+        
+        <div style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1); flex-direction: column;">
+            <h3>@@ref Examples</h3>
+            
+            <div style="margin: 10px 0;">
+                <button @ref="myButton1">
+                    @("Button 1 (captured via @ref)")
+                </button>
+                <button @onclick="@UseRef1">
+                    Click Button 1 Programmatically
+                </button>
+            </div>
+            
+            <div style="margin: 10px 0;">
+                <button @ref="myButton2">
+                    Button 2: @button2ClickCount
+                </button>
+                <button @onclick="@UseRef2">
+                    Click Button 2 Programmatically
+                </button>
+            </div>
+            
+            <div style="margin: 10px 0;">
+                <p>Button 1 valid: @(myButton1?.IsValid() ?? false)</p>
+                <p>Button 2 valid: @(myButton2?.IsValid() ?? false)</p>
+            </div>
+        </div>
+        
+        <div style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1); flex-direction: column;">
+            <h3>Combined Example</h3>
+            
+            <div style="margin: 10px 0;">
+                <button @ref="combinedButton" @onclick="@HandleCombinedClick">
+                    Combined: @combinedCount
+                </button>
+                <button @onclick="@UseCombinedRef">
+                    Trigger Combined Button
+                </button>
+            </div>
+            
+            <p>Combined button text: @(combinedButton?.Text ?? "null")</p>
+        </div>
+    </div>
+</root>
+
+@code {
+    // Simple click counter
+    private int simpleCount = 0;
+    private int lambdaCount = 0;
+    private int eventCount = 0;
+    private string lastButtonPressed = "none";
+    
+    // Ref examples
+    private Button? myButton1;
+    private Button? myButton2;
+    private int button2ClickCount = 0;
+    
+    // Combined example
+    private Button? combinedButton;
+    private int combinedCount = 0;
+    
+    private void IncrementSimple()
+    {
+        simpleCount++;
+        StateHasChanged();
+    }
+    
+    private void HandleClickWithEvent(PanelEvent e)
+    {
+        eventCount++;
+        if (e is MousePanelEvent mpe)
+        {
+            lastButtonPressed = mpe.Button ?? "unknown";
+        }
+        StateHasChanged();
+    }
+    
+    private void UseRef1()
+    {
+        if (myButton1 != null && myButton1.IsValid())
+        {
+            myButton1.Click();
+            Console.WriteLine("Button 1 clicked programmatically via @ref");
+        }
+    }
+    
+    private void UseRef2()
+    {
+        if (myButton2 != null && myButton2.IsValid())
+        {
+            // Update the button's text directly via ref
+            button2ClickCount++;
+            myButton2.Text = $"Button 2: {button2ClickCount}";
+            StateHasChanged();
+        }
+    }
+    
+    private void HandleCombinedClick()
+    {
+        combinedCount++;
+        StateHasChanged();
+    }
+    
+    private void UseCombinedRef()
+    {
+        if (combinedButton != null && combinedButton.IsValid())
+        {
+            combinedButton.Click();
+            Console.WriteLine($"Combined button clicked programmatically. Text: {combinedButton.Text}");
+        }
+    }
+    
+    protected override void OnAfterTreeRender(bool firstTime)
+    {
+        base.OnAfterTreeRender(firstTime);
+        
+        if (firstTime)
+        {
+            Console.WriteLine("=== RefOnClickDemo initialized ===");
+            Console.WriteLine($"myButton1 captured: {myButton1?.IsValid() ?? false}");
+            Console.WriteLine($"myButton2 captured: {myButton2?.IsValid() ?? false}");
+            Console.WriteLine($"combinedButton captured: {combinedButton?.IsValid() ?? false}");
+        }
+    }
+}

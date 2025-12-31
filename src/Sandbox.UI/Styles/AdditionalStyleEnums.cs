@@ -77,13 +77,31 @@ Oblique = 3
 /// <summary>
 /// Possible values for <c>white-space</c> CSS property.
 /// </summary>
+/// <summary>
+/// Determines how white space inside an element is handled.
+/// Based on s&box's WhiteSpace enum
+/// </summary>
 public enum WhiteSpace
 {
-Normal = 0,
-NoWrap = 1,
-Pre = 2,
-PreWrap = 3,
-PreLine = 4
+	/// <summary>
+	/// Sequences of white spaces are collapsed, text will wrap when necessary. Default.
+	/// </summary>
+	Normal = 0,
+
+	/// <summary>
+	/// Sequences of white spaces are collapsed and linebreaks are suppressed.
+	/// </summary>
+	NoWrap = 1,
+
+	/// <summary>
+	/// Sequences of white spaces are collapsed, text will wrap when necessary, linebreaks are preserved.
+	/// </summary>
+	PreLine = 2,
+
+	/// <summary>
+	/// Sequences of white space are preserved, lines are only broken at newline characters in the source.
+	/// </summary>
+	Pre = 3
 }
 
 /// <summary>

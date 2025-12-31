@@ -1,8 +1,7 @@
-﻿using Sandbox.Html;
+using Sandbox.Html;
 using Sandbox.UI.Reflection;
 
 namespace Sandbox.UI;
-
 /// <summary>
 /// This is a tree renderer for panels. If we ever use razor on other ui we'll want to make a copy of
 /// this class and do the specific things to that.
@@ -17,40 +16,38 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 		// Quick ignore for empty strings
 		if ( string.IsNullOrWhiteSpace( markupContent ) )
 			return;
-
 		var parent = CurrentScope.Element ?? Parent;
-
 		var scope = CurrentScope;
 		scope.Sequence = sequence;
 		scope.Loop = CurrentBlock.Increment( sequence );
 		scope.Hash = HashCode.Combine( scope.Loop, scope.Sequence );
-
 		var block = GetBlock( scope.Hash );
-
 		// already created - these are static so won't ever need changing
 		// but make sure they haven't been deleted and make sure their child order is correct
 		if ( block.MarkupPanels != null && block.MarkupPanels.All( x => x.IsValid() ) )
 		{
 			foreach ( var panel in block.MarkupPanels )
 			{
-				if (panel.Parent != parent) throw new InvalidOperationException("Panel parent mismatch");
+				// Match s&box's assertion on line 35 of their RenderTree.Markup.cs
+				// This ensures the cached panel still belongs to the expected parent
+				if ( panel.Parent != parent )
+				{
+					// This shouldn't happen - means the render tree structure changed in unexpected ways
+					throw new System.InvalidOperationException( 
+						$"Panel parent mismatch for markup panel <{panel.ElementName}>: expected parent {parent.ElementName} but got {panel.Parent?.ElementName ?? "null"}" );
+				}
 				parent.SetChildIndex( panel, CurrentScope.ChildIndex );
 				CurrentScope.ChildIndex++;
 			}
 			return;
 		}
-
 		// Make sure we don't reach this point every again
 		block.MarkupPanels = new List<Panel>();
-
 		// Don't create an element if it's just newlines and whitespace
 		if ( markupContent.All( x => char.IsWhiteSpace( x ) || x == '\n' || x == '\r' ) )
 			return;
-
 		FlushContent();
-
 		var root = Sandbox.Html.Node.Parse( markupContent );
-
 		if ( root.NodeType == Sandbox.Html.NodeType.Document )
 		{
 			foreach ( var e in root.ChildNodes )
@@ -59,43 +56,25 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 				if ( panel != null )
 				{
 					block.MarkupPanels.Add( panel );
-
 					parent.SetChildIndex( panel, CurrentScope.ChildIndex );
 					panel.SourceFile = sourceFile;
 					panel.SourceLine = sourceLine;
-
 					CurrentScope.ChildIndex++;
 				}
 			}
 		}
-
 		return;
 	}
-
 	Panel CreateNodeMarkup( Sandbox.Html.Node node, Panel parent )
 	{
 		if ( node.NodeType == Sandbox.Html.NodeType.Element )
 		{
-			// Skip HTML document structure elements (html, head, body) that AngleSharp adds
-			// These are wrapper elements created by the parser and not actual UI elements
-			if ( node.Name == "html" || node.Name == "head" || node.Name == "body" )
-			{
-				// Process children but don't create a panel for the wrapper itself
-				foreach ( var e in node.ChildNodes )
-				{
-					CreateNodeMarkup( e, parent );
-				}
-				return null;
-			}
-
-			var panel = PanelFactory.Create(node.Name) ?? new Panel();
+			var panel = PanelFactory.Create( node.Name ) ?? new Panel();
 			panel.ElementName = node.Name;
 			panel.Parent = parent;
 			panel.SourceFile = sourceFile;
 			panel.SourceLine = sourceLine;
-
 			string slot = null;
-
 			foreach ( var attr in node.Attributes )
 			{
 				if ( attr.Name == "slot" )
@@ -103,30 +82,24 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 					slot = attr.Value;
 					continue;
 				}
-
 				panel.SetProperty( attr.Name, attr.Value );
 			}
-
 			foreach ( var e in node.ChildNodes )
 			{
 				CreateNodeMarkup( e, panel );
 			}
-
 			if ( slot != null )
 			{
 				panel.Parent?.OnTemplateSlot( node, slot, panel );
 			}
-
 			return panel;
 		}
-
 		if ( node.NodeType == Sandbox.Html.NodeType.Text )
 		{
 			// Don't bother with empty content
-			var content = node.TextContent;
+			var content = node.InnerHtml;
 			if ( string.IsNullOrWhiteSpace( content ) )
 				return null;
-
 			if ( parent is Label )
 			{
 				parent.SetContent( content );
@@ -134,15 +107,12 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 			}
 			else
 			{
-				var panel = PanelFactory.Create("label") ?? new Panel();
+				var panel = PanelFactory.Create( "label" ) ?? new Panel();
 				panel.Parent = parent;
 				panel.SetContent( content );
-
 				return panel;
 			}
 		}
-
 		return null;
-
 	}
 }

@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>1701;1702;1591;NETSDK1138</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Using embedded Microsoft.AspNetCore.Razor.Language from s&box (MIT licensed) -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Auto-generated resource files -->
+    <Compile Update="Microsoft.AspNetCore.Razor.Language\ComponentResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ComponentResources.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Microsoft.AspNetCore.Razor.Language\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Embedded resources -->
+    <EmbeddedResource Update="Microsoft.AspNetCore.Razor.Language\ComponentResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ComponentResources.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>Microsoft.AspNetCore.Razor.Language</CustomToolNamespace>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Microsoft.AspNetCore.Razor.Language\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>Microsoft.AspNetCore.Razor.Language</CustomToolNamespace>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

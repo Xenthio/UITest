@@ -77,7 +77,7 @@ public class PickerOverlay : Panel
 		}
 	}
 
-	private Panel? FindPanelAtPosition(Panel root, Vector2 position)
+	private Panel? FindPanelAtPosition(Panel root, Sandbox.UI.Vector2 position)
 	{
 		// Don't pick inspector windows or the overlay itself
 		var panel = root.GetPanelAt(position, true, false);

@@ -347,6 +347,10 @@ public class SkiaPanelRenderer : IPanelRenderer
         var style = label.ComputedStyle;
         if (style == null) return;
 
+        // Process text according to white-space style
+        var processedText = label.ProcessWhiteSpace(label.Text);
+        if (string.IsNullOrEmpty(processedText)) return;
+
         var opacity = label.Opacity * state.RenderOpacity;
         var textColor = style.FontColor ?? new Color(0, 0, 0, 1);
         var fontSize = style.FontSize?.GetPixels(16f) ?? 16f;
@@ -380,26 +384,26 @@ public class SkiaPanelRenderer : IPanelRenderer
         // Apply text alignment
         if (style.TextAlign == TextAlign.Center)
         {
-            var textWidth = paint.MeasureText(label.Text);
+            var textWidth = paint.MeasureText(processedText);
             x = rect.Left + (rect.Width - textWidth) / 2;
         }
         else if (style.TextAlign == TextAlign.Right)
         {
-            var textWidth = paint.MeasureText(label.Text);
+            var textWidth = paint.MeasureText(processedText);
             x = rect.Right - textWidth;
         }
 
         // Check if text needs wrapping (only if width is constrained)
-        var textWidth2 = paint.MeasureText(label.Text);
+        var textWidth2 = paint.MeasureText(processedText);
         var shouldWrap = rect.Width > 0 && textWidth2 > rect.Width && style.WhiteSpace != WhiteSpace.NoWrap;
 
         if (shouldWrap)
         {
-            DrawWrappedText(canvas, label.Text, paint, rect, x, y, metrics, style.TextAlign);
+            DrawWrappedText(canvas, processedText, paint, rect, x, y, metrics, style.TextAlign);
         }
         else
         {
-            canvas.DrawText(label.Text, x, y, paint);
+            canvas.DrawText(processedText, x, y, paint);
         }
     }
 

@@ -5,45 +5,45 @@ namespace Microsoft.AspNetCore.Components;
 
 public static class RazorExtensions
 {
-	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, Action<PanelEvent> value)
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, Action<PanelEvent> value )
 	{
-		if (self is not PanelRenderTreeBuilder ptb) return;
+		if ( self is not PanelRenderTreeBuilder ptb ) return;
 
-		ptb.AddPanelEventAttribute(sequence, attrName, value);
+		ptb.AddPanelEventAttribute( sequence, attrName, value );
 	}
 
-	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, Func<Task> value)
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, Func<Task> value )
 	{
-		if (self is not PanelRenderTreeBuilder ptb) return;
+		if ( self is not PanelRenderTreeBuilder ptb ) return;
 
-		ptb.AddAttributeAction(sequence, attrName, value);
+		ptb.AddAttributeAction( sequence, attrName, value );
 	}
 
-	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, Action value)
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, Action value )
 	{
-		if (self is not PanelRenderTreeBuilder ptb) return;
+		if ( self is not PanelRenderTreeBuilder ptb ) return;
 
-		ptb.AddAttributeAction(sequence, attrName, value);
+		ptb.AddAttributeAction( sequence, attrName, value );
 	}
 
-	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, object value)
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, object value )
 	{
-		if (self is not PanelRenderTreeBuilder ptb) return;
+		if ( self is not PanelRenderTreeBuilder ptb ) return;
 
-		ptb.AddAttributeObject(sequence, attrName, value);
+		ptb.AddAttributeObject( sequence, attrName, value );
 	}
 
-	public static void AddAttribute(this RenderTreeBuilder self, int sequence, string attrName, string value)
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, string value )
 	{
-		if (self is not PanelRenderTreeBuilder ptb) return;
+		if ( self is not PanelRenderTreeBuilder ptb ) return;
 
-		ptb.AddAttributeString(sequence, attrName, value);
+		ptb.AddAttributeString( sequence, attrName, value );
 	}
 
-	public static void AddAttribute<T>(this RenderTreeBuilder self, int sequence, object value, Action<T> setter)
+	public static void AddAttribute<T>( this RenderTreeBuilder self, int sequence, object value, Action<T> setter )
 	{
-		if (self is not PanelRenderTreeBuilder ptb) return;
+		if ( self is not PanelRenderTreeBuilder ptb ) return;
 
-		ptb.AddAttributeWithSetter<T>(sequence, value, setter);
+		ptb.AddAttributeWithSetter<T>( sequence, value, setter );
 	}
 }

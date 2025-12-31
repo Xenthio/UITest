@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Sandbox.UI.Reflection;
 
 namespace Sandbox.UI;
-
 /// <summary>
 /// This is a tree renderer for panels. If we ever use razor on other ui we'll want to make a copy of
 /// this class and do the specific things to that.
@@ -11,26 +10,19 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 {
 	Block RootBlock;
 	Block CurrentBlock => CurrentScope.Block ?? RootBlock;
-
 	class Block
 	{
 		public int Hash;
 		public List<Block> Children;
-
 		public bool IsRootElement;
 		public Panel ElementPanel;
 		public Action ReferenceClearer;
 		public List<Func<bool>> Binds;
-
 		public List<Panel> MarkupPanels;
-
 		public bool WasSeen;
-
 		public Block()
 		{
-
 		}
-
 		internal void Destroy()
 		{
 			if ( Children != null )
@@ -39,28 +31,22 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 				{
 					child?.Destroy();
 				}
-
 				Children = null;
 			}
-
 			if ( MarkupPanels != null )
 			{
 				foreach ( var panel in MarkupPanels )
 				{
 					panel?.Delete( true );
 				}
-
 				MarkupPanels.Clear();
 				MarkupPanels = null;
 			}
-
 			if ( !IsRootElement )
 			{
 				ElementPanel?.Delete( false );
 			}
-
 			ElementPanel = null;
-
 			try
 			{
 				ReferenceClearer?.Invoke();
@@ -71,56 +57,45 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 				// because we're going to be setting a reference to null
 				// that may very well not even exist anymore
 			}
-
-
 		}
-
 		public Panel FindOrCreateElement( string elementName, Panel parent )
 		{
 			if ( ElementPanel == null || !ElementPanel.IsValid() )
 			{
 				Panel panel = null;
 				if ( elementName == "div" || elementName == "p" || elementName == "span" ) panel ??= new Panel();
-				else panel = PanelFactory.Create(elementName);
+				else panel = PanelFactory.Create( elementName );
 				panel ??= new Panel();
 				panel.ElementName = elementName;
 				panel.Parent = parent;
 				ElementPanel = panel;
 			}
-
 			if ( ElementPanel.Parent != parent )
 			{
 				// can't have children
 				if ( parent is Label ) return ElementPanel;
 				if ( parent is Image ) return ElementPanel;
-
 				Log.Warning( $"Fixing parent of {ElementPanel}" );
 				ElementPanel.Parent = parent;
 			}
-
 			return ElementPanel;
 		}
-
 		public Panel FindOrCreateElement<T>( Panel parent ) where T : IComponent, new()
 		{
-			if ( !ElementPanel.IsValid() )
+			if ( ElementPanel == null || !ElementPanel.IsValid() )
 			{
 				IComponent component = new T();
-
 				if ( component is Panel panel )
 				{
 					panel.Parent = parent;
 					ElementPanel = panel;
 				}
 			}
-
 			return ElementPanel;
 		}
-
 		public bool UpdateBinds()
 		{
 			bool b = false;
-
 			if ( Children is not null )
 			{
 				for ( int i = 0; i < Children.Count; i++ )
@@ -128,7 +103,6 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 					b = Children[i].UpdateBinds() || b;
 				}
 			}
-
 			if ( Binds is not null )
 			{
 				for ( int i = 0; i < Binds.Count; i++ )
@@ -145,10 +119,8 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 					}
 				}
 			}
-
 			return b;
 		}
-
 		/// <summary>
 		/// Reset to an unseen, unlooped state
 		/// </summary>
@@ -156,16 +128,13 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 		{
 			WasSeen = false;
 			increments?.Clear();
-
 			if ( Children == null )
 				return;
-
 			foreach ( var child in Children )
 			{
 				child.Reset();
 			}
 		}
-
 		internal bool DestroyUnseen()
 		{
 			if ( Children != null )
@@ -175,20 +144,16 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 					Children.Remove( child );
 				}
 			}
-
 			if ( !WasSeen )
 			{
 				Destroy();
 				return true;
 			}
-
 			return false;
 		}
-
 		internal Block GetChild( int hash )
 		{
 			Children ??= new();
-
 			var child = Children.FirstOrDefault( x => x.Hash == hash );
 			if ( child == null )
 			{
@@ -196,13 +161,10 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 				child.Hash = hash;
 				Children.Add( child );
 			}
-
 			child.WasSeen = true;
 			return child;
 		}
-
 		Dictionary<int, int> cache;
-
 		/// <summary>
 		/// Allows caching a block so you can avoid repeating unnecessary steps. 
 		/// Calling this will return true if it's already cached, false if it's not.
@@ -211,26 +173,20 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 		public bool CheckCacheValue( int i, int hashcode )
 		{
 			cache ??= new();
-
 			if ( cache.TryGetValue( i, out var code ) && hashcode == code )
 				return true;
-
 			cache[i] = hashcode;
 			return false;
 		}
-
 		/// <summary>
 		/// For loops, how many times has this been seen
 		/// </summary>
 		Dictionary<int, int> increments;
-
 		public int Increment( int sequence )
 		{
 			increments ??= new Dictionary<int, int>();
-
 			if ( !increments.TryGetValue( sequence, out int counter ) )
 				counter = 0;
-
 			counter++;
 			increments[sequence] = counter;
 			return counter;

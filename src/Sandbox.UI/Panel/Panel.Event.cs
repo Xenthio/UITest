@@ -20,6 +20,7 @@ public partial class Panel
     {
         public string EventName;
         public Action<PanelEvent>? Action;
+        public Action? BaseAction;
         public Panel? Panel;
         public Panel? Context;
     }
@@ -57,7 +58,7 @@ public partial class Panel
     /// <summary>
     /// Process pending events
     /// </summary>
-    internal void ProcessPendingEvents()
+    public void ProcessPendingEvents()
     {
         if (PendingEvents == null || PendingEvents.Count == 0)
             return;
@@ -94,6 +95,11 @@ public partial class Panel
             if (e.Is("onmousemove")) OnMouseMove(mpe);
             if (e.Is("onmouseover")) OnMouseOver(mpe);
             if (e.Is("onmouseout")) OnMouseOut(mpe);
+
+            if (!e.Is("onmousemove"))
+            {
+                razorTreeDirty = true;
+            }
         }
 
         if (!e.Propagate)
@@ -104,10 +110,10 @@ public partial class Panel
         {
             foreach (var listener in EventListeners.ToList())
             {
-                if (string.Equals(listener.EventName, e.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    listener.Action?.Invoke(e);
-                }
+                if (!e.Is(listener.EventName)) continue;
+
+                listener.Action?.Invoke(e);
+                listener.BaseAction?.Invoke();
             }
         }
 

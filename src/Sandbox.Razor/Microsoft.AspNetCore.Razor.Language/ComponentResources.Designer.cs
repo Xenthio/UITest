@@ -39,7 +39,7 @@ namespace Microsoft.AspNetCore.Razor.Language {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Avalazor.Razor.Microsoft.AspNetCore.Razor.Language.ComponentResources", typeof(ComponentResources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Sandbox.Razor.Microsoft.AspNetCore.Razor.Language.ComponentResources", typeof(ComponentResources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
