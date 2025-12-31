@@ -10,8 +10,9 @@ public static class GlobalPanelInspector
 {
 	private static PanelInspector? _inspector;
 	private static bool _isEnabled = true;
+    private static RootPanel? _currentRootPanel;
 
-	static GlobalPanelInspector()
+    static GlobalPanelInspector()
 	{
 		// Register our interceptor with RootPanel
 		RootPanel.ButtonEventInterceptor = ProcessButtonEvent;

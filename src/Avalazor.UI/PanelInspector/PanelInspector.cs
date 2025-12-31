@@ -11,12 +11,13 @@ public class PanelInspector
 {
 	private PanelListWindow? panelListWindow;
 	private StyleInspectorWindow? styleInspectorWindow;
+    private RootPanel? targetRootPanel;
 
-	/// <summary>
-	/// Whether to open inspector windows in separate OS windows (true) or as overlays (false).
-	/// When true, requires WindowCreator to be set.
-	/// </summary>
-	public bool UseSeparateWindows { get; set; } = false;
+    /// <summary>
+    /// Whether to open inspector windows in separate OS windows (true) or as overlays (false).
+    /// When true, requires WindowCreator to be set.
+    /// </summary>
+    public bool UseSeparateWindows { get; set; } = false;
 
 	/// <summary>
 	/// Callback to create a separate OS window for an inspector panel.
