@@ -28,8 +28,8 @@ public class StyleInspectorWindow : Window
 		AddClass("inspector-window");
 		AddClass("style-inspector-window");
 		
-		// Load stylesheet
-		StyleSheet.Load("/themes/PanelInspector.scss");
+		// Load stylesheet - use relative path from working directory
+		StyleSheet.Load("themes/PanelInspector.scss", failSilently: false);
 		
 		BuildUI();
 	}

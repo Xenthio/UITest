@@ -35,8 +35,8 @@ public class PanelListWindow : Window
 		AddClass("inspector-window");
 		AddClass("panel-list-window");
 		
-		// Load stylesheet
-		StyleSheet.Load("/themes/PanelInspector.scss");
+		// Load stylesheet - use relative path from working directory
+		StyleSheet.Load("themes/PanelInspector.scss", failSilently: false);
 		
 		BuildUI();
 	}
