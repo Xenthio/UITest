@@ -239,7 +239,10 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
                 }
             }
 
+            RunPendingEvents();
             Tick();
+            RunPendingEvents();
+            RunClassBinds();
         }
         catch (Exception e)
         {
