@@ -4,11 +4,12 @@
 @attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
 @inherits Window
 
-<root title="@@ref and @@onclick Demo" hasminimise="true" hasmaximise="true" hasclose="true" windowwidth="600" windowheight="500">
+<root title="@@ref and @@onclick Demo" hasminimise="true" hasmaximise="true" hasclose="true" windowwidth="600" windowheight="500" style="flex-direction: column;">
+    <div class="window-content" style="flex-direction: column; padding: 20px;">
         <h2>@@ref and @@onclick Demo</h2>
-        <p>This demonstrates both @("@ref") and @("@onclick") working correctly.</p>
+        <label>This demonstrates both @("@ref") and @("@onclick") working correctly.</label>
         
-        <section style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1);">
+        <div style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1); flex-direction: column;">
             <h3>@@onclick Examples</h3>
             
             <div style="margin: 10px 0;">
@@ -28,9 +29,9 @@
                     @($"Event Click: {eventCount} (last button: {lastButtonPressed})")
                 </button>
             </div>
-        </section>
+        </div>
         
-        <section style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1);">
+        <div style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1); flex-direction: column;">
             <h3>@@ref Examples</h3>
             
             <div style="margin: 10px 0;">
@@ -55,9 +56,9 @@
                 <p>Button 1 valid: @(myButton1?.IsValid() ?? false)</p>
                 <p>Button 2 valid: @(myButton2?.IsValid() ?? false)</p>
             </div>
-        </section>
+        </div>
         
-        <section style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1);">
+        <div style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1); flex-direction: column;">
             <h3>Combined Example</h3>
             
             <div style="margin: 10px 0;">
@@ -70,7 +71,8 @@
             </div>
             
             <p>Combined button text: @(combinedButton?.Text ?? "null")</p>
-        </section>
+        </div>
+    </div>
 </root>
 
 @code {
