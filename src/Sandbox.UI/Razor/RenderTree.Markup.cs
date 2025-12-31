@@ -100,13 +100,6 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 			var content = node.InnerHtml;
 			if ( string.IsNullOrWhiteSpace( content ) )
 				return null;
-			
-			// Trim leading/trailing whitespace from text content
-			// This prevents trailing whitespace in buttons and other elements
-			content = content.Trim();
-			if ( string.IsNullOrEmpty( content ) )
-				return null;
-			
 			if ( parent is Label )
 			{
 				parent.SetContent( content );
