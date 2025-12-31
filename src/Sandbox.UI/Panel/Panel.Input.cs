@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace Sandbox.UI;
 
 /// <summary>
@@ -27,12 +25,9 @@ public partial class Panel
     /// Called by <see cref="PanelInput.CheckHover(Panel, Vector2, ref Panel)" /> to transform
     /// the current mouse position using the panel's LocalMatrix (by default). This can be overriden for special cases.
     /// </summary>
-    /// <param name="pos"></param>
-    /// <returns></returns>
     public virtual Vector2 GetTransformPosition(Vector2 pos)
     {
         // TODO: Implement LocalMatrix transform when we add transform support
-        // return LocalMatrix?.Transform(pos) ?? pos;
         return pos;
     }
 
@@ -51,10 +46,41 @@ public partial class Panel
     }
 
     /// <summary>
+    /// Whether the given rect is inside this panels bounds. (<see cref="Box.Rect"/>)
+    /// </summary>
+    /// <param name="rect">The rect to test, which should have screen-space coordinates.</param>
+    /// <param name="fullyInside"><see langword="true"/> to test if the given rect is completely inside the panel. <see langword="false"/> to test for an intersection.</param>
+    public bool IsInside(Rect rect, bool fullyInside)
+    {
+        if (fullyInside)
+        {
+            return rect.Left >= Box.Rect.Left && rect.Right <= Box.Rect.Right &&
+                   rect.Top >= Box.Rect.Top && rect.Bottom <= Box.Rect.Bottom;
+        }
+        else
+        {
+            // Intersection test
+            return !(rect.Right < Box.Rect.Left || rect.Left > Box.Rect.Right ||
+                     rect.Bottom < Box.Rect.Top || rect.Top > Box.Rect.Bottom);
+        }
+    }
+
+    /// <summary>
     /// False by default, can this element accept keyboard focus. If an element accepts
     /// focus it'll be able to receive keyboard input.
     /// </summary>
     public bool AcceptsFocus { get; set; }
+
+    /// <summary>
+    /// Describe what to do with keyboard input. The default is InputMode.UI which means that when
+    /// focused, this panel will receive Keys Typed and Button Events.
+    /// </summary>
+    public PanelInputType ButtonInput { get; set; }
+
+    /// <summary>
+    /// False by default. Anything that is capable of accepting IME input should return true. Which is probably just a TextEntry.
+    /// </summary>
+    public virtual bool AcceptsImeInput => false;
 
     /// <summary>
     /// Give input focus to this panel.
@@ -73,11 +99,10 @@ public partial class Panel
     }
 
     /// <summary>
-    /// Called when any button, mouse (except for mouse4/5) and keyboard, are pressed or released while hovering this panel.
+    /// Called when any button, mouse (except for mouse4/5) and keyboard, are pressed or depressed while hovering this panel.
     /// </summary>
     public virtual void OnButtonEvent(ButtonEvent e)
     {
-        if (e.StopPropagation) return;
         Parent?.OnButtonEvent(e);
     }
 
@@ -94,8 +119,26 @@ public partial class Panel
     /// </summary>
     public virtual void OnButtonTyped(ButtonEvent e)
     {
-        if (e.StopPropagation) return;
         Parent?.OnButtonTyped(e);
+    }
+
+    /// <summary>
+    /// Called when the user presses CTRL+V while this panel has input focus.
+    /// </summary>
+    public virtual void OnPaste(string text)
+    {
+        Parent?.OnPaste(text);
+    }
+
+    /// <summary>
+    /// If we have a value that can be copied to the clipboard, return it here.
+    /// </summary>
+    public virtual string? GetClipboardValue(bool cut)
+    {
+        if (Parent != null)
+            return Parent.GetClipboardValue(cut);
+
+        return null;
     }
 
     /// <summary>
@@ -114,14 +157,43 @@ public partial class Panel
     /// Called from <see cref="OnMouseWheel"/> to try to scroll.
     /// </summary>
     /// <param name="value">The scroll wheel delta.</param>
-    /// <returns>Return true to NOT propagate the event to the parent.</returns>
+    /// <returns>Return true to NOT propagate the event to the <see cref="Parent"/>.</returns>
     public bool TryScroll(Vector2 value)
     {
         if (ComputedStyle == null) return false;
-        // Note: HasScrollY/HasScrollX don't exist yet, skip scrolling for now
-        // TODO: Implement proper scrolling support
+        if (!HasScrollY && !HasScrollX) return false;
 
-        return false;
+        // If we're not scrolling in the same direction that this panel overflows in, ignore
+        if (ComputedStyle.OverflowX != OverflowMode.Scroll && value.x != 0) return false;
+        if (ComputedStyle.OverflowY != OverflowMode.Scroll && value.y != 0) return false;
+
+        var velocityAdd = Vector2.Zero;
+
+        if (ComputedStyle.OverflowX == OverflowMode.Scroll && HasScrollX) velocityAdd += new Vector2(value.x * -20, 0);
+        if (ComputedStyle.OverflowY == OverflowMode.Scroll && HasScrollY) velocityAdd += new Vector2(0, value.y * 20);
+
+        velocityAdd *= (1 + ScrollVelocity.Length / 100.0f);
+        ScrollVelocity += velocityAdd;
+
+        if (velocityAdd.Length < 0.001f)
+            return false;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Scroll to the bottom, if the panel has scrolling enabled.
+    /// </summary>
+    /// <returns>Whether we scrolled to the bottom or not.</returns>
+    public bool TryScrollToBottom()
+    {
+        if (ComputedStyle == null) return false;
+        if (!HasScrollY) return false;
+
+        ScrollOffset = new Vector2(ScrollOffset.x, ScrollSize.y);
+        IsScrollAtBottom = true;
+        ScrollVelocity = new Vector2(0, 0);
+        return true;
     }
 
     internal static Panel? MouseCapture { get; private set; }
@@ -149,6 +221,12 @@ public partial class Panel
     /// Whether this panel is capturing the mouse cursor.
     /// </summary>
     public bool HasMouseCapture => MouseCapture == this;
+
+    //
+    // These are used by the input system as an optimization
+    //
+    internal Vector2 WorldCursor;
+    internal float WorldDistance = float.MaxValue;
 
     /// <summary>
     /// Get the panel at a specific screen position (used for inspector picking)

@@ -115,6 +115,7 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
         YogaNode = new YogaWrapper(this);
         Style = new PanelStyle(this);
         StyleSheet = new StyleSheetCollection(this);
+        Transitions = new Transitions(this);
 
         ElementName = GetType().Name.ToLower();
         Switch(PseudoClass.Empty, true);
@@ -294,7 +295,7 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
 
     public override string ToString()
     {
-        var classes = _classes?.Count > 0 ? $".{string.Join(".", _classes)}" : "";
+        var classes = _class?.Count > 0 ? $".{string.Join(".", _class)}" : "";
         return $"<{ElementName}{classes}>";
     }
 
