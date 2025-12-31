@@ -250,6 +250,9 @@ internal class PanelInput
 
 			if (canClick && ButtonName == "mouseleft")
 			{
+				// Debug: Log what panel is receiving the click
+				System.Console.WriteLine($"[PanelInput] Click on {Active.GetType().Name} (Parent: {Active.Parent?.GetType().Name})");
+				
 				// Create onclick event for the active panel
 				var clickEvent = new MousePanelEvent("onclick", Active, ButtonName);
 				Active.CreateEvent(clickEvent);

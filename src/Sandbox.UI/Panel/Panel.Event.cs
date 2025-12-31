@@ -81,6 +81,12 @@ public partial class Panel
     protected virtual void OnEvent(PanelEvent e)
     {
         e.This = this;
+        
+        // Debug: Log event handling
+        if (e.Is("onclick"))
+        {
+            System.Console.WriteLine($"[OnEvent] {GetType().Name} handling onclick, has listeners: {EventListeners?.Count ?? 0}");
+        }
 
         if (e is MousePanelEvent mpe)
         {
@@ -114,6 +120,10 @@ public partial class Panel
             return;
 
         // Propagate event up the parent chain (matches S&box line 276 in Panel.Event.cs)
+        if (Parent != null && e.Is("onclick"))
+        {
+            System.Console.WriteLine($"[OnEvent] {GetType().Name} propagating onclick to {Parent.GetType().Name}");
+        }
         Parent?.OnEvent(e);
     }
 
