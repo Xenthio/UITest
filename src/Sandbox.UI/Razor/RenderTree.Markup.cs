@@ -28,17 +28,11 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 		{
 			foreach ( var panel in block.MarkupPanels )
 			{
-				// Fix parent if it changed during re-render (matching s&box's FindOrCreateElement behavior)
+				// Assert that parent hasn't changed (matching s&box exactly - line 35 of their RenderTree.Markup.cs)
+				// If this fails, it indicates a bug in the render tree logic
 				if ( panel.Parent != parent )
 				{
-					// can't have children
-					if ( parent is Label || parent is Image )
-					{
-						// Skip this panel, don't try to reparent
-						continue;
-					}
-					Log.Warning( $"Fixing parent of markup panel {panel}" );
-					panel.Parent = parent;
+					throw new InvalidOperationException( $"Panel parent mismatch for markup panel {panel}: expected {parent}, got {panel.Parent}" );
 				}
 				parent.SetChildIndex( panel, CurrentScope.ChildIndex );
 				CurrentScope.ChildIndex++;
