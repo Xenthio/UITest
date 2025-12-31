@@ -28,8 +28,9 @@ public class StyleInspectorWindow : Window
 		AddClass("inspector-window");
 		AddClass("style-inspector-window");
 		
-		// Load stylesheet - use relative path from working directory
-		StyleSheet.Load("themes/PanelInspector.scss", failSilently: false);
+		// Load stylesheet - use path relative to application base directory
+		var stylesheetPath = System.IO.Path.Combine(AppContext.BaseDirectory, "themes", "PanelInspector.scss");
+		StyleSheet.Load(stylesheetPath, failSilently: false);
 		
 		BuildUI();
 	}

@@ -59,6 +59,8 @@
 		overflow-y: auto;
 		flex-grow: 1;
 		background-color: #1e1e1e;
+		flex-direction: column;
+		display: flex;
 	}
 	
 	.node-row {
