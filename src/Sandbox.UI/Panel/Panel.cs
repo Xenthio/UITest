@@ -156,6 +156,28 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     }
 
     /// <summary>
+    /// Switch a pseudo class on or off for a panel and all its ancestors.
+    /// This is how s&box applies :hover and :active - the states bubble up to parent panels.
+    /// </summary>
+    /// <param name="c">The pseudo class to switch</param>
+    /// <param name="state">Whether to turn it on or off</param>
+    /// <param name="panel">The panel to start from</param>
+    /// <param name="unlessAncestorOf">Optional panel - if the target is an ancestor of this panel, don't apply the state</param>
+    internal static void Switch(PseudoClass c, bool state, Panel? panel, Panel? unlessAncestorOf = null)
+    {
+        if (panel == null)
+            return;
+
+        foreach (var target in panel.AncestorsAndSelf)
+        {
+            if (unlessAncestorOf != null && unlessAncestorOf.IsAncestor(target))
+                continue;
+
+            target.Switch(c, state);
+        }
+    }
+
+    /// <summary>
     /// Return true if this panel isn't hidden by opacity or display mode.
     /// </summary>
     public bool IsVisible { get; internal set; } = true;
