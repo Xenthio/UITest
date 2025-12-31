@@ -36,7 +36,7 @@ public class PanelListWindow : Window
 		AddClass("panel-list-window");
 		
 		// Load stylesheet
-		StyleSheet.Load("/src/Avalazor.UI/PanelInspector/PanelInspector.scss");
+		StyleSheet.Load("/themes/PanelInspector.scss");
 		
 		BuildUI();
 	}

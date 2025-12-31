@@ -29,7 +29,7 @@ public class StyleInspectorWindow : Window
 		AddClass("style-inspector-window");
 		
 		// Load stylesheet
-		StyleSheet.Load("/src/Avalazor.UI/PanelInspector/PanelInspector.scss");
+		StyleSheet.Load("/themes/PanelInspector.scss");
 		
 		BuildUI();
 	}
