@@ -110,6 +110,11 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     /// </summary>
     public bool IsDeleted { get; private set; }
 
+    /// <summary>
+    /// The current time relative to the panel. Used for animations and events.
+    /// </summary>
+    protected double TimeNow => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+
     public Panel()
     {
         YogaNode = new YogaWrapper(this);
@@ -321,47 +326,6 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     // Source location tracking (for debugging Razor-generated panels)
     public string? SourceFile { get; set; }
     public int SourceLine { get; set; }
-    
-    // Event listener management
-    public void AddEventListener(string eventName, Action<PanelEvent> handler)
-    {
-        EventListeners ??= new List<EventCallback>();
-
-        var ev = new EventCallback
-        {
-            EventName = eventName.ToLower(),
-            Action = handler,
-            Panel = this
-        };
-
-        EventListeners.Add(ev);
-    }
-    
-    public void AddEventListener(string eventName, Action handler)
-    {
-        EventListeners ??= new List<EventCallback>();
-
-        var ev = new EventCallback
-        {
-            EventName = eventName.ToLower(),
-            BaseAction = handler,
-            Panel = this
-        };
-
-        EventListeners.Add(ev);
-    }
-    
-    public void RemoveEventListener(string eventName, Action<PanelEvent> handler)
-    {
-        if (EventListeners == null) return;
-        // TODO: Implement proper removal
-    }
-    
-    public void RemoveEventListener(string eventName)
-    {
-        if (EventListeners == null) return;
-        EventListeners.RemoveAll(x => string.Equals(x.EventName, eventName, StringComparison.OrdinalIgnoreCase));
-    }
     
     // Template slot handling for S&box compatibility
     // When a child has slot="name", it gets passed to OnTemplateSlot on the parent

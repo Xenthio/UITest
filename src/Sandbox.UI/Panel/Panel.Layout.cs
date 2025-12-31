@@ -68,7 +68,7 @@ public partial class Panel
     /// <summary>
     /// The computed style has a renderable background
     /// </summary>
-    internal bool HasBackground { get; private set; }
+    public bool HasBackground { get; internal set; }
 
     /// <summary>
     /// Whether the panel can scroll horizontally
