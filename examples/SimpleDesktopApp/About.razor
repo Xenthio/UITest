@@ -16,7 +16,8 @@
 						<check>CheckBox</check>
 					</div>
 					<div class="self-layout self-layout-row">
-						<button>Button</button>
+						<button @onclick="OnTestClick">Test Button (Click Me!)</button>
+						<label>Clicks: @clickCount</label>
 					</div>
 					<div class="self-layout self-layout-row">
 						<textentry></textentry>
@@ -94,6 +95,14 @@
 	private ComboBox ThemeComboBox; 
 	public TabContainer MainTabs { get; set; }
 	int Loaded = 0;
+	int clickCount = 0;
+	
+	void OnTestClick()
+	{
+		clickCount++;
+		System.Console.WriteLine($"[About] Button clicked! Count: {clickCount}");
+	}
+	
 	public override void Tick()
 	{
 		base.Tick();
@@ -123,6 +132,6 @@
 	}
 	protected override int BuildHash()
 	{
-		return System.HashCode.Combine(Loaded);
+		return System.HashCode.Combine(Loaded, clickCount);
 	}
 }

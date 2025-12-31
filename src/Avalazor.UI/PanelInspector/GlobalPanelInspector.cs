@@ -10,6 +10,7 @@ public static class GlobalPanelInspector
 {
 	private static PanelInspector? _inspector;
 	private static bool _isEnabled = true;
+	private static RootPanel? _currentRootPanel;
 
 	static GlobalPanelInspector()
 	{

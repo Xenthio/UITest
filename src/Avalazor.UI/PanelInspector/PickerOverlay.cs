@@ -1,6 +1,8 @@
 using Sandbox.UI;
-
 using System.Numerics;
+
+// Use System.Numerics.Vector2 to avoid ambiguity with Sandbox.UI.Vector2
+using Vector2 = System.Numerics.Vector2;
 
 namespace Avalazor.UI.PanelInspector;
 
