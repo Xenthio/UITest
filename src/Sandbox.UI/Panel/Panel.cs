@@ -319,25 +319,36 @@ public partial class Panel : IDisposable, IStyleTarget
     public string? SourceFile { get; set; }
     public int SourceLine { get; set; }
     
-    // Event listener management (stub for S&box compatibility)
+    // Event listener management
     public void AddEventListener(string eventName, Action<PanelEvent> handler)
     {
-        // TODO: Implement event system
+        EventListeners ??= new List<EventCallback>();
+
+        var ev = new EventCallback
+        {
+            EventName = eventName.ToLower(),
+            Action = handler,
+            Panel = this
+        };
+
+        EventListeners.Add(ev);
     }
     
     public void AddEventListener(string eventName, Action handler)
     {
-        // TODO: Implement event system
+        AddEventListener(eventName, (e) => handler());
     }
     
     public void RemoveEventListener(string eventName, Action<PanelEvent> handler)
     {
-        // TODO: Implement event system
+        if (EventListeners == null) return;
+        // TODO: Implement proper removal
     }
     
     public void RemoveEventListener(string eventName)
     {
-        // TODO: Implement event system
+        if (EventListeners == null) return;
+        EventListeners.RemoveAll(x => string.Equals(x.EventName, eventName, StringComparison.OrdinalIgnoreCase));
     }
     
     // Template slot handling for S&box compatibility

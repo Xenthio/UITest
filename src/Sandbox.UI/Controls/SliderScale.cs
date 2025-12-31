@@ -175,7 +175,50 @@ public class SliderScale : Panel
 
     protected virtual void OnValueChanged()
     {
+        CreateEvent("onchange");
+        CreateValueEvent("value", _value);
         ValueChanged?.Invoke(Value);
+    }
+
+    /// <summary>
+    /// Convert mouse position to slider value. Uses the mouse position relative to SliderControl.
+    /// </summary>
+    public virtual float MousePosToValue()
+    {
+        if (SliderControl == null || Thumb == null)
+            return Value;
+
+        var localPos = SliderControl.MousePosition;
+        var thumbSize = Thumb.Box.Rect.Width * 0.5f;
+        var normalized = MathX.LerpInverse(localPos.x, thumbSize, SliderControl.Box.Rect.Width - thumbSize, true);
+        var scaled = MathX.LerpTo(MinValue, MaxValue, normalized, true);
+        return Step > 0 ? SnapToGrid(scaled, Step) : scaled;
+    }
+
+    /// <summary>
+    /// If we move the mouse while we're being pressed then set the position
+    /// </summary>
+    protected override void OnMouseMove(MousePanelEvent e)
+    {
+        base.OnMouseMove(e);
+
+        if (!HasActive) return;
+
+        Value = MousePosToValue();
+        UpdateSliderPositions();
+        e.StopPropagation();
+    }
+
+    /// <summary>
+    /// On mouse press jump to that position
+    /// </summary>
+    protected override void OnMouseDown(MousePanelEvent e)
+    {
+        base.OnMouseDown(e);
+
+        Value = MousePosToValue();
+        UpdateSliderPositions();
+        e.StopPropagation();
     }
 
     /// <summary>

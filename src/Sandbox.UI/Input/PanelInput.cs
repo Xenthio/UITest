@@ -18,6 +18,7 @@ internal class PanelInput
 	public Panel? Active { get; private set; }
 
 	internal MouseButtonState[] MouseStates;
+	private Vector2 _lastMousePosition;
 
 	public PanelInput()
 	{
@@ -45,6 +46,7 @@ internal class PanelInput
 	internal void Tick(IEnumerable<RootPanel> panels, Vector2 mousePosition, bool mouseIsActive)
 	{
 		bool hoveredAny = false;
+		bool mouseMoved = _lastMousePosition != mousePosition;
 
 		if (mouseIsActive)
 		{
@@ -62,6 +64,17 @@ internal class PanelInput
 		{
 			SetHovered(null);
 		}
+
+		// Dispatch onmousemove event if mouse moved and we have an active panel
+		if (mouseMoved && Active != null)
+		{
+			var mouseMoveEvent = new MousePanelEvent("onmousemove", Active, "mouseleft");
+			mouseMoveEvent.LocalPosition = mousePosition;
+			Active.CreateEvent(mouseMoveEvent);
+			Active.ProcessPendingEvents();
+		}
+
+		_lastMousePosition = mousePosition;
 	}
 
 	public void AddMouseButton(string button, bool down)
@@ -146,16 +159,8 @@ internal class PanelInput
 
 		var inside = panel.IsInside(pos);
 
-		// pointer-events defaults to All when not set (null)
-		var pointerEvents = panel.ComputedStyle.PointerEvents ?? PointerEvents.All;
-
-		// DEBUG: Log hover checks
-		if (inside)
-		{
-			Console.WriteLine($"CheckHover: {panel.GetType().Name} at {panel.Box.Rect} - inside=true, pointerEvents={pointerEvents}");
-		}
-
-		if (inside && pointerEvents != PointerEvents.None)
+		// Check pointer-events (matches S&box - defaults to None via property getter)
+		if (inside && panel.ComputedStyle.PointerEvents != PointerEvents.None)
 		{
 			current = panel;
 			found = true;
@@ -218,17 +223,20 @@ internal class PanelInput
 		{
 			Active = hovered;
 
-			Console.WriteLine($"OnPressed: {ButtonName}, hovered={hovered?.GetType().Name}");
+			//Console.WriteLine($"OnPressed: {ButtonName}, hovered={hovered?.GetType().Name}");
 
 			if (Active == null)
 				return;
 
 			Active.Switch(PseudoClass.Active, true);
 
-			if (Active.AcceptsFocus)
-			{
-				Active.Focus();
-			}
+			// Always call Focus() - it will walk up to find a focusable parent (matches S&box)
+			Active.Focus();
+
+			// Create and dispatch onmousedown event
+			var mouseDownEvent = new MousePanelEvent("onmousedown", Active, ButtonName);
+			Active.CreateEvent(mouseDownEvent);
+			Active.ProcessPendingEvents();
 
 			Active.OnButtonEvent(new ButtonEvent(ButtonName, true));
 		}
@@ -242,11 +250,10 @@ internal class PanelInput
 
 			if (canClick && ButtonName == "mouseleft")
 			{
-				// Trigger click on buttons
-				if (Active is Button btn)
-				{
-					btn.Click();
-				}
+				// Create onclick event for the active panel
+				var clickEvent = new MousePanelEvent("onclick", Active, ButtonName);
+				Active.CreateEvent(clickEvent);
+				Active.ProcessPendingEvents();
 			}
 
 			Active.Switch(PseudoClass.Active, false);

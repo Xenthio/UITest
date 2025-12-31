@@ -1,4 +1,5 @@
 @namespace SimpleDesktopApp
+@using System;
 @using Sandbox;
 @using Sandbox.UI;
 @* @using XGUI; *@
@@ -7,7 +8,7 @@
 
 <root title="XGUI Port Test - Hello World" windowwidth="800" windowheight="600" hasminimise="true" hasmaximise="true">
 	Hello, I am a window!
-	<button>okay</button>
+	<button @onclick=@Test>okay</button>
 		<tabcontrol>
 		<tab tabName="general" slot="tab" tabtext="General">
 				<div style="width:300px;height:200px;">
@@ -45,3 +46,14 @@
 
 	</resizer>
 </root>
+
+					
+@code{
+
+	private Button ButtonTest;
+	void Test()
+	{
+		Log.Info($"Button Clicked!");
+		Console.WriteLine("Button Clicked!");
+	}
+}

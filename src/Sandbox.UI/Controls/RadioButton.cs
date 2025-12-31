@@ -114,14 +114,19 @@ public class RadioButton : Panel
     public virtual void OnValueChanged()
     {
         UpdateState();
+        CreateEvent("onchange", Selected);
+        CreateValueEvent("checked", Selected);
+        CreateValueEvent("value", Selected);
         ValueChanged?.Invoke(Selected);
 
         if (Selected)
         {
+            CreateEvent("onchecked");
             OnSelected?.Invoke();
         }
         else
         {
+            CreateEvent("onunchecked");
             OnDeselected?.Invoke();
         }
     }
@@ -139,6 +144,28 @@ public class RadioButton : Panel
     protected virtual void UpdateState()
     {
         SetClass("checked", Selected);
+    }
+
+    /// <summary>
+    /// Handle mouse click to select this radio button
+    /// </summary>
+    protected override void OnClick(MousePanelEvent e)
+    {
+        base.OnClick(e);
+
+        if (Parent is RadioButtons radioButtons)
+        {
+            if (radioButtons.SelectedRadioOption != this)
+            {
+                radioButtons.SelectOption(this);
+            }
+        }
+        else
+        {
+            Selected = true;
+        }
+        
+        e.StopPropagation();
     }
 
     /// <summary>
