@@ -28,9 +28,14 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 		{
 			foreach ( var panel in block.MarkupPanels )
 			{
-				// Note: s&box uses Assert.True( panel.Parent == parent ) here (line 35)
-				// This is debug-only and doesn't execute in production builds
-				// We skip this assertion as it's not needed in production
+				// Match s&box's assertion on line 35 of their RenderTree.Markup.cs
+				// This ensures the cached panel still belongs to the expected parent
+				if ( panel.Parent != parent )
+				{
+					// This shouldn't happen - means the render tree structure changed in unexpected ways
+					throw new System.InvalidOperationException( 
+						$"Panel parent mismatch for markup panel <{panel.ElementName}>: expected parent {parent.ElementName} but got {panel.Parent?.ElementName ?? "null"}" );
+				}
 				parent.SetChildIndex( panel, CurrentScope.ChildIndex );
 				CurrentScope.ChildIndex++;
 			}
