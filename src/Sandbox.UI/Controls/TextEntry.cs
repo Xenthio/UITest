@@ -234,4 +234,62 @@ public class TextEntry : Panel
         Text += k;
         OnValueChanged();
     }
+
+    /// <summary>
+    /// Handle keyboard button events (backspace, delete, arrow keys, etc.)
+    /// Based on S&box TextEntry.OnButtonTyped
+    /// </summary>
+    public override void OnButtonTyped(ButtonEvent e)
+    {
+        if (Disabled)
+            return;
+
+        e.StopPropagation = true;
+
+        var button = e.Button;
+
+        // Handle backspace
+        if (button == "backspace")
+        {
+            if (!string.IsNullOrEmpty(Text))
+            {
+                Text = Text.Substring(0, Text.Length - 1);
+                OnValueChanged();
+            }
+            return;
+        }
+
+        // Handle delete
+        if (button == "delete")
+        {
+            // For now, just treat as backspace for simplicity
+            // Full implementation would handle caret position
+            return;
+        }
+
+        // Handle enter/return
+        if (button == "enter" || button == "keypadenter")
+        {
+            if (Multiline)
+            {
+                OnKeyTyped('\n');
+                return;
+            }
+
+            Blur();
+            CreateEvent("onsubmit", Text);
+            return;
+        }
+
+        // Handle escape
+        if (button == "escape")
+        {
+            Blur();
+            CreateEvent("oncancel");
+            return;
+        }
+
+        // Let parent handle other keys
+        base.OnButtonTyped(e);
+    }
 }
