@@ -23,7 +23,7 @@ public class TabContainer : Panel
     /// <summary>
     /// Access to the tabs on this control
     /// </summary>
-    public List<TabInfo> Tabs = new();
+    public List<Tab> Tabs = new();
 
     /// <summary>
     /// If a cookie is set then the selected tab will be saved and restored.
@@ -43,8 +43,7 @@ public class TabContainer : Panel
         }
     }
 
-    private string _activeTab = "";
-    
+    string _activeTab = "";
     /// <summary>
     /// The tab that is active
     /// </summary>
@@ -57,8 +56,7 @@ public class TabContainer : Panel
             _activeTab = value;
 
             var t = Tabs.FirstOrDefault(x => x.TabName == _activeTab);
-            if (t != null)
-                SwitchTab(t);
+            SwitchTab(t);
         }
     }
 
@@ -68,7 +66,6 @@ public class TabContainer : Panel
         // Note: XGUI-3's CSS uses PascalCase (.TabContainer) but their C# uses lowercase
         // We add both for compatibility
         AddClass("tabcontainer");
-        AddClass("TabContainer");  // PascalCase for XGUI-3 CSS compatibility
 
         TabsContainer = AddChild(new Panel(this, "tabs"));
         TabsContainer.AddClass("tabs");
@@ -103,11 +100,11 @@ public class TabContainer : Panel
     /// <summary>
     /// Add a tab to the sheet.
     /// </summary>
-    public TabInfo AddTab(Panel panel, string tabName, string title, string icon = null)
+    public Tab AddTab(Panel panel, string tabName, string title, string icon = null)
     {
         var index = Tabs.Count;
 
-        var tab = new TabInfo(this, title, icon, panel);
+        var tab = new Tab(this, title, icon, panel);
         tab.TabName = tabName;
 
         Tabs.Add(tab);
@@ -146,11 +143,9 @@ public class TabContainer : Panel
     /// <summary>
     /// Switch to a specific tab.
     /// </summary>
-    public void SwitchTab(TabInfo tab, bool setCookie = true)
+    public void SwitchTab(Tab tab, bool setCookie = true)
     {
-        if (tab == null) return;
-        
-        _activeTab = tab.TabName;
+        ActiveTab = tab.TabName;
 
         foreach (var page in Tabs)
         {
@@ -164,54 +159,23 @@ public class TabContainer : Panel
         // }
     }
 
-    protected override void OnAfterTreeRender(bool firstTime)
-    {
-        base.OnAfterTreeRender(firstTime);
-
-        if (firstTime)
-        {
-            // Find all tab children and register them
-            var tabs = new List<Tab>();
-            foreach (var child in Children)
-            {
-                if (child is Tab tab)
-                {
-                    tabs.Add(tab);
-                }
-            }
-
-            // Register tabs through the slot system
-            foreach (var tab in tabs)
-            {
-                // The tab will be reparented via OnTemplateSlot
-                // This happens automatically through the render tree processing
-            }
-        }
-    }
 
     /// <summary>
     /// Holds a Tab button and a Page for each sheet on the TabControl.
     /// </summary>
-    public class TabInfo
+    public class Tab
     {
         private TabContainer Parent;
         public Button Button { get; protected set; }
         public Panel Page { get; protected set; }
         public string TabName { get; set; } = "";
 
-        public TabInfo(TabContainer tabContainer, string title, string icon, Panel panel)
+        public Tab(TabContainer tabContainer, string title, string icon, Panel panel)
         {
             Parent = tabContainer;
             Page = panel;
 
-            Button = new Button();
-            Button.Text = title;
-            Button.AddClass("button");
-            if (!string.IsNullOrEmpty(icon))
-            {
-                Button.Icon = icon;
-            }
-            Button.OnClick += () => Parent?.SwitchTab(this, true);
+            Button = new Button(title, icon, () => Parent?.SwitchTab(this, true));
             Button.Parent = tabContainer.TabsContainer;
         }
 
@@ -226,9 +190,9 @@ public class TabContainer : Panel
             set
             {
                 active = value;
-                Button.SetClass("active", value);
+                Button.Active = value;
+
                 Page.SetClass("active", value);
-                Page.Style.Display = value ? DisplayMode.Flex : DisplayMode.None;
             }
         }
     }
