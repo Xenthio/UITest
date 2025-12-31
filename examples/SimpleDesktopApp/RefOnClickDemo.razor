@@ -4,8 +4,7 @@
 @attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
 @inherits Window
 
-<root title="@@ref and @@onclick Demo" hasminimise="true" hasmaximise="true" hasclose="true" width="600" height="500">
-    <div style="padding: 20px;">
+<root title="@@ref and @@onclick Demo" hasminimise="true" hasmaximise="true" hasclose="true" windowwidth="600" windowheight="500">
         <h2>@@ref and @@onclick Demo</h2>
         <p>This demonstrates both @("@ref") and @("@onclick") working correctly.</p>
         
@@ -26,7 +25,7 @@
             
             <div style="margin: 10px 0;">
                 <button @onclick="@HandleClickWithEvent">
-                    Event Click: @eventCount (last button: @lastButtonPressed)
+                    @($"Event Click: {eventCount} (last button: {lastButtonPressed})")
                 </button>
             </div>
         </section>
@@ -36,7 +35,7 @@
             
             <div style="margin: 10px 0;">
                 <button @ref="myButton1">
-                    Button 1 (captured via @@ref)
+                    @("Button 1 (captured via @ref)")
                 </button>
                 <button @onclick="@UseRef1">
                     Click Button 1 Programmatically
@@ -72,7 +71,6 @@
             
             <p>Combined button text: @(combinedButton?.Text ?? "null")</p>
         </section>
-    </div>
 </root>
 
 @code {

@@ -24,6 +24,6 @@ class Program
         //Avalazor.UI.AvalazorApplication.RunPanel<XGUIPortTest>(title: "Avalazor - Desktop Razor with XGUI Themes");
 
 
-        Avalazor.UI.AvalazorApplication.RunPanel<About>();
+        Avalazor.UI.AvalazorApplication.RunPanel<RefOnClickDemo>();
     }
 }
