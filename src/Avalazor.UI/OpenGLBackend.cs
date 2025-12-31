@@ -20,7 +20,6 @@ public class OpenGLBackend : IGraphicsBackend
     {
         _window = window;
         _gl = window.CreateOpenGL();
-        _gl.ClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
         _grGlInterface = GRGlInterface.Create((name) =>
             _gl.Context.TryGetProcAddress(name, out var addr) ? addr : IntPtr.Zero);
@@ -49,12 +48,10 @@ public class OpenGLBackend : IGraphicsBackend
         // Reset Skia's GL state tracking since Silk.NET may have changed GL state
         _grContext.ResetContext();
 
-        _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         _surface.Canvas.Clear(new SKColor(240, 240, 240));
 
         _renderer.Render(_surface.Canvas, panel);
 
-        _surface.Canvas.Flush();
         _grContext.Flush();
         
         // Don't manually swap - Silk.NET handles this automatically after the Render callback
