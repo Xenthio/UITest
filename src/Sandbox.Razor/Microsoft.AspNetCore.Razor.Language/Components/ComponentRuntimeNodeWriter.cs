@@ -520,8 +520,13 @@ namespace Microsoft.AspNetCore.Razor.Language.Components
 
 			using ( codeWriter.BuildLinePragma( node.Source, context ) )
 			{
+				// Call RazorExtensions.AddAttribute as a static method to ensure proper overload resolution.
+				// When called as an instance method on __builder, method groups get resolved to the 'object'
+				// overload. By calling statically, the compiler can properly resolve to Action/Action<PanelEvent>.
+				// This matches how s&box's generated code looks:
+				// RazorExtensions.AddAttribute(__builder, 7, "onclick", new Action(...));
 				codeWriter
-					.Write( $"{_scopeStack.BuilderVarName}.AddAttribute( {seq}, " )
+					.Write( $"Microsoft.AspNetCore.Components.RazorExtensions.AddAttribute( {_scopeStack.BuilderVarName}, {seq}, " )
 					.Write( $"\"{attributeName}\", " );
 
 				WriteAttributeValue( context, _currentAttributeValues );
