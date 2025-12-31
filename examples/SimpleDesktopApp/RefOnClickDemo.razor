@@ -4,13 +4,13 @@
 @attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
 @inherits Window
 
-<root title="@ref and @onclick Demo" hasminimise="true" hasmaximise="true" hasclose="true" width="600" height="500">
+<root title="@@ref and @@onclick Demo" hasminimise="true" hasmaximise="true" hasclose="true" width="600" height="500">
     <div style="padding: 20px;">
-        <h2>@ref and @onclick Demo</h2>
+        <h2>@@ref and @@onclick Demo</h2>
         <p>This demonstrates both @("@ref") and @("@onclick") working correctly.</p>
         
         <section style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1);">
-            <h3>@onclick Examples</h3>
+            <h3>@@onclick Examples</h3>
             
             <div style="margin: 10px 0;">
                 <button @onclick="@IncrementSimple">
@@ -32,11 +32,11 @@
         </section>
         
         <section style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1);">
-            <h3>@("@ref") Examples</h3>
+            <h3>@@ref Examples</h3>
             
             <div style="margin: 10px 0;">
                 <button @ref="myButton1">
-                    Button 1 (captured via @("@ref"))
+                    Button 1 (captured via @@ref)
                 </button>
                 <button @onclick="@UseRef1">
                     Click Button 1 Programmatically
