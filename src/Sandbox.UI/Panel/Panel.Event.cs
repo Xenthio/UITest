@@ -96,6 +96,9 @@ public partial class Panel
             if (e.Is("onmouseout")) OnMouseOut(mpe);
         }
 
+        if (!e.Propagate)
+            return;
+
         // Call event listeners
         if (EventListeners != null)
         {
@@ -107,6 +110,12 @@ public partial class Panel
                 }
             }
         }
+
+        if (!e.Propagate)
+            return;
+
+        // Propagate event up the parent chain (matches S&box line 276 in Panel.Event.cs)
+        Parent?.OnEvent(e);
     }
 
     /// <summary>
