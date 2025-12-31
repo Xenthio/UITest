@@ -68,7 +68,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 			return;
 
 		var elementType = element.GetType();
-		var theirProperty = elementType.GetProperty(propertyName);
+		var theirProperty = elementType.GetProperty( propertyName );
 		if ( theirProperty == null )
 		{
 			Log.Warning( $"{element} does not have property '{propertyName}'" );

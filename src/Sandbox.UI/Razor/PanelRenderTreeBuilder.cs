@@ -182,7 +182,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 
 
 	/// <summary>
-	/// Standard AddAttribute called by Razor compiler for attributes.
+	/// Standard AddAttribute called by Razor compiler for object attributes.
 	/// Delegates to AddAttributeObject.
 	/// </summary>
 	public override void AddAttribute( int sequence, string name, object value )
