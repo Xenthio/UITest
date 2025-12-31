@@ -15,13 +15,13 @@ class Program
         // Avalazor.UI.PanelInspectorHelper.EnableOverlayMode();
         
         // Run the Panel Inspector Test to demonstrate the new inspector feature
-        Avalazor.UI.AvalazorApplication.RunPanel<PanelInspectorTest>(title: "Avalazor - Panel Inspector Demo");
+        //Avalazor.UI.AvalazorApplication.RunPanel<PanelInspectorTest>(title: "Avalazor - Panel Inspector Demo");
         
         // Run Flexbox Test:
         // Avalazor.UI.AvalazorApplication.RunPanel<FlexboxTest>(title: "Avalazor - Flexbox Layout Test");
 
         // Or use MainApp with text:
-        Avalazor.UI.AvalazorApplication.RunPanel<XGUIPortTest>(title: "Avalazor - Desktop Razor with XGUI Themes");
+        //Avalazor.UI.AvalazorApplication.RunPanel<XGUIPortTest>(title: "Avalazor - Desktop Razor with XGUI Themes");
 
 
         Avalazor.UI.AvalazorApplication.RunPanel<About>();

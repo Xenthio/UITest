@@ -113,11 +113,14 @@
 		overflow-y: auto;
 		flex-grow: 1;
 		padding: 8px;
+		flex-direction: column;
 		background-color: #1e1e1e;
 	}
 	
 	.style-block {
 		margin-bottom: 16px;
+		
+			flex-direction: column;
 		
 		.block-header {
 			background-color: #2d2d30;
@@ -135,6 +138,7 @@
 		}
 		
 		.style-rows {
+			flex-direction: column;
 			background-color: #252526;
 			border: 1px solid #3c3c3c;
 			border-top: none;
