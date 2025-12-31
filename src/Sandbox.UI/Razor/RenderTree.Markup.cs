@@ -101,7 +101,7 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 		if ( node.NodeType == Sandbox.Html.NodeType.Text )
 		{
 			// Don't bother with empty content
-			var content = node.TextContent;
+			var content = node.InnerHtml;
 			if ( string.IsNullOrWhiteSpace( content ) )
 				return null;
 			if ( parent is Label )
