@@ -39,19 +39,15 @@ public class Button : Panel
 
         IconPanel = AddChild(new IconPanel("people", "icon"));
         IconPanel.Style.Display = DisplayMode.None;
-        IconPanel.Style.PointerEvents = PointerEvents.None; // Don't intercept clicks
 
         RightColumn = AddChild(new Panel(this, "button-right-column"));
         RightColumn.Style.Display = DisplayMode.None;
-        RightColumn.Style.PointerEvents = PointerEvents.None; // Don't intercept clicks
 
         TextLabel = RightColumn.AddChild(new Label("Empty Label", "button-label button-text"));
         TextLabel.Style.Display = DisplayMode.None;
-        TextLabel.Style.PointerEvents = PointerEvents.None; // Don't intercept clicks
 
         HelpLabel = RightColumn.AddChild(new Label("", "button-help"));
         HelpLabel.Style.Display = DisplayMode.None;
-        HelpLabel.Style.PointerEvents = PointerEvents.None; // Don't intercept clicks
     }
 
     public Button(string? text, Action? action = default) : this()
