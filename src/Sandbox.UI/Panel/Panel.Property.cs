@@ -48,7 +48,7 @@ public partial class Panel
 
         if (name == "style")
         {
-            // Style.Set(value); // TODO: Implement style parsing
+            Style.Set(value);
             return;
         }
 
