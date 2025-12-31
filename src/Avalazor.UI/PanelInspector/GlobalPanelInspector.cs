@@ -9,7 +9,6 @@ namespace Avalazor.UI.PanelInspector;
 public static class GlobalPanelInspector
 {
 	private static PanelInspector? _inspector;
-	private static RootPanel? _currentRootPanel;
 	private static bool _isEnabled = true;
 
 	static GlobalPanelInspector()
@@ -49,11 +48,6 @@ public static class GlobalPanelInspector
 	/// </summary>
 	public static bool ProcessButtonEvent(RootPanel rootPanel, string button, bool pressed, KeyboardModifiers modifiers)
 	{
-		// Debug: Log all keypresses to understand what button name we get
-		if (pressed && !button.StartsWith("mouse"))
-		{
-			Console.WriteLine($"[GlobalPanelInspector] Key pressed: '{button}' (looking for '{InspectorHotkey}')");
-		}
 
 		if (!_isEnabled) return false;
 		if (!pressed) return false; // Only on key down
@@ -62,7 +56,6 @@ public static class GlobalPanelInspector
 		// F12 pressed - toggle inspector
 		Console.WriteLine($"[GlobalPanelInspector] Inspector hotkey pressed! Toggling inspector...");
 		_currentRootPanel = rootPanel;
-		
 		if (_inspector == null)
 		{
 			_inspector = new PanelInspector

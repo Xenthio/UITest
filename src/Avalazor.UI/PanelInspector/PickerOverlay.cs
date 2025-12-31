@@ -13,7 +13,7 @@ public class PickerOverlay : Panel
 	private Panel? highlightedPanel;
 	private Panel? targetRootPanel;
 	private Action<Panel?>? onPanelClicked;
-	private PanelHighlight? highlight;
+	private readonly PanelHighlight? highlight;
 	private bool isActive;
 
 	public PickerOverlay(Panel? parent = null) : base(parent)
@@ -77,7 +77,7 @@ public class PickerOverlay : Panel
 		}
 	}
 
-	private Panel? FindPanelAtPosition(Panel root, Sandbox.UI.Vector2 position)
+	private Panel? FindPanelAtPosition(Panel root, Vector2 position)
 	{
 		// Don't pick inspector windows or the overlay itself
 		var panel = root.GetPanelAt(position, true, false);

@@ -135,7 +135,7 @@ public class StyleInspectorWindow : Window
 			idLabel.Parent = infoPanel;
 		}
 
-		var classes = string.Join(" ", selectedPanel.Classes);
+		var classes = string.Join(" ", selectedPanel.Classes?.ToArray() ?? Array.Empty<string>());
 		if (!string.IsNullOrEmpty(classes))
 		{
 			var classLabel = new Label($"Classes: {classes}");

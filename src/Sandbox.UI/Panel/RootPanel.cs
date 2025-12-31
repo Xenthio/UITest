@@ -222,12 +222,9 @@ public partial class RootPanel : Panel
     public void ProcessButtonEvent(string button, bool pressed, KeyboardModifiers modifiers = KeyboardModifiers.None)
     {
         // Check if there's an interceptor (e.g., Panel Inspector)
-        if (ButtonEventInterceptor != null)
+        if (ButtonEventInterceptor?.Invoke(this, button, pressed, modifiers) == true)
         {
-            if (ButtonEventInterceptor.Invoke(this, button, pressed, modifiers))
-            {
-                return; // Event was handled by interceptor
-            }
+            return; // Event was handled by interceptor
         }
 
         if (button.StartsWith("mouse"))

@@ -69,7 +69,8 @@ public static class PanelInspectorHelper
 			}
 		});
 		
-		thread.IsBackground = false; // Keep the thread running
+		// Run inspector window on a background thread so it does not block application shutdown
+	thread.IsBackground = true;
 		thread.Start();
 		
 		// Give the window a moment to initialize

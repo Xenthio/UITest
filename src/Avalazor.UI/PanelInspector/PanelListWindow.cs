@@ -106,7 +106,7 @@ public class PanelListWindow : Window
 		nodeContainer.AddClass("node-row");
 		nodeContainer.Style.PaddingLeft = depth * 20;
 
-		var node = new PanelTreeNode(panel, nodeContainer);
+		new PanelTreeNode(panel, nodeContainer);
 		
 		// Make it clickable
 		nodeContainer.AddEventListener("onclick", (PanelEvent e) =>
@@ -164,15 +164,13 @@ public class PanelListWindow : Window
 		Rebuild();
 		
 		// Scroll to the selected panel in the tree
-		// TODO: Implement scroll-to-selected functionality
+		// Scroll to the selected panel in the tree (not yet implemented)
 	}
 
 	public override void Tick()
 	{
 		base.Tick();
 		
-		// Rebuild tree if needed (simplified - should use dirty flags)
-		// Auto-refresh periodically to show dynamic panel changes
 	}
 
 	public override void OnDeleted()

@@ -8,7 +8,7 @@ namespace Avalazor.UI.PanelInspector;
 /// </summary>
 public class StyleRow : Panel
 {
-	private IStyleBlock styleBlock;
+	private readonly IStyleBlock styleBlock;
 	private IStyleBlock.StyleProperty property;
 	private Label? nameLabel;
 	private Label? valueLabel;
@@ -98,17 +98,13 @@ public class StyleRow : Panel
 	{
 		newValue = newValue.TrimEnd(';', ' ');
 		
-		// Don't accept values with semicolons (except in valid contexts like data URIs)
-		// This is a simplified check - a full CSS parser would be better
-		if (newValue.Contains(';') && !newValue.Contains("data:"))
-			return;
 
 		property.Value = newValue;
 		bool success = styleBlock.SetRawValue(property.Name, property.Value);
 		property.IsValid = success;
 
 		if (valueLabel != null)
-			valueLabel.Text = $"{property.Value};";
+			valueLabel.Text = property.Value;
 
 		if (nameLabel != null)
 			nameLabel.SetClass("invalid", !property.IsValid);

@@ -119,8 +119,8 @@
 	
 	.style-block {
 		margin-bottom: 16px;
-		
-			flex-direction: column;
+		display: flex;
+		flex-direction: column;
 		
 		.block-header {
 			background-color: #2d2d30;

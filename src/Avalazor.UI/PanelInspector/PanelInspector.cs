@@ -11,7 +11,6 @@ public class PanelInspector
 {
 	private PanelListWindow? panelListWindow;
 	private StyleInspectorWindow? styleInspectorWindow;
-	private RootPanel? targetRootPanel;
 
 	/// <summary>
 	/// Whether to open inspector windows in separate OS windows (true) or as overlays (false).
