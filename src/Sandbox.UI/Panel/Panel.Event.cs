@@ -55,7 +55,11 @@ public partial class Panel
     }
 
     /// <summary>
-    /// Process pending events
+    /// Process pending events.
+    /// Events are processed by calling OnEvent() which handles event listeners and propagation.
+    /// Event propagation is done directly via Parent?.OnEvent(e) inside OnEvent, matching S&box behavior.
+    /// This ensures that when a child panel (like a label) receives an event, it properly propagates
+    /// up to parent panels (like buttons), allowing parent event listeners to fire.
     /// </summary>
     internal void ProcessPendingEvents()
     {
