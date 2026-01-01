@@ -326,8 +326,8 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     {
         pos = ScreenPositionToPanelPosition(pos);
 
-        var x = pos.X / Box.Rect.Width;
-        var y = pos.Y / Box.Rect.Height;
+        var x = pos.x / Box.Rect.Width;
+        var y = pos.y / Box.Rect.Height;
 
         return new Vector2(x, y);
     }
@@ -342,8 +342,8 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
             pos = GlobalMatrix.Value.Transform(pos);
         }
 
-        var x = pos.X - Box.Rect.Left;
-        var y = pos.Y - Box.Rect.Top;
+        var x = pos.x - Box.Rect.Left;
+        var y = pos.y - Box.Rect.Top;
 
         return new Vector2(x, y);
     }
@@ -353,11 +353,11 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     /// </summary>
     public Vector2 PanelPositionToScreenPosition(Vector2 pos)
     {
-        var screenPos = new Vector2(pos.X + Box.Rect.Left, pos.Y + Box.Rect.Top);
+        var screenPos = new Vector2(pos.x + Box.Rect.Left, pos.y + Box.Rect.Top);
 
         if (GlobalMatrix.HasValue)
         {
-            screenPos = GlobalMatrix.Value.Inverted.Transform(screenPos);
+            screenPos = GlobalMatrix.Value.Inverted().Transform(screenPos);
         }
 
         return screenPos;
