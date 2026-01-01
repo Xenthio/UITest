@@ -105,10 +105,17 @@ internal class TextBlockWrapper
         }
         
         // Configure paint options based on font-smooth setting
+        // Using Edging property (IsAntialias and LcdRenderText are obsolete in RichTextKit)
+        var edging = _fontSmooth switch
+        {
+            FontSmooth.None => SKFontEdging.Alias,  // No antialiasing
+            FontSmooth.SubpixelAntialiased => SKFontEdging.SubpixelAntialias,  // LCD subpixel rendering
+            _ => SKFontEdging.Antialias  // Auto, Antialiased - standard antialiasing
+        };
+        
         var paintOptions = new TextPaintOptions
         {
-            IsAntialias = _fontSmooth != FontSmooth.None,
-            LcdRenderText = _fontSmooth == FontSmooth.SubpixelAntialiased
+            Edging = edging
         };
         
         // Paint the text block with configured options
