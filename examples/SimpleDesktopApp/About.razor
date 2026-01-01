@@ -78,7 +78,7 @@
 			<combobox default="OliveGreen" @ref="ThemeComboBox"> 
 				@foreach (string i in GetThemes())
 				{
-					<option value="combo">@i.Replace(".scss", "")</option>
+					<option value="@i.Replace(".scss", "")">@i.Replace(".scss", "")</option>
 				}
 			</combobox>
 		</div>
@@ -118,7 +118,7 @@
 	}
 	public void LoadStyle(string styleName)
 	{
-		//SetTheme($"/XGUI/DefaultStyles/{styleName}.scss");
+		SetTheme($"/themes/XGUI/DefaultStyles/{styleName}.scss");
 	}
 	protected override int BuildHash()
 	{
