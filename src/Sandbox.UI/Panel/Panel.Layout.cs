@@ -43,17 +43,17 @@ public partial class Panel
     /// <summary>
     /// If this panel has transforms, they'll be reflected here
     /// </summary>
-    public Matrix? LocalMatrix { get; internal set; }
+    public Matrix? LocalMatrix { get; set; }
 
     /// <summary>
     /// If this panel or its parents have transforms, they'll be compounded here.
     /// </summary>
-    public Matrix? GlobalMatrix { get; internal set; }
+    public Matrix? GlobalMatrix { get; set; }
 
     /// <summary>
     /// The matrix that is applied as a result of transform: styles
     /// </summary>
-    internal Matrix TransformMatrix { get; set; }
+    public Matrix TransformMatrix { get; set; }
 
     /// <summary>
     /// The computed style has a non-default backdrop filter property
