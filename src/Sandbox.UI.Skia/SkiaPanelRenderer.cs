@@ -777,7 +777,7 @@ public class SkiaPanelRenderer : IPanelRenderer
 
     /// <summary>
     /// Draw non-uniform borders with rounded corners
-    /// Creates individual border paths for each edge that properly include their adjacent corners
+    /// Uses individual stroked paths for each edge with proper corner handling
     /// </summary>
     private void DrawNonUniformBorderWithRadius(SKCanvas canvas, Rect rect, Styles style, float opacity,
         float leftWidth, float topWidth, float rightWidth, float bottomWidth,
@@ -785,122 +785,202 @@ public class SkiaPanelRenderer : IPanelRenderer
     {
         var skRect = ToSKRect(rect);
         
-        // Create outer rounded rect (full panel boundary)
-        using var outerPath = CreateRoundedRectPath(skRect, radiusTL, radiusTR, radiusBR, radiusBL);
+        // For each border, we'll draw a stroked path that follows the outer edge
+        // This ensures smooth rounded corners that match the uniform border rendering
         
-        // Create inner rounded rect (content area, inside the border)
-        var innerRect = new SKRect(
-            skRect.Left + leftWidth,
-            skRect.Top + topWidth,
-            skRect.Right - rightWidth,
-            skRect.Bottom - bottomWidth
-        );
-        
-        // Adjust inner radii to account for border width (can't be negative)
-        // Use average of adjacent borders for corner radius reduction
-        var innerRadiusTL = Math.Max(0, radiusTL - (leftWidth + topWidth) / 2);
-        var innerRadiusTR = Math.Max(0, radiusTR - (rightWidth + topWidth) / 2);
-        var innerRadiusBR = Math.Max(0, radiusBR - (rightWidth + bottomWidth) / 2);
-        var innerRadiusBL = Math.Max(0, radiusBL - (leftWidth + bottomWidth) / 2);
-        
-        using var innerPath = CreateRoundedRectPath(innerRect, innerRadiusTL, innerRadiusTR, innerRadiusBR, innerRadiusBL);
-        
-        // Create the full border region path
-        using var fullBorderPath = new SKPath();
-        outerPath.Op(innerPath, SKPathOp.Difference, fullBorderPath);
-        
-        // For non-uniform borders with radius, we need to handle corners specially
-        // Corners are split between adjacent edges based on a 45-degree diagonal
-        // This matches typical CSS border rendering behavior
-        
-        // Calculate the center points for corner splitting
-        var centerX = skRect.MidX;
-        var centerY = skRect.MidY;
-        
-        // Top border (includes top-left and top-right corners)
+        // Top border
         if (topWidth > 0 && style.BorderTopColor.HasValue)
         {
-            canvas.Save();
+            using var path = new SKPath();
             
-            // Create a clipping path that includes the top edge and portions of corners
-            // Split corners diagonally from center to outer corners
-            using var topClipPath = new SKPath();
-            topClipPath.MoveTo(skRect.Left, centerY);
-            topClipPath.LineTo(skRect.Left, skRect.Top);
-            topClipPath.LineTo(skRect.Right, skRect.Top);
-            topClipPath.LineTo(skRect.Right, centerY);
-            topClipPath.LineTo(centerX, centerY);
-            topClipPath.Close();
+            // Start from top-left corner (accounting for left border width)
+            var startX = skRect.Left + leftWidth / 2;
+            var startY = skRect.Top + topWidth / 2;
             
-            canvas.ClipPath(topClipPath);
+            // End at top-right corner (accounting for right border width)
+            var endX = skRect.Right - rightWidth / 2;
+            var endY = skRect.Top + topWidth / 2;
+            
+            // Create path along top edge with rounded corners
+            if (radiusTL > 0)
+            {
+                // Start after the top-left corner arc
+                path.MoveTo(skRect.Left + radiusTL, startY);
+            }
+            else
+            {
+                path.MoveTo(startX, startY);
+            }
+            
+            // Line to top-right corner start
+            if (radiusTR > 0)
+            {
+                path.LineTo(skRect.Right - radiusTR, endY);
+                // Arc around top-right corner
+                var arcRect = new SKRect(
+                    skRect.Right - radiusTR * 2, 
+                    skRect.Top, 
+                    skRect.Right, 
+                    skRect.Top + radiusTR * 2
+                );
+                path.ArcTo(arcRect, 270, 90, false);
+            }
+            else
+            {
+                path.LineTo(endX, endY);
+            }
             
             var color = ToSKColor(style.BorderTopColor.Value, opacity);
-            using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
-            canvas.DrawPath(fullBorderPath, paint);
-            canvas.Restore();
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = topWidth,
+                IsAntialias = true,
+                StrokeCap = SKStrokeCap.Round
+            };
+            canvas.DrawPath(path, paint);
         }
         
-        // Right border (includes top-right and bottom-right corners)
+        // Right border
         if (rightWidth > 0 && style.BorderRightColor.HasValue)
         {
-            canvas.Save();
+            using var path = new SKPath();
             
-            using var rightClipPath = new SKPath();
-            rightClipPath.MoveTo(centerX, skRect.Top);
-            rightClipPath.LineTo(skRect.Right, skRect.Top);
-            rightClipPath.LineTo(skRect.Right, skRect.Bottom);
-            rightClipPath.LineTo(centerX, skRect.Bottom);
-            rightClipPath.LineTo(centerX, centerY);
-            rightClipPath.Close();
+            var startX = skRect.Right - rightWidth / 2;
+            var startY = skRect.Top + topWidth / 2;
+            var endX = skRect.Right - rightWidth / 2;
+            var endY = skRect.Bottom - bottomWidth / 2;
             
-            canvas.ClipPath(rightClipPath);
+            if (radiusTR > 0)
+            {
+                path.MoveTo(startX, skRect.Top + radiusTR);
+            }
+            else
+            {
+                path.MoveTo(startX, startY);
+            }
+            
+            if (radiusBR > 0)
+            {
+                path.LineTo(endX, skRect.Bottom - radiusBR);
+                var arcRect = new SKRect(
+                    skRect.Right - radiusBR * 2,
+                    skRect.Bottom - radiusBR * 2,
+                    skRect.Right,
+                    skRect.Bottom
+                );
+                path.ArcTo(arcRect, 0, 90, false);
+            }
+            else
+            {
+                path.LineTo(endX, endY);
+            }
             
             var color = ToSKColor(style.BorderRightColor.Value, opacity);
-            using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
-            canvas.DrawPath(fullBorderPath, paint);
-            canvas.Restore();
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = rightWidth,
+                IsAntialias = true,
+                StrokeCap = SKStrokeCap.Round
+            };
+            canvas.DrawPath(path, paint);
         }
         
-        // Bottom border (includes bottom-left and bottom-right corners)
+        // Bottom border
         if (bottomWidth > 0 && style.BorderBottomColor.HasValue)
         {
-            canvas.Save();
+            using var path = new SKPath();
             
-            using var bottomClipPath = new SKPath();
-            bottomClipPath.MoveTo(skRect.Left, centerY);
-            bottomClipPath.LineTo(centerX, centerY);
-            bottomClipPath.LineTo(skRect.Right, centerY);
-            bottomClipPath.LineTo(skRect.Right, skRect.Bottom);
-            bottomClipPath.LineTo(skRect.Left, skRect.Bottom);
-            bottomClipPath.Close();
+            var startX = skRect.Right - rightWidth / 2;
+            var startY = skRect.Bottom - bottomWidth / 2;
+            var endX = skRect.Left + leftWidth / 2;
+            var endY = skRect.Bottom - bottomWidth / 2;
             
-            canvas.ClipPath(bottomClipPath);
+            if (radiusBR > 0)
+            {
+                path.MoveTo(skRect.Right - radiusBR, startY);
+            }
+            else
+            {
+                path.MoveTo(startX, startY);
+            }
+            
+            if (radiusBL > 0)
+            {
+                path.LineTo(skRect.Left + radiusBL, endY);
+                var arcRect = new SKRect(
+                    skRect.Left,
+                    skRect.Bottom - radiusBL * 2,
+                    skRect.Left + radiusBL * 2,
+                    skRect.Bottom
+                );
+                path.ArcTo(arcRect, 90, 90, false);
+            }
+            else
+            {
+                path.LineTo(endX, endY);
+            }
             
             var color = ToSKColor(style.BorderBottomColor.Value, opacity);
-            using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
-            canvas.DrawPath(fullBorderPath, paint);
-            canvas.Restore();
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = bottomWidth,
+                IsAntialias = true,
+                StrokeCap = SKStrokeCap.Round
+            };
+            canvas.DrawPath(path, paint);
         }
         
-        // Left border (includes top-left and bottom-left corners)
+        // Left border
         if (leftWidth > 0 && style.BorderLeftColor.HasValue)
         {
-            canvas.Save();
+            using var path = new SKPath();
             
-            using var leftClipPath = new SKPath();
-            leftClipPath.MoveTo(skRect.Left, skRect.Top);
-            leftClipPath.LineTo(centerX, skRect.Top);
-            leftClipPath.LineTo(centerX, centerY);
-            leftClipPath.LineTo(centerX, skRect.Bottom);
-            leftClipPath.LineTo(skRect.Left, skRect.Bottom);
-            leftClipPath.Close();
+            var startX = skRect.Left + leftWidth / 2;
+            var startY = skRect.Bottom - bottomWidth / 2;
+            var endX = skRect.Left + leftWidth / 2;
+            var endY = skRect.Top + topWidth / 2;
             
-            canvas.ClipPath(leftClipPath);
+            if (radiusBL > 0)
+            {
+                path.MoveTo(startX, skRect.Bottom - radiusBL);
+            }
+            else
+            {
+                path.MoveTo(startX, startY);
+            }
+            
+            if (radiusTL > 0)
+            {
+                path.LineTo(endX, skRect.Top + radiusTL);
+                var arcRect = new SKRect(
+                    skRect.Left,
+                    skRect.Top,
+                    skRect.Left + radiusTL * 2,
+                    skRect.Top + radiusTL * 2
+                );
+                path.ArcTo(arcRect, 180, 90, false);
+            }
+            else
+            {
+                path.LineTo(endX, endY);
+            }
             
             var color = ToSKColor(style.BorderLeftColor.Value, opacity);
-            using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
-            canvas.DrawPath(fullBorderPath, paint);
-            canvas.Restore();
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = leftWidth,
+                IsAntialias = true,
+                StrokeCap = SKStrokeCap.Round
+            };
+            canvas.DrawPath(path, paint);
         }
     }
 
