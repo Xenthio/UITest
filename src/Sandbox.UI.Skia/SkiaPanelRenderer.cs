@@ -855,16 +855,15 @@ public class SkiaPanelRenderer : IPanelRenderer
         using var innerPath = new SKPath();
         innerPath.AddRoundRect(innerRoundRect);
         
-        // Create the border path (Outer - Inner)
-        // This defines the exact shape of the border area, including rounded corners
-        using var borderPath = outerPath.Op(innerPath, SKPathOp.Difference);
-        if (borderPath == null) return;
-
         canvas.Save();
         
-        // Clip to the border area
-        // This ensures we only draw within the valid border region
-        canvas.ClipPath(borderPath, SKClipOperation.Intersect, true);
+        // Clip to the outer rounded rect
+        // This ensures the outer edge matches the "normal" uniform border rendering exactly
+        canvas.ClipPath(outerPath, SKClipOperation.Intersect, true);
+        
+        // Clip OUT the inner rounded rect
+        // This creates the hole in the middle
+        canvas.ClipPath(innerPath, SKClipOperation.Difference, true);
 
         // Draw each side using a trapezoid defined by the sharp corners of the bounding boxes.
         // The miter line is the diagonal connecting the outer sharp corner to the inner sharp corner.
