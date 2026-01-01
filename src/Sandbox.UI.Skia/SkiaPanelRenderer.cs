@@ -28,6 +28,17 @@ public class SkiaPanelRenderer : IPanelRenderer
     }
 
     /// <summary>
+    /// Ensures the static constructor has run and text measurement is available.
+    /// Call this before creating any panels to ensure accurate text layout.
+    /// </summary>
+    /// <returns>True when initialization is complete</returns>
+    public static bool EnsureInitialized()
+    {
+        // Simply accessing this triggers the static constructor if not already run
+        return Label.TextMeasureFunc != null;
+    }
+
+    /// <summary>
     /// Register this renderer as the active renderer for text measurement.
     /// Call this once when the renderer is created to enable accurate Label layout.
     /// </summary>
