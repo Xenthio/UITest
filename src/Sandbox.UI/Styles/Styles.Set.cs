@@ -81,6 +81,15 @@ namespace Sandbox.UI
 				case "flex":
 					return SetFlex( value );
 
+				// Handle transition properties
+				case "transition":
+				case "transition-delay":
+				case "transition-duration":
+				case "transition-property":
+				case "transition-timing-function":
+					Transitions = TransitionDesc.ParseProperty( property, value, Transitions );
+					return true;
+
 				// Handle font-smooth with never/always aliases
 				case "font-smooth":
 					return SetFontSmooth( value );

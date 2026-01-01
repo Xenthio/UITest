@@ -34,12 +34,7 @@ public partial class Styles
 		Dirty();
 	}
 
-	// NOTE: Animation support is partially implemented. Full implementation requires:
-	// - Easing utility functions (not yet ported)
-	// - Public TimeNow/TimeDelta properties on Panel (currently protected)
-	// This is disabled for now to avoid build errors. The critical style lifecycle
-	// fixes (From/Add methods) are in Styles.From.cs and work independently.
-	/*
+	// NOTE: Animation support is now fully ported from s&box
 	public bool ApplyAnimation( Panel panel )
 	{
 		if ( !HasAnimation )
@@ -96,7 +91,7 @@ public partial class Styles
 
 		if ( !float.IsInfinity( iterations ) )
 		{
-			playLength = playLength.Clamp( 0, totalDuration );
+			playLength = Math.Clamp( playLength, 0, totalDuration );
 		}
 
 		var delta = (playLength % duration) / duration;
@@ -132,5 +127,4 @@ public partial class Styles
 
 		return true;
 	}
-	*/
 }

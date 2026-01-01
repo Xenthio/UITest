@@ -2,6 +2,7 @@
 @using System
 @using System.Collections.Generic
 @using Sandbox.UI
+@using SimpleDesktopApp
 @attribute [StyleSheet("/themes/Avalazor.Defaults.scss")]
 @attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
 @attribute [StyleSheet("MainApp.scss")]
@@ -19,6 +20,9 @@
             </button>
             <button class="button" @onclick="@OpenThemeSelector">
                 <span class="button-text">🎨 Open Theme Selector</span>
+            </button>
+            <button class="button" @onclick="@OpenTransitionTest">
+                <span class="button-text">✨ Open Transition Test</span>
             </button>
             <button class="button disabled">
                 <span class="button-text">Disabled Button</span>
@@ -124,6 +128,7 @@
     private bool groupCheckbox = false;
     private bool showThemeSelector = false;
     private string currentTheme = "OliveGreen";
+    private Window? transitionTestWindow = null;
     
     private void IncrementCounter()
     {
@@ -141,6 +146,35 @@
     {
         showThemeSelector = false;
         Console.WriteLine("Closing theme selector");
+    }
+    
+    private void OpenTransitionTest()
+    {
+        if (transitionTestWindow != null && !transitionTestWindow.IsDeleting)
+        {
+            // Window already exists, just bring it to front
+            return;
+        }
+
+        // Create a new window with the transition test
+        var window = new Window
+        {
+            Title = "CSS Transition Test",
+            HasMinimise = true,
+            HasMaximise = true,
+            HasClose = true,
+            WindowWidth = 500,
+            WindowHeight = 600
+        };
+
+        // Add the transition test component to the window
+        var test = window.AddChild<TransitionTest>();
+        
+        Parent?.AddChild(window);
+        transitionTestWindow = window;
+        
+        Console.WriteLine("Opening transition test window");
+        StateHasChanged();
     }
     
     private class ThemeInfo
