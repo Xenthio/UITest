@@ -285,29 +285,17 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (style.Transform?.IsEmpty() ?? true) return false;
         if (panel.TransformMatrix == System.Numerics.Matrix4x4.Identity) return false;
         
-        var rect = panel.Box.Rect;
-        
-        // Get transform origin (defaults to center)
-        var originX = style.TransformOriginX?.GetPixels(rect.Width) ?? rect.Width * 0.5f;
-        var originY = style.TransformOriginY?.GetPixels(rect.Height) ?? rect.Height * 0.5f;
-        
-        // Calculate origin in absolute coordinates
-        var absoluteOriginX = rect.Left + originX;
-        var absoluteOriginY = rect.Top + originY;
-        
-        // Translate to origin, apply transform, translate back
-        canvas.Translate(absoluteOriginX, absoluteOriginY);
-        
         // Convert Matrix4x4 to SKMatrix (use 2D portion)
+        // The TransformMatrix already contains all the transform operations (translate, rotate, scale)
+        // built from PanelTransform.BuildTransform() which handles transform-origin for perspective
         var m = panel.TransformMatrix;
         var skMatrix = new SKMatrix(
-            m.M11, m.M21, m.M41,  // First row
-            m.M12, m.M22, m.M42,  // Second row
+            m.M11, m.M21, m.M41,  // First row (scaleX, skewY, translateX)
+            m.M12, m.M22, m.M42,  // Second row (skewX, scaleY, translateY)
             m.M14, m.M24, m.M44   // Perspective row
         );
         
         canvas.Concat(ref skMatrix);
-        canvas.Translate(-absoluteOriginX, -absoluteOriginY);
         
         // Update GlobalMatrix for child panels
         // Note: We don't have full matrix chain support yet, but this provides the local transform
