@@ -47,9 +47,15 @@ public partial class Label : Panel
         if (string.IsNullOrEmpty(_text))
             return new Vector2(2, 10);
 
+        // Process whitespace before measuring to get accurate dimensions
+        // This ensures the layout matches what will actually be rendered
+        var processedText = ProcessWhiteSpace(_text);
+        if (string.IsNullOrEmpty(processedText))
+            return new Vector2(2, 10);
+
         // Default measurement - renderers should override this
         var fontSize = ComputedStyle?.FontSize?.GetPixels(16f) ?? 16f;
-        var estimated = new Vector2(_text.Length * fontSize * 0.6f, fontSize * 1.2f);
+        var estimated = new Vector2(processedText.Length * fontSize * 0.6f, fontSize * 1.2f);
 
         return estimated;
     }
