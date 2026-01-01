@@ -146,7 +146,23 @@ public class SkiaPanelRenderer : IPanelRenderer
                     var lineWidth = paint.MeasureText(currentLine);
                     maxLineWidth = Math.Max(maxLineWidth, lineWidth);
                     lineCount++;
-                    currentLine = word;
+                    
+                    // Check if the word itself is too long and needs to be broken
+                    var wordWidth = paint.MeasureText(word);
+                    if (wordWidth > maxWidth)
+                    {
+                        // Word needs to be broken - count additional lines
+                        // Approximate: each line can fit about (maxWidth / avgCharWidth) characters
+                        var avgCharWidth = wordWidth / word.Length;
+                        var charsPerLine = Math.Max(1, (int)(maxWidth / avgCharWidth));
+                        var additionalLines = (int)Math.Ceiling((double)word.Length / charsPerLine);
+                        lineCount += additionalLines;
+                        currentLine = "";
+                    }
+                    else
+                    {
+                        currentLine = word;
+                    }
                 }
                 else
                 {
@@ -889,8 +905,8 @@ public class SkiaPanelRenderer : IPanelRenderer
         
         var y = startY;
         
-        // First split by explicit newlines
-        var paragraphs = text.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+        // First split by explicit newlines (including paragraph separator U+2029)
+        var paragraphs = text.Split(new[] { "\r\n", "\n", "\r", "\u2029" }, StringSplitOptions.None);
         
         foreach (var paragraph in paragraphs)
         {
@@ -917,12 +933,64 @@ public class SkiaPanelRenderer : IPanelRenderer
                     // Draw the current line
                     var x = CalculateTextX(rect, currentLine, paint, textAlign);
                     canvas.DrawText(currentLine, x, y, paint);
-                    currentLine = word;
                     y += lineHeight;
 
                     // Stop if we've exceeded the rect height
                     if (y - metrics.Ascent > rect.Bottom)
                         break;
+                    
+                    // Check if the word itself is too long
+                    var wordWidth = paint.MeasureText(word);
+                    if (wordWidth > rect.Width)
+                    {
+                        // Word is too long, need to break it mid-word
+                        var remainingWord = word;
+                        while (!string.IsNullOrEmpty(remainingWord))
+                        {
+                            // Find how many characters fit
+                            var charsToFit = "";
+                            for (int i = 1; i <= remainingWord.Length; i++)
+                            {
+                                var testStr = remainingWord.Substring(0, i);
+                                if (paint.MeasureText(testStr) <= rect.Width)
+                                {
+                                    charsToFit = testStr;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                            
+                            // If no characters fit (should be rare), force at least one
+                            if (string.IsNullOrEmpty(charsToFit) && remainingWord.Length > 0)
+                            {
+                                charsToFit = remainingWord.Substring(0, 1);
+                            }
+                            
+                            // Draw this chunk
+                            if (!string.IsNullOrEmpty(charsToFit))
+                            {
+                                var x2 = CalculateTextX(rect, charsToFit, paint, textAlign);
+                                canvas.DrawText(charsToFit, x2, y, paint);
+                                remainingWord = remainingWord.Substring(charsToFit.Length);
+                                y += lineHeight;
+                                
+                                if (y - metrics.Ascent > rect.Bottom)
+                                    break;
+                            }
+                            else
+                            {
+                                // Safety: shouldn't happen, but break to avoid infinite loop
+                                break;
+                            }
+                        }
+                        currentLine = "";
+                    }
+                    else
+                    {
+                        currentLine = word;
+                    }
                 }
                 else
                 {
