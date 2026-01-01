@@ -11,6 +11,9 @@ public class SkiaPanelRenderer : IPanelRenderer
 {
     private SKCanvas? _canvas;
     
+    // Tolerance for comparing border widths to determine if they're uniform
+    private const float BorderWidthTolerance = 0.1f;
+    
     // Cache typefaces to avoid recreation each frame (which can cause font rendering issues on resize).
     // This cache is bounded by the finite number of font family/style combinations used by the application.
     // Typefaces are long-lived resources and should not be frequently created/destroyed.
@@ -364,9 +367,9 @@ public class SkiaPanelRenderer : IPanelRenderer
         var uniformColor = style.BorderLeftColor == style.BorderTopColor &&
                           style.BorderTopColor == style.BorderRightColor &&
                           style.BorderRightColor == style.BorderBottomColor;
-        var uniformWidth = Math.Abs(leftWidth - topWidth) < 0.1f &&
-                          Math.Abs(topWidth - rightWidth) < 0.1f &&
-                          Math.Abs(rightWidth - bottomWidth) < 0.1f;
+        var uniformWidth = Math.Abs(leftWidth - topWidth) < BorderWidthTolerance &&
+                          Math.Abs(topWidth - rightWidth) < BorderWidthTolerance &&
+                          Math.Abs(rightWidth - bottomWidth) < BorderWidthTolerance;
         var borderWidth = (leftWidth + topWidth + rightWidth + bottomWidth) / 4f;
 
         // If borders are uniform and we have radius, draw a rounded border
