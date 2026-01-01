@@ -114,3 +114,32 @@ Every UI component is a `Panel` (in `Sandbox.UI`).
 - **Silk.NET**: Windowing, Input, OpenGL.
 - **SkiaSharp**: 2D Graphics.
 - **Facebook Yoga**: Layout engine (native DLL required).
+
+## 🎓 Lessons Learned (Session Knowledge)
+
+### Text Measurement
+- **Text measurement must be initialized early**: `SkiaPanelRenderer.EnsureInitialized()` must be called in `AvalazorApplication`'s static constructor, BEFORE any panels are created. Otherwise, layout happens before the renderer's text measurement function is registered.
+- **Add buffer to text measurements**: S&box uses `Math.Ceiling()` + 1px buffer on text width. Without this, text gets cut off by word-wrapping due to off-by-one issues.
+- **Process whitespace before measuring**: Raw text like `"\n     Hello"` must have whitespace collapsed to match what will actually be rendered.
+
+### Layout Issues
+- **Opacity 0 elements still need first layout**: In `FinalLayout`, only skip opacity 0 elements if `LayoutCount > 0`. Elements with initial `opacity: 0` (like checkbox marks) need their `Box.Rect` calculated at least once, or they'll have zero-size rects even when opacity changes to 1.
+- **CSS transforms are applied by renderer, not layout**: The `TransformMatrix` from `PanelTransform.BuildTransform()` should be applied directly to the canvas - don't add extra transform-origin translation on top of it.
+
+### Event Handling
+- **Delegates passed as objects**: When Razor generates `@onclick`, method groups become `object` type. `AddAttributeObject` must detect delegates (`Action`, `Action<PanelEvent>`, `Func<Task>`) and route them to proper event registration.
+- **Pseudo classes propagate to ancestors**: `:active` and `:hover` must propagate up the panel tree using `Panel.Switch()`, not just apply to the directly interacted panel.
+
+### Razor Code Generation
+- **Use `RazorExtensions.AddAttribute` as static method**: S&box's generated code calls `RazorExtensions.AddAttribute(__builder, seq, "onclick", handler)` as a static method, not `__builder.AddAttribute()`. This ensures correct C# overload resolution for delegates.
+
+### Font Handling
+- **Webdings font for checkmarks**: Checkbox ticks use the "a" character in Webdings font. If checkmarks don't appear, verify font loading and measurement.
+- **Font files can be bundled**: Use `AddFontDirectory()` in SkiaPanelRenderer to load `.ttf`/`.otf` files from the `fonts/` directory.
+
+### Cross-Assembly Access
+- **Public visibility for renderer access**: Properties like `TransformMatrix`, `LocalMatrix`, `GlobalMatrix` on Panel must be `public` (not `internal`) for `Sandbox.UI.Skia` to access them.
+
+### Debugging Tips
+- **Add temporary debug logging**: When hunting layout/rendering bugs, add `Console.WriteLine` with details like rect bounds, opacity, font info, and parent hierarchy. Remove after fixing.
+- **Check the Layout Inspector**: The PanelInspector shows computed styles and layout rects - useful for seeing if CSS properties are being applied correctly.
