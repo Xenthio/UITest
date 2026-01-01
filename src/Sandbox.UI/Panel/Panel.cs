@@ -91,6 +91,28 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     public Styles? ComputedStyle { get; internal set; }
 
     /// <summary>
+    /// Try to find @keyframes CSS rule with given name in AllStyleSheets.
+    /// </summary>
+    /// <param name="name">The name to search for.</param>
+    /// <param name="keyframes">The keyframes, if any are found, or null.</param>
+    /// <returns>true if @keyframes with given name were found.</returns>
+    public bool TryFindKeyframe(string name, out KeyFrames? keyframes)
+    {
+        keyframes = null;
+
+        foreach (var sheet in AllStyleSheets)
+        {
+            if (sheet.KeyFrames.TryGetValue(name, out var keyframe))
+            {
+                keyframes = keyframe;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Yoga layout node
     /// </summary>
     public YogaWrapper? YogaNode { get; private set; }
@@ -258,8 +280,11 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
                 }
             }
 
-            // Tick styles if dirty
-            if (Style.IsDirty)
+            // Update ::before and ::after pseudo-elements
+            UpdateBeforeAfterElements();
+
+            // Tick styles if dirty or animating
+            if (Style.IsDirty || HasActiveTransitions || (ComputedStyle?.HasAnimation ?? false))
             {
                 SetNeedsPreLayout();
             }
@@ -281,6 +306,188 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
         catch (Exception e)
         {
             Console.WriteLine($"Panel.TickInternal error: {e}");
+        }
+    }
+
+    /// <summary>
+    /// Get the render order index for this panel.
+    /// This is used to determine which panel is on top when hit testing.
+    /// </summary>
+    internal int GetRenderOrderIndex()
+    {
+        return SiblingIndex + (ComputedStyle?.ZIndex ?? 0);
+    }
+
+    /// <summary>
+    /// Convert a point from screen space to a point representing a delta on this panel
+    /// where the top left is [0,0] and the bottom right is [1,1]
+    /// </summary>
+    public Vector2 ScreenPositionToPanelDelta(Vector2 pos)
+    {
+        pos = ScreenPositionToPanelPosition(pos);
+
+        var x = pos.X / Box.Rect.Width;
+        var y = pos.Y / Box.Rect.Height;
+
+        return new Vector2(x, y);
+    }
+
+    /// <summary>
+    /// Convert a point from screen space to a position relative to the top left of this panel
+    /// </summary>
+    public Vector2 ScreenPositionToPanelPosition(Vector2 pos)
+    {
+        if (GlobalMatrix.HasValue)
+        {
+            pos = GlobalMatrix.Value.Transform(pos);
+        }
+
+        var x = pos.X - Box.Rect.Left;
+        var y = pos.Y - Box.Rect.Top;
+
+        return new Vector2(x, y);
+    }
+
+    /// <summary>
+    /// Convert a point from local panel space to screen space
+    /// </summary>
+    public Vector2 PanelPositionToScreenPosition(Vector2 pos)
+    {
+        var screenPos = new Vector2(pos.X + Box.Rect.Left, pos.Y + Box.Rect.Top);
+
+        if (GlobalMatrix.HasValue)
+        {
+            screenPos = GlobalMatrix.Value.Inverted.Transform(screenPos);
+        }
+
+        return screenPos;
+    }
+
+    /// <summary>
+    /// Find and return any children of this panel (including self) within the given rect.
+    /// </summary>
+    /// <param name="box">The area to look for panels in, in screen-space coordinates.</param>
+    /// <param name="fullyInside">Whether we want only the panels that are completely within the given bounds.</param>
+    public IEnumerable<Panel> FindInRect(Rect box, bool fullyInside)
+    {
+        if (!IsVisible)
+            yield break;
+
+        if (!IsInside(box, fullyInside))
+            yield break;
+
+        yield return this;
+
+        if (!HasChildren)
+            yield break;
+
+        foreach (var child in Children)
+        {
+            foreach (var found in child.FindInRect(box, fullyInside))
+            {
+                yield return found;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Allow selecting child text
+    /// </summary>
+    public bool AllowChildSelection { get; set; }
+
+    /// <summary>
+    /// If AllowChildSelection is enabled, select all children text.
+    /// TODO: This requires Label.ShouldDrawSelection, SelectionStart, SelectionEnd which are not yet implemented.
+    /// </summary>
+    public void SelectAllInChildren()
+    {
+        // DISABLED: Requires text selection support in Label
+        /*
+        if (this is Label label)
+        {
+            label.ShouldDrawSelection = true;
+            label.SelectionStart = 0;
+            label.SelectionEnd = int.MaxValue;
+            return;
+        }
+
+        if (HasChildren)
+        {
+            foreach (var child in Children)
+            {
+                child.SelectAllInChildren();
+            }
+        }
+        */
+    }
+
+    /// <summary>
+    /// Clear any selection in children.
+    /// TODO: This requires Label.ShouldDrawSelection which is not yet implemented.
+    /// </summary>
+    public void UnselectAllInChildren()
+    {
+        // DISABLED: Requires text selection support in Label
+        /*
+        if (this is Label label)
+        {
+            label.ShouldDrawSelection = false;
+            return;
+        }
+
+        if (HasChildren)
+        {
+            foreach (var child in Children)
+            {
+                child.UnselectAllInChildren();
+            }
+        }
+        */
+    }
+
+    /// <summary>
+    /// Called when the current language has changed.
+    /// This allows you to rebuild anything that might need rebuilding.
+    /// </summary>
+    public virtual void LanguageChanged()
+    {
+        foreach (var child in Children)
+        {
+            child.LanguageChanged();
+        }
+    }
+
+    /// <summary>
+    /// Called when a hotload happened. (Not necessarily on this panel)
+    /// </summary>
+    public virtual void OnHotloaded()
+    {
+        LoadStyleSheet();
+
+        // If our render tree changed, rebuild it
+        if (razorLastTreeChecksum != GetRenderTreeChecksum())
+        {
+            razorLastTreeChecksum = GetRenderTreeChecksum();
+            if (renderTree != null)
+            {
+                renderTree?.Clear();
+                razorTreeDirty = true;
+            }
+        }
+
+        // Remove any null children that may have been deleted
+        _children?.RemoveAll(x => x is null);
+
+        foreach (var child in Children)
+        {
+            try
+            {
+                child.OnHotloaded();
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Error in OnHotloaded: {e}");
+            }
         }
     }
 

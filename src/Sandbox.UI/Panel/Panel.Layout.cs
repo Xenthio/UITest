@@ -152,6 +152,9 @@ public partial class Panel
             (ComputedStyle.BorderRightColor?.a > 0f && ComputedStyle.BorderRightWidth?.GetPixels(1.0f) > 0f) ||
             (ComputedStyle.BorderBottomColor?.a > 0f && ComputedStyle.BorderBottomWidth?.GetPixels(1.0f) > 0f);
 
+        // Update CSS order property
+        UpdateOrder();
+
         if (changed)
         {
             _renderChildrenDirty = true;
@@ -368,32 +371,30 @@ public partial class Panel
 
     internal void SortChildrenOrder()
     {
+        // Sort children by CSS order property and sibling index (for Yoga layout)
+        if (NeedsOrderSort)
+        {
+            NeedsOrderSort = false;
+
+            if (_children != null && YogaNode != null)
+            {
+                // Re-add children to Yoga in the correct order
+                foreach (var child in _children.OrderBy(x => x.LastOrder ?? 0).ThenBy(x => x.SiblingIndex))
+                {
+                    if (child.YogaNode == null)
+                        continue;
+
+                    YogaNode.RemoveChild(child.YogaNode);
+                    YogaNode.AddChild(child.YogaNode);
+                }
+            }
+        }
+
         // Sort children by z-index for rendering
         if (_renderChildren != null && _renderChildrenDirty)
         {
             _renderChildren.Sort((x, y) => (x.ComputedStyle?.ZIndex ?? 0) - (y.ComputedStyle?.ZIndex ?? 0));
             _renderChildrenDirty = false;
         }
-    }
-
-    internal int GetRenderOrderIndex()
-    {
-        return SiblingIndex + (ComputedStyle?.ZIndex ?? 0);
-    }
-
-    /// <summary>
-    /// Convert a point from the screen to a position relative to this panel
-    /// </summary>
-    public Vector2 ScreenPositionToPanelPosition(Vector2 pos)
-    {
-        return new Vector2(pos.x - Box.Rect.Left, pos.y - Box.Rect.Top);
-    }
-
-    /// <summary>
-    /// Convert a point from local space to screen space
-    /// </summary>
-    public Vector2 PanelPositionToScreenPosition(Vector2 pos)
-    {
-        return new Vector2(pos.x + Box.Rect.Left, pos.y + Box.Rect.Top);
     }
 }
