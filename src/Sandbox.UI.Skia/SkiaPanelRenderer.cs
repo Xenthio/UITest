@@ -314,10 +314,13 @@ public class SkiaPanelRenderer : IPanelRenderer
         var opacity = panel.Opacity * state.RenderOpacity;
 
         // Border radius - each corner can have a different radius (matches s&box)
-        var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
-        var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
-        var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
-        var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
+        // S&box uses the smallest dimension for percentage resolution to ensure circular corners
+        // (deviates from CSS spec which uses width for X-radii and height for Y-radii for elliptical corners)
+        var resolutionSize = Math.Min(rect.Width, rect.Height);
+        var radiusTL = style.BorderTopLeftRadius?.GetPixels(resolutionSize) ?? 0;
+        var radiusTR = style.BorderTopRightRadius?.GetPixels(resolutionSize) ?? 0;
+        var radiusBL = style.BorderBottomLeftRadius?.GetPixels(resolutionSize) ?? 0;
+        var radiusBR = style.BorderBottomRightRadius?.GetPixels(resolutionSize) ?? 0;
         var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0;
 
         // Background gradient takes priority over solid color
@@ -424,6 +427,7 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (hasRadius)
         {
             canvas.Save();
+            // Ensure we use the same radii as the background/border
             using var clipPath = CreateRoundedRectPath(skRect, radiusTL, radiusTR, radiusBR, radiusBL);
             canvas.ClipPath(clipPath, SKClipOperation.Intersect, true);
         }
@@ -637,21 +641,31 @@ public class SkiaPanelRenderer : IPanelRenderer
         var skRect = ToSKRect(rect);
         var opacity = panel.Opacity * state.RenderOpacity;
 
-        // Get border widths
+        // Get border widths with 1px clamp for non-zero values (matches s&box)
         var leftWidth = style.BorderLeftWidth?.GetPixels(1f) ?? 0;
+        if (leftWidth > 0 && leftWidth < 1) leftWidth = 1;
+
         var topWidth = style.BorderTopWidth?.GetPixels(1f) ?? 0;
+        if (topWidth > 0 && topWidth < 1) topWidth = 1;
+
         var rightWidth = style.BorderRightWidth?.GetPixels(1f) ?? 0;
+        if (rightWidth > 0 && rightWidth < 1) rightWidth = 1;
+
         var bottomWidth = style.BorderBottomWidth?.GetPixels(1f) ?? 0;
+        if (bottomWidth > 0 && bottomWidth < 1) bottomWidth = 1;
         
         // Check if any border exists
         var hasBorder = leftWidth > 0 || topWidth > 0 || rightWidth > 0 || bottomWidth > 0;
         if (!hasBorder) return;
 
         // Get border radius - each corner can be different (matches s&box)
-        var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
-        var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
-        var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
-        var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
+        // S&box uses the smallest dimension for percentage resolution to ensure circular corners
+        // (deviates from CSS spec which uses width for X-radii and height for Y-radii for elliptical corners)
+        var resolutionSize = Math.Min(rect.Width, rect.Height);
+        var radiusTL = style.BorderTopLeftRadius?.GetPixels(resolutionSize) ?? 0;
+        var radiusTR = style.BorderTopRightRadius?.GetPixels(resolutionSize) ?? 0;
+        var radiusBL = style.BorderBottomLeftRadius?.GetPixels(resolutionSize) ?? 0;
+        var radiusBR = style.BorderBottomRightRadius?.GetPixels(resolutionSize) ?? 0;
         var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0;
 
         // Check if all borders are uniform (same color and width)
@@ -663,8 +677,21 @@ public class SkiaPanelRenderer : IPanelRenderer
                           Math.Abs(rightWidth - bottomWidth) < BorderWidthTolerance;
         var borderWidth = (leftWidth + topWidth + rightWidth + bottomWidth) / 4f;
 
-        // If borders are uniform, use path-based stroke rendering (supports per-corner radii)
-        if (uniformColor && uniformWidth && style.BorderLeftColor.HasValue)
+        // Check if we can use the simple path-based stroke rendering
+        // This is preferred for uniform borders as it produces smoother results
+        // We can only use it if:
+        // 1. Borders are uniform in color and width
+        // 2. For every corner with a radius, the radius is >= half the border width
+        //    (Otherwise the stroke path would need a negative radius)
+        bool IsRadiusValidForStroke(float r, float w) => r <= 0 || r >= w / 2f;
+        
+        var canUseStroke = uniformColor && uniformWidth && style.BorderLeftColor.HasValue &&
+                          IsRadiusValidForStroke(radiusTL, borderWidth) &&
+                          IsRadiusValidForStroke(radiusTR, borderWidth) &&
+                          IsRadiusValidForStroke(radiusBR, borderWidth) &&
+                          IsRadiusValidForStroke(radiusBL, borderWidth);
+
+        if (canUseStroke)
         {
             var color = ToSKColor(style.BorderLeftColor.Value, opacity);
             using var paint = new SKPaint
@@ -676,82 +703,244 @@ public class SkiaPanelRenderer : IPanelRenderer
             };
 
             // Adjust rect to account for stroke being drawn on center of path
+            var halfWidth = borderWidth / 2f;
             var adjustedRect = new SKRect(
-                skRect.Left + borderWidth / 2,
-                skRect.Top + borderWidth / 2,
-                skRect.Right - borderWidth / 2,
-                skRect.Bottom - borderWidth / 2
+                skRect.Left + halfWidth,
+                skRect.Top + halfWidth,
+                skRect.Right - halfWidth,
+                skRect.Bottom - halfWidth
             );
 
             if (hasRadius)
             {
-                // Use per-corner radii with path-based rendering
-                using var path = CreateRoundedRectPath(adjustedRect, radiusTL, radiusTR, radiusBR, radiusBL);
+                // Adjust radii for the stroke inset
+                // The path radius should be (OuterRadius - StrokeWidth/2)
+                var rTL = Math.Max(0, radiusTL - halfWidth);
+                var rTR = Math.Max(0, radiusTR - halfWidth);
+                var rBR = Math.Max(0, radiusBR - halfWidth);
+                var rBL = Math.Max(0, radiusBL - halfWidth);
+
+                using var path = CreateRoundedRectPath(adjustedRect, rTL, rTR, rBR, rBL);
                 canvas.DrawPath(path, paint);
             }
             else
             {
-                // Simple rectangle border
                 canvas.DrawRect(adjustedRect, paint);
             }
         }
         else
         {
-            // Non-uniform borders: draw each edge separately (no radius support for mixed borders)
-            // This matches s&box behavior - per-edge colors/widths don't work well with rounded corners
+            // Non-uniform borders: draw each edge separately
+            // Like s&box, we support border-radius even with non-uniform borders
             
-            // Left border
-            if (leftWidth > 0 && style.BorderLeftColor.HasValue)
+            if (hasRadius)
             {
-                var color = ToSKColor(style.BorderLeftColor.Value, opacity);
-                using var paint = new SKPaint
-                {
-                    Color = color,
-                    Style = SKPaintStyle.Fill,
-                    IsAntialias = true
-                };
-                canvas.DrawRect(rect.Left, rect.Top, leftWidth, rect.Height, paint);
+                // Draw non-uniform borders with rounded corners using path clipping
+                DrawNonUniformBorderWithRadius(canvas, rect, style, opacity, 
+                    leftWidth, topWidth, rightWidth, bottomWidth,
+                    radiusTL, radiusTR, radiusBR, radiusBL);
             }
-
-            // Top border
-            if (topWidth > 0 && style.BorderTopColor.HasValue)
+            else
             {
-                var color = ToSKColor(style.BorderTopColor.Value, opacity);
-                using var paint = new SKPaint
-                {
-                    Color = color,
-                    Style = SKPaintStyle.Fill,
-                    IsAntialias = true
-                };
-                canvas.DrawRect(rect.Left, rect.Top, rect.Width, topWidth, paint);
-            }
-
-            // Right border
-            if (rightWidth > 0 && style.BorderRightColor.HasValue)
-            {
-                var color = ToSKColor(style.BorderRightColor.Value, opacity);
-                using var paint = new SKPaint
-                {
-                    Color = color,
-                    Style = SKPaintStyle.Fill,
-                    IsAntialias = true
-                };
-                canvas.DrawRect(rect.Right - rightWidth, rect.Top, rightWidth, rect.Height, paint);
-            }
-
-            // Bottom border
-            if (bottomWidth > 0 && style.BorderBottomColor.HasValue)
-            {
-                var color = ToSKColor(style.BorderBottomColor.Value, opacity);
-                using var paint = new SKPaint
-                {
-                    Color = color,
-                    Style = SKPaintStyle.Fill,
-                    IsAntialias = true
-                };
-                canvas.DrawRect(rect.Left, rect.Bottom - bottomWidth, rect.Width, bottomWidth, paint);
+                // Simple rectangular borders without radius
+                DrawNonUniformBorderSimple(canvas, rect, style, opacity,
+                    leftWidth, topWidth, rightWidth, bottomWidth);
             }
         }
+    }
+
+    /// <summary>
+    /// Draw non-uniform borders without radius (simple rectangles)
+    /// </summary>
+    private void DrawNonUniformBorderSimple(SKCanvas canvas, Rect rect, Styles style, float opacity,
+        float leftWidth, float topWidth, float rightWidth, float bottomWidth)
+    {
+        // Left border
+        if (leftWidth > 0 && style.BorderLeftColor.HasValue)
+        {
+            var color = ToSKColor(style.BorderLeftColor.Value, opacity);
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Fill,
+                IsAntialias = true
+            };
+            canvas.DrawRect(rect.Left, rect.Top, leftWidth, rect.Height, paint);
+        }
+
+        // Top border
+        if (topWidth > 0 && style.BorderTopColor.HasValue)
+        {
+            var color = ToSKColor(style.BorderTopColor.Value, opacity);
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Fill,
+                IsAntialias = true
+            };
+            canvas.DrawRect(rect.Left, rect.Top, rect.Width, topWidth, paint);
+        }
+
+        // Right border
+        if (rightWidth > 0 && style.BorderRightColor.HasValue)
+        {
+            var color = ToSKColor(style.BorderRightColor.Value, opacity);
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Fill,
+                IsAntialias = true
+            };
+            canvas.DrawRect(rect.Right - rightWidth, rect.Top, rightWidth, rect.Height, paint);
+        }
+
+        // Bottom border
+        if (bottomWidth > 0 && style.BorderBottomColor.HasValue)
+        {
+            var color = ToSKColor(style.BorderBottomColor.Value, opacity);
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Fill,
+                IsAntialias = true
+            };
+            canvas.DrawRect(rect.Left, rect.Bottom - bottomWidth, rect.Width, bottomWidth, paint);
+        }
+    }
+
+    /// <summary>
+    /// Draw non-uniform borders with rounded corners
+    /// Properly implements CSS border rendering with miter joins at corners
+    /// </summary>
+    private void DrawNonUniformBorderWithRadius(SKCanvas canvas, Rect rect, Styles style, float opacity,
+        float leftWidth, float topWidth, float rightWidth, float bottomWidth,
+        float radiusTL, float radiusTR, float radiusBR, float radiusBL)
+    {
+        var skRect = ToSKRect(rect);
+        
+        // Create outer path
+        using var outerPath = CreateRoundedRectPath(skRect, radiusTL, radiusTR, radiusBR, radiusBL);
+        
+        // Calculate inner rect
+        var innerRect = new SKRect(
+            skRect.Left + leftWidth,
+            skRect.Top + topWidth,
+            skRect.Right - rightWidth,
+            skRect.Bottom - bottomWidth
+        );
+        
+        // Handle overlapping borders (clamp inner rect to non-negative)
+        // This prevents "bowtie" artifacts when borders are thicker than the element
+        if (innerRect.Width < 0)
+        {
+            float cx = (skRect.Left + leftWidth + skRect.Right - rightWidth) / 2;
+            innerRect.Left = cx;
+            innerRect.Right = cx;
+        }
+        if (innerRect.Height < 0)
+        {
+            float cy = (skRect.Top + topWidth + skRect.Bottom - bottomWidth) / 2;
+            innerRect.Top = cy;
+            innerRect.Bottom = cy;
+        }
+        
+        // Calculate inner radii (circular, to match circular outer radii)
+        // We use SKPoint array for SetRectRadii, but X and Y are equal per corner to maintain circular corners
+        var innerRadii = new SKPoint[4];
+        var innerRadiusTL = (float)Math.Max(0, radiusTL - Math.Max(leftWidth, topWidth));
+        var innerRadiusTR = (float)Math.Max(0, radiusTR - Math.Max(rightWidth, topWidth));
+        var innerRadiusBR = (float)Math.Max(0, radiusBR - Math.Max(rightWidth, bottomWidth));
+        var innerRadiusBL = (float)Math.Max(0, radiusBL - Math.Max(leftWidth, bottomWidth));
+        innerRadii[0] = new SKPoint(innerRadiusTL, innerRadiusTL);
+        innerRadii[1] = new SKPoint(innerRadiusTR, innerRadiusTR);
+        innerRadii[2] = new SKPoint(innerRadiusBR, innerRadiusBR);
+        innerRadii[3] = new SKPoint(innerRadiusBL, innerRadiusBL);
+        
+        using var innerRoundRect = new SKRoundRect();
+        innerRoundRect.SetRectRadii(innerRect, innerRadii);
+        using var innerPath = new SKPath();
+        innerPath.AddRoundRect(innerRoundRect);
+        
+        canvas.Save();
+        
+        // Clip to the outer rounded rect
+        // This ensures the outer edge matches the "normal" uniform border rendering exactly
+        canvas.ClipPath(outerPath, SKClipOperation.Intersect, true);
+        
+        // Clip OUT the inner rounded rect
+        // This creates the hole in the middle
+        canvas.ClipPath(innerPath, SKClipOperation.Difference, true);
+
+        // Draw each side using a trapezoid defined by the sharp corners of the bounding boxes.
+        // The miter line is the diagonal connecting the outer sharp corner to the inner sharp corner.
+        // Since we are clipped to the rounded border path, these large trapezoids will be trimmed
+        // to the correct rounded shape.
+        
+        // We add a small overlap to the inner coordinates to ensure the trapezoids overlap
+        // at the miter lines, preventing hairline gaps due to anti-aliasing.
+        float overlap = 0.5f;
+
+        // Top
+        if (topWidth > 0 && style.BorderTopColor.HasValue)
+        {
+            DrawTrapezoid(canvas, style.BorderTopColor.Value, opacity,
+                skRect.Left, skRect.Top,          // Outer TL
+                skRect.Right, skRect.Top,         // Outer TR
+                innerRect.Right, innerRect.Top + overlap,   // Inner TR
+                innerRect.Left, innerRect.Top + overlap);   // Inner TL
+        }
+
+        // Right
+        if (rightWidth > 0 && style.BorderRightColor.HasValue)
+        {
+            DrawTrapezoid(canvas, style.BorderRightColor.Value, opacity,
+                skRect.Right, skRect.Top,         // Outer TR
+                skRect.Right, skRect.Bottom,      // Outer BR
+                innerRect.Right - overlap, innerRect.Bottom,// Inner BR
+                innerRect.Right - overlap, innerRect.Top);  // Inner TR
+        }
+
+        // Bottom
+        if (bottomWidth > 0 && style.BorderBottomColor.HasValue)
+        {
+            DrawTrapezoid(canvas, style.BorderBottomColor.Value, opacity,
+                skRect.Right, skRect.Bottom,      // Outer BR
+                skRect.Left, skRect.Bottom,       // Outer BL
+                innerRect.Left, innerRect.Bottom - overlap, // Inner BL
+                innerRect.Right, innerRect.Bottom - overlap);// Inner BR
+        }
+
+        // Left
+        if (leftWidth > 0 && style.BorderLeftColor.HasValue)
+        {
+            DrawTrapezoid(canvas, style.BorderLeftColor.Value, opacity,
+                skRect.Left, skRect.Bottom,       // Outer BL
+                skRect.Left, skRect.Top,          // Outer TL
+                innerRect.Left + overlap, innerRect.Top,    // Inner TL
+                innerRect.Left + overlap, innerRect.Bottom);// Inner BL
+        }
+
+        canvas.Restore();
+    }
+
+    private void DrawTrapezoid(SKCanvas canvas, Color color, float opacity,
+        float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+    {
+        using var path = new SKPath();
+        path.MoveTo(x1, y1);
+        path.LineTo(x2, y2);
+        path.LineTo(x3, y3);
+        path.LineTo(x4, y4);
+        path.Close();
+
+        using var paint = new SKPaint
+        {
+            Color = ToSKColor(color, opacity),
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        };
+        
+        canvas.DrawPath(path, paint);
     }
 
     private void DrawContent(SKCanvas canvas, Panel panel, ref RenderState state)

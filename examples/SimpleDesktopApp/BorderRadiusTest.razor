@@ -1,0 +1,75 @@
+@using Sandbox.UI
+@inherits Panel
+
+<root class="border-test-panel">
+    <style>
+        .border-test-panel {
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .test-box {
+            width: 200px;
+            height: 100px;
+            background-color: white;
+            padding: 10px;
+        }
+        
+        /* Test 1: Uniform border with radius (should work) */
+        .test-uniform {
+            border: 2px solid #0078D4;
+            border-radius: 10px;
+        }
+        
+        /* Test 2: Non-uniform border colors with radius (Computer11 style - should now work!) */
+        .test-nonuniform {
+            border: 2px solid #D0D0D0;
+            border-bottom: 2px solid #BABABA;
+            border-radius: 10px;
+        }
+        
+        /* Test 3: Individual borders set manually with radius (should now work!) */
+        .test-individual {
+            border-left: 2px solid red;
+            border-right: 2px solid red;
+            border-top: 2px solid red;
+            border-bottom: 2px solid blue;
+            border-radius: 10px;
+        }
+        
+        /* Test 4: Computer11 button style (the original issue) */
+        .test-computer11 {
+            background-color: #FDFDFD;
+            border: 1px solid #D0D0D0;
+            border-bottom: 1px solid #BABABA;
+            border-radius: 4px;
+        }
+    </style>
+    
+    <label>Border-Radius Test Cases</label>
+    
+    <div class="test-box test-uniform">
+        <label>Test 1: Uniform Border</label>
+        <label>border: 2px solid blue</label>
+        <label>border-radius: 10px</label>
+    </div>
+    
+    <div class="test-box test-nonuniform">
+        <label>Test 2: Non-Uniform Colors</label>
+        <label>border + border-bottom</label>
+        <label>border-radius: 10px</label>
+    </div>
+    
+    <div class="test-box test-individual">
+        <label>Test 3: Individual Borders</label>
+        <label>All 4 borders set separately</label>
+        <label>border-radius: 10px</label>
+    </div>
+    
+    <div class="test-box test-computer11">
+        <label>Test 4: Computer11 Style</label>
+        <label>Windows 11 button style</label>
+        <label>border-radius: 4px</label>
+    </div>
+</root>
