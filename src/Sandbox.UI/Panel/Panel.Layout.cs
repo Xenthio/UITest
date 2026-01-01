@@ -296,10 +296,13 @@ public partial class Panel
         }
 
         if (ComputedStyle.Display == DisplayMode.None) return;
-        if (Opacity <= 0.0f) return;
+        // Only skip layout for opacity 0 after first layout - ensures Box values are set at least once
+        if (LayoutCount > 0 && Opacity <= 0.0f) return;
 
         offset = new Vector2(Box.Rect.Left, Box.Rect.Top) - ScrollOffset;
         FinalLayoutChildren(offset);
+        
+        LayoutCount++;
     }
 
     protected virtual void FinalLayoutChildren(Vector2 offset)
