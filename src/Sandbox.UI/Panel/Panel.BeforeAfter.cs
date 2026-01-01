@@ -3,8 +3,6 @@ namespace Sandbox.UI;
 /// <summary>
 /// Support for CSS ::before and ::after pseudo-elements.
 /// Ported from s&box engine/Sandbox.Engine/Systems/UI/Panel/Panel.BeforeAfter.cs
-/// NOTE: This requires CSS content: property support in PanelStyle which is not yet implemented.
-/// For now this is disabled.
 /// </summary>
 public partial class Panel
 {
@@ -20,13 +18,9 @@ public partial class Panel
 
 	/// <summary>
 	/// Called during tick to create or destroy the ::before and ::after elements.
-	/// TODO: Implement when we have CSS content: property support in PanelStyle
 	/// </summary>
 	void UpdateBeforeAfterElements()
 	{
-		// DISABLED: Requires PanelStyle.HasBeforeElement and HasAfterElement properties
-		// which are based on CSS content: property
-		/*
 		// Don't do this if we ARE a ::before or ::after element.
 		if (PseudoClass.HasFlag(PseudoClass.Before)) return;
 		if (PseudoClass.HasFlag(PseudoClass.After)) return;
@@ -41,7 +35,6 @@ public partial class Panel
 		// Make sure ::after is always last
 		if (_afterElement != null && _afterElement.IsValid() && _children != null)
 			SetChildIndex(_afterElement, _children.Count - 1);
-		*/
 	}
 
 	/// <summary>
