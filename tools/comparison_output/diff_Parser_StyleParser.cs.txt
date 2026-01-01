@@ -1,0 +1,18 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Parser/StyleParser.cs	2026-01-01 07:45:59.605934670 +0000
++++ ./src/Sandbox.UI/Parser/StyleParser.cs	2026-01-01 07:45:47.902924524 +0000
+@@ -1,4 +1,4 @@
+-﻿namespace Sandbox.UI;
++namespace Sandbox.UI;
+ 
+ internal static partial class StyleParser
+ {
+@@ -50,7 +50,8 @@
+ 
+ 			if ( !style.Set( name, value ) )
+ 			{
+-				throw new Exception( $"Unknown Property: {name} / {value} {p.FileAndLine}" );
++				// Log warning but don't throw - unknown properties should be ignored for graceful degradation
++				Console.WriteLine( $"Warning: Unknown CSS property '{name}' with value '{value}' {p.FileAndLine}" );
+ 			}
+ 
+ 			p = p.SkipWhitespaceAndNewlines();

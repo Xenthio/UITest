@@ -1,0 +1,15 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Styles/BaseStyles.Textures.cs	2026-01-01 07:45:59.606934670 +0000
++++ ./src/Sandbox.UI/Styles/BaseStyles.Textures.cs	2026-01-01 07:45:47.903924525 +0000
+@@ -5,9 +5,9 @@
+ {
+ 	public abstract partial class BaseStyles
+ 	{
+-		internal Lazy<Texture> _backgroundImage;
+-		internal Lazy<Texture> _maskImage;
+-		internal Lazy<Texture> _borderImageSource;
++		internal Lazy<Texture>? _backgroundImage;
++		internal Lazy<Texture>? _maskImage;
++		internal Lazy<Texture>? _borderImageSource;
+ 
+ 		public Texture BackgroundImage
+ 		{

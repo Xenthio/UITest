@@ -1,0 +1,117 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Panel/Panel.Order.cs	2026-01-01 07:45:59.604934669 +0000
++++ ./src/Sandbox.UI/Panel/Panel.Order.cs	2026-01-01 07:45:47.902924524 +0000
+@@ -1,90 +1,54 @@
+-﻿namespace Sandbox.UI;
++namespace Sandbox.UI;
+ 
++/// <summary>
++/// Child ordering and CSS 'order' property support.
++/// Ported from s&box engine/Sandbox.Engine/Systems/UI/Panel/Panel.Order.cs
++/// Note: SetChildIndex is in Panel.Children.cs to avoid duplication
++/// Note: SortChildrenOrder is in Panel.Layout.cs (called from PreLayout)
++/// </summary>
+ public partial class Panel
+ {
+ 	int? LastOrder;
+ 
++	/// <summary>
++	/// Check if the CSS 'order' property changed and mark children for re-ordering if needed.
++	/// </summary>
+ 	internal void UpdateOrder()
+ 	{
+-		if ( ComputedStyle.Order == LastOrder ) return;
++		if (ComputedStyle?.Order == LastOrder) return;
+ 
+-		LastOrder = ComputedStyle.Order;
++		LastOrder = ComputedStyle?.Order;
+ 		Parent?.DirtyChildrenOrder();
+-
+ 	}
+ 
+ 	bool NeedsOrderSort;
+ 
++	/// <summary>
++	/// Mark this panel's children as needing to be re-ordered.
++	/// </summary>
+ 	internal void DirtyChildrenOrder()
+ 	{
+ 		NeedsOrderSort = true;
+ 	}
+ 
+-	internal void SortChildrenOrder()
+-	{
+-		if ( !NeedsOrderSort ) return;
+-
+-		NeedsOrderSort = false;
+-
+-		if ( _children == null ) return;
+-
+-		foreach ( var child in _children.OrderBy( x => x.LastOrder ?? 0 ).ThenBy( x => x.SiblingIndex ) )
+-		{
+-			if ( child.YogaNode is null )
+-				continue;
+-
+-			YogaNode.RemoveChild( child.YogaNode );
+-			YogaNode.AddChild( child.YogaNode );
+-		}
+-	}
+-
+ 	/// <summary>
+ 	/// Move this panel to be after the given sibling.
+ 	/// </summary>
+-	public void MoveAfterSibling( Panel previousSibling )
++	public void MoveAfterSibling(Panel previousSibling)
+ 	{
+-		if ( Parent == null )
+-			throw new ArgumentException( "Can't move after sibling if we have no parent" );
++		if (Parent == null)
++			throw new ArgumentException("Can't move after sibling if we have no parent");
+ 
+-		if ( previousSibling.Parent != this.Parent )
+-			throw new ArgumentException( "previousSibling doesn't share a parent with us" );
++		if (previousSibling.Parent != this.Parent)
++			throw new ArgumentException("previousSibling doesn't share a parent with us");
+ 
+-		if ( Parent.IndexesDirty )
++		if (Parent.IndexesDirty)
+ 			Parent.UpdateChildrenIndexes();
+ 
+-		// already okay
+-		if ( previousSibling.SiblingIndex == SiblingIndex - 1 )
++		// Already in the correct position
++		if (previousSibling.SiblingIndex == SiblingIndex - 1)
+ 			return;
+ 
+-		Parent.SetChildIndex( this, previousSibling.SiblingIndex );
+-	}
+-
+-	/// <summary>
+-	/// Move given child panel to be given index, where 0 is the first child.
+-	/// </summary>
+-	public void SetChildIndex( Panel child, int newIndex )
+-	{
+-		if ( child.Parent != this )
+-			throw new ArgumentException( "Can't set child index - it's not our child!" );
+-
+-		if ( child.SiblingIndex == newIndex && newIndex < _children.Count && _children[newIndex] == child )
+-			return;
+-
+-		newIndex = Math.Clamp( newIndex, 0, _children.Count - 1 );
+-
+-		if ( child.YogaNode != null )
+-		{
+-			YogaNode?.RemoveChild( child.YogaNode );
+-			YogaNode?.AddChild( newIndex, child.YogaNode );
+-		}
+-
+-		// Log.Info( $"{child.ElementName} Set Index To {newIndex} [si:{child.SiblingIndex}] [i:{_children.IndexOf( child )}]" );
+-
+-		_children.Remove( child );
+-		_children.Insert( newIndex, child );
+-		child.UpdateSiblingIndex( newIndex, _children.Count );
+-		IndexesDirty = true;
+-
+-		Assert.Equals( child.SiblingIndex, newIndex );
++		Parent.SetChildIndex(this, previousSibling.SiblingIndex + 1);
+ 	}
+ }

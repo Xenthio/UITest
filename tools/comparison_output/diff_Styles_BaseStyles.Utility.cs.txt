@@ -1,0 +1,41 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Styles/BaseStyles.Utility.cs	2026-01-01 07:45:59.606934670 +0000
++++ ./src/Sandbox.UI/Styles/BaseStyles.Utility.cs	2026-01-01 07:45:47.903924525 +0000
+@@ -19,6 +19,20 @@
+ 
+ 			return null;
+ 		}
++		
++		/// <summary>
++		/// Linear interpolation between two colors
++		/// </summary>
++		static Color ColorLerp(Color a, Color b, float t)
++		{
++			t = Math.Clamp(t, 0f, 1f);
++			return new Color(
++				(byte)MathX.Lerp(a.r, b.r, t),
++				(byte)MathX.Lerp(a.g, b.g, t),
++				(byte)MathX.Lerp(a.b, b.b, t),
++				(byte)MathX.Lerp(a.a, b.a, t)
++			);
++		}
+ 
+ 		static float? ParseSeconds( string value )
+ 		{
+@@ -70,7 +84,7 @@
+ 				return;
+ 			}
+ 
+-			o = from.LerpTo( to, delta );
++			o = MathX.Lerp( from, to, delta );
+ 		}
+ 
+ 		protected void Lerp( ref PanelTransform? o, in PanelTransform? a, in PanelTransform? b, in PanelTransform? defaultValue, float delta )
+@@ -104,7 +118,7 @@
+ 				return;
+ 			}
+ 
+-			o = Color.Lerp( from, to, delta );
++			o = ColorLerp( from, to, delta );
+ 		}
+ 
+ 		protected void Lerp( ref Length? o, in Length? a, in Length? b, in Length? defaultValue, float delta )

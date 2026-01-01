@@ -1,0 +1,29 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Panel/Panel.StyleTarget.cs	2026-01-01 07:45:59.604934669 +0000
++++ ./src/Sandbox.UI/Panel/Panel.StyleTarget.cs	2026-01-01 07:45:47.902924524 +0000
+@@ -1,4 +1,3 @@
+-﻿
+ namespace Sandbox.UI;
+ 
+ public partial class Panel : IStyleTarget
+@@ -11,4 +10,21 @@
+ 	bool IStyleTarget.HasClasses( string[] classes ) => HasClasses( classes );
+ 	int IStyleTarget.SiblingIndex => SiblingIndex;
+ 
++	/// <summary>
++	/// Get the currently active style blocks for this panel (for debugging/inspection)
++	/// </summary>
++	public IEnumerable<IStyleBlock> ActiveStyleBlocks
++	{
++		get
++		{
++			if (Style?.LastActiveRules == null)
++				yield break;
++
++			foreach (var rule in Style.LastActiveRules)
++			{
++				if (rule?.Block != null)
++					yield return rule.Block;
++			}
++		}
++	}
+ }

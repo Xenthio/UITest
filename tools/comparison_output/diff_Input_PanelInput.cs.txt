@@ -1,0 +1,570 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Input/PanelInput.cs	2026-01-01 07:45:59.603934668 +0000
++++ ./src/Sandbox.UI/Input/PanelInput.cs	2026-01-01 07:45:47.901924523 +0000
+@@ -1,6 +1,7 @@
+-﻿using NativeEngine;
+-using Sandbox.Engine;
+-using System.Runtime.InteropServices;
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Numerics;
+ 
+ namespace Sandbox.UI;
+ 
+@@ -9,53 +10,49 @@
+ 	/// <summary>
+ 	/// Panel we're currently hovered over
+ 	/// </summary>
+-	public Panel Hovered { get; private set; }
++	public Panel? Hovered { get; private set; }
+ 
+ 	/// <summary>
+ 	/// Panel we're currently pressing down
+ 	/// </summary>
+-	public Panel Active { get; private set; }
++	public Panel? Active { get; private set; }
+ 
+-
+-	//public string LastCursor;
+-
+-	public Selection Selection = new Selection();
++	internal MouseButtonState[] MouseStates;
++	private Vector2 _lastMousePosition;
+ 
+ 	public PanelInput()
+ 	{
+ 		MouseStates = new MouseButtonState[5];
+ 
+-		for ( int i = 0; i < 5; i++ )
++		for (int i = 0; i < 5; i++)
+ 		{
+-			MouseStates[i] = new MouseButtonState( this, ButtonCode.MouseLeft + i );
++			MouseStates[i] = new MouseButtonState(this, GetButtonName(i));
+ 		}
+ 	}
+ 
+-	internal virtual void Tick( IEnumerable<RootPanel> panels, bool mouseIsActive )
++	private string GetButtonName(int index)
+ 	{
+-		bool hoveredAny = false;
+-
+-		// When we're ticking inputs, let's emulate the mouse if we're using a gamepad
+-		if ( Input.EnableVirtualCursor && Input.CurrentController is { } controller )
++		return index switch
+ 		{
+-			var moveX = controller.GetAxis( NativeEngine.GameControllerAxis.LeftX );
+-			var moveY = controller.GetAxis( NativeEngine.GameControllerAxis.LeftY );
+-
+-			if ( MathF.Abs( moveX ) > 0 || MathF.Abs( moveY ) > 0 )
+-			{
+-				var screen = Screen.Size;
+-				var min = MathF.Min( screen.x, screen.y );
+-				Mouse.Position += new Vector2( moveX * min, moveY * min ) * Preferences.ControllerAnalogSpeed * RealTime.Delta;
+-			}
+-		}
++			0 => "mouseleft",
++			1 => "mouseright",
++			2 => "mousemiddle",
++			3 => "mouseback",
++			4 => "mouseforward",
++			_ => $"mouse{index}"
++		};
++	}
+ 
+-		var inputData = GetInputData();
++	internal void Tick(IEnumerable<RootPanel> panels, Vector2 mousePosition, bool mouseIsActive)
++	{
++		bool hoveredAny = false;
++		bool mouseMoved = _lastMousePosition != mousePosition;
+ 
+-		if ( mouseIsActive )
++		if (mouseIsActive)
+ 		{
+-			foreach ( var panel in panels )
++			foreach (var panel in panels)
+ 			{
+-				if ( UpdateMouse( panel, inputData ) )
++				if (UpdateMouse(panel, mousePosition))
+ 				{
+ 					hoveredAny = true;
+ 					break;
+@@ -63,205 +60,137 @@
+ 			}
+ 		}
+ 
+-		if ( !hoveredAny )
++		if (!hoveredAny)
+ 		{
+-			SetHovered( null );
++			SetHovered(null);
+ 		}
+-	}
+-
+-	HashSet<ButtonCode> mousebuttons = new HashSet<ButtonCode>();
+-	Vector2 mouseWheelValue { get; set; }
+-
+-	/// <summary>
+-	/// Called from input when mouse wheel changes
+-	/// </summary>
+-	public void AddMouseWheel( Vector2 value, KeyboardModifiers modifiers )
+-	{
+-		//
+-		// Windows apps will typically translate vertical mouse wheel movement into
+-		// horizontal mouse wheel movement if the shift key is held down during a mouse
+-		// wheel event
+-		// This is also inverted, i.e. scrolling down will scroll to the right
+-		//
+-		if ( modifiers.Contains( KeyboardModifiers.Shift ) )
+-			value = value.WithX( -value.y ).WithY( 0 );
+ 
+-		mouseWheelValue -= value;
+-	}
++		// Dispatch onmousemove event if mouse moved and we have an active panel
++		if (mouseMoved && Active != null)
++		{
++			var mouseMoveEvent = new MousePanelEvent("onmousemove", Active, "mouseleft");
++			mouseMoveEvent.LocalPosition = mousePosition;
++			Active.CreateEvent(mouseMoveEvent);
++			Active.ProcessPendingEvents();
++		}
+ 
+-	/// <summary>
+-	/// Called from input when mouse wheel changes
+-	/// </summary>
+-	internal void AddMouseButton( ButtonCode code, bool down, KeyboardModifiers modifiers )
+-	{
+-		if ( down ) mousebuttons.Add( code );
+-		else mousebuttons.Remove( code );
++		_lastMousePosition = mousePosition;
+ 	}
+ 
+-	internal virtual InputData GetInputData()
++	public void AddMouseButton(string button, bool down)
+ 	{
+-		var mouseWheel = mouseWheelValue;
+-		var leftMouseDown = mousebuttons.Contains( ButtonCode.MouseLeft );
+-
+-		// When using a controller, simulate left mouse click, and analog scroll wheel
+-		if ( Input.EnableVirtualCursor && Input.CurrentController is { } controller )
++		var index = button switch
+ 		{
+-			leftMouseDown |= InputRouter.IsButtonDown( GamepadCode.A );
+-
+-			const float scrollScale = 0.5f;
+-
+-			var mouseWheelY = controller.GetAxis( GameControllerAxis.RightY, 0 ) * scrollScale;
+-			var mouseWheelX = controller.GetAxis( GameControllerAxis.RightX, 0 ) * scrollScale;
++			"mouseleft" => 0,
++			"mouseright" => 1,
++			"mousemiddle" => 2,
++			"mouseback" => 3,
++			"mouseforward" => 4,
++			_ => -1
++		};
+ 
+-			if ( MathF.Abs( mouseWheelX ) > 0f ) mouseWheel.x = mouseWheelX;
+-			if ( MathF.Abs( mouseWheelY ) > 0f ) mouseWheel.y = mouseWheelY;
++		if (index >= 0 && index < MouseStates.Length)
++		{
++			MouseStates[index].Update(down, Hovered);
+ 		}
+-
+-		var d = new InputData();
+-		d.MousePos = Mouse.Position;
+-		d.Mouse0 = leftMouseDown;
+-		d.Mouse1 = mousebuttons.Contains( ButtonCode.MouseMiddle );
+-		d.Mouse2 = mousebuttons.Contains( ButtonCode.MouseRight );
+-		d.Mouse3 = mousebuttons.Contains( ButtonCode.MouseBack );
+-		d.Mouse4 = mousebuttons.Contains( ButtonCode.MouseForward );
+-		d.MouseWheel = mouseWheel;
+-
+-		mouseWheelValue = 0;
+-
+-		return d;
+ 	}
+ 
+-	/// <summary>
+-	/// The cursor should change. Name could be null, meaning default.
+-	/// </summary>
+-	public virtual void SetCursor( string name ) => Mouse.CursorType = name;
+-
+-	internal virtual bool UpdateMouse( RootPanel root, InputData data )
++	private bool UpdateMouse(RootPanel root, Vector2 mousePos)
+ 	{
+-		root.MousePos = data.MousePos;
++		root.MousePos = mousePos;
+ 
+-		if ( !UpdateHovered( root, data.MousePos ) )
++		if (!UpdateHovered(root, mousePos))
+ 			return false;
+ 
+-		var leftMousePressed = !MouseStates[0].Pressed && data.Mouse0;
+-		var leftMouseReleased = MouseStates[0].Pressed && !data.Mouse0;
+-
+-		MouseStates[0].Update( data.Mouse0, Hovered );
+-		MouseStates[1].Update( data.Mouse2, Hovered );
+-		MouseStates[2].Update( data.Mouse1, Hovered );
+-		MouseStates[3].Update( data.Mouse3, Hovered );
+-		MouseStates[4].Update( data.Mouse4, Hovered );
+-
++		// Update active state based on mouse button states
+ 		Active = null;
+-		if ( MouseStates[2].Active != null ) Active = MouseStates[2].Active;
+-		if ( MouseStates[1].Active != null ) Active = MouseStates[1].Active;
+-		if ( MouseStates[0].Active != null ) Active = MouseStates[0].Active;
+-
+-		if ( Hovered != null )
+-		{
+-			if ( data.MouseWheel != Vector2.Zero )
+-			{
+-				Hovered.OnMouseWheel( data.MouseWheel );
+-			}
+-		}
+-
+-		Selection.UpdateSelection( root, Hovered, data.Mouse0, leftMousePressed, leftMouseReleased, data.MousePos );
++		if (MouseStates[2].Active != null) Active = MouseStates[2].Active;
++		if (MouseStates[1].Active != null) Active = MouseStates[1].Active;
++		if (MouseStates[0].Active != null) Active = MouseStates[0].Active;
+ 
+ 		return true;
+ 	}
+ 
+-	bool UpdateHovered( Panel panel, Vector2 pos )
++	private bool UpdateHovered(Panel panel, Vector2 pos)
+ 	{
+-		Panel current = null;
++		Panel? current = null;
+ 
+-		if ( !CheckHover( panel, pos, ref current ) )
++		if (!CheckHover(panel, pos, ref current))
+ 		{
+ 			return false;
+ 		}
+ 
+-		if ( MouseStates[0].Dragged )
+-			return true;
+-
+-		SetHovered( current );
++		SetHovered(current);
+ 
+ 		return true;
+ 	}
+ 
+-	internal void SetHovered( Panel current )
++	internal void SetHovered(Panel? current)
+ 	{
+-		if ( current != Hovered )
++		if (current != Hovered)
+ 		{
+-			if ( Hovered != null )
++			if (Hovered != null)
+ 			{
+-				Panel.Switch( PseudoClass.Hover, false, Hovered, current );
+-				Hovered.CreateEvent( new MousePanelEvent( "onmouseout", Hovered, "none" ) );
++				// Use static Switch to propagate to ancestors, excluding common ancestors with new hover target
++				Panel.Switch(PseudoClass.Hover, false, Hovered, current);
++				Hovered.CreateEvent(new MousePanelEvent("onmouseout", Hovered, "none"));
+ 			}
+ 
+ 			Hovered = current;
+ 
+-			if ( Hovered != null )
++			if (Hovered != null)
+ 			{
+-				if ( Active == null || Active == Hovered )
+-					Panel.Switch( PseudoClass.Hover, true, Hovered );
++				if (Active == null || Active == Hovered)
++					Panel.Switch(PseudoClass.Hover, true, Hovered);
+ 
+-				Hovered.CreateEvent( new MousePanelEvent( "onmouseover", Hovered, "none" ) );
++				Hovered.CreateEvent(new MousePanelEvent("onmouseover", Hovered, "none"));
+ 			}
+ 		}
+-
+-		if ( Hovered != null )
+-		{
+-			var cursor = Hovered.ComputedStyle?.Cursor;
+-			SetCursor( cursor );
+-		}
+ 	}
+ 
+-	bool CheckHover( Panel panel, Vector2 pos, ref Panel current )
++	private bool CheckHover(Panel panel, Vector2 pos, ref Panel? current)
+ 	{
+ 		bool found = false;
+ 
+-		if ( !panel.IsVisible )
++		if (!panel.IsVisible)
+ 			return false;
+ 
+-		if ( panel.ComputedStyle == null )
++		if (panel.ComputedStyle == null)
+ 			return false;
+ 
+-		//
+-		// Transform using this panel's local matrix
+-		//
+-		pos = panel.GetTransformPosition( pos );
++		// Transform using this panel's local matrix (like S&box does)
++		pos = panel.GetTransformPosition(pos);
+ 
+-		var inside = panel.IsInside( pos );
++		var inside = panel.IsInside(pos);
+ 
+-		if ( inside && panel.ComputedStyle.PointerEvents != PointerEvents.None )
++		// Check pointer-events (matches S&box - defaults to None via property getter)
++		if (inside && panel.ComputedStyle.PointerEvents != PointerEvents.None)
+ 		{
+ 			current = panel;
+ 			found = true;
+ 		}
+ 
+-		//
+ 		// If we're outside and this panel has overflow hidden we can avoid testing against the children
+-		//
+-		if ( !inside && (panel.ComputedStyle?.Overflow ?? OverflowMode.Visible) != OverflowMode.Visible )
++		if (!inside && (panel.ComputedStyle?.Overflow ?? OverflowMode.Visible) != OverflowMode.Visible)
+ 		{
+ 			return found;
+ 		}
+ 
+-		//
+ 		// No children
+-		//
+-		if ( panel._renderChildren is null || panel._renderChildren.Count == 0 )
++		if (panel.ChildrenCount == 0)
+ 		{
+ 			return found;
+ 		}
+ 
++		// Check children with proper z-ordering (using render order index like S&box)
+ 		int topIndex = -10000;
+-
+-		foreach ( var child in CollectionsMarshal.AsSpan( panel._renderChildren ) )
++		
++		foreach (var child in panel.Children)
+ 		{
+ 			var index = child.GetRenderOrderIndex();
+-			if ( index < topIndex ) continue;
++			if (index < topIndex) continue;
+ 
+-			if ( CheckHover( child, pos, ref current ) )
++			if (CheckHover(child, pos, ref current))
+ 			{
+ 				topIndex = index;
+ 				found = true;
+@@ -274,179 +203,78 @@
+ 	internal class MouseButtonState
+ 	{
+ 		public PanelInput Input { get; init; }
+-		public ButtonCode MouseButton { get; init; }
++		public string ButtonName { get; init; }
+ 
+ 		public bool Pressed;
+-		public Panel Active;
+-		public bool Dragged;
++		public Panel? Active;
+ 
+-		MousePanelEvent MouseDownEvent;
+-
+-		/// <summary>
+-		/// Then panel that is potentially being dragged
+-		/// </summary>
+-		public Panel DragTarget;
+-
+-		/// <summary>
+-		/// The point where we first pressed on the Active element
+-		/// </summary>
+-		public Vector2 StartHoldOffsetLocal;
+-		public Vector2 StartHoldOffsetScreen;
+-
+-		public MouseButtonState( PanelInput input, ButtonCode i )
++		public MouseButtonState(PanelInput input, string buttonName)
+ 		{
+ 			Input = input;
+-			MouseButton = i;
++			ButtonName = buttonName;
+ 		}
+ 
+-		public void Update( bool down, Panel hovered )
++		public void Update(bool down, Panel? hovered)
+ 		{
+-			var mouseMoved = !Mouse.Delta.IsNearZeroLength;
+-
+-			//
+-			// Watch drag - we might have started dragging
+-			//
+-			if ( Pressed && down && DragTarget != null && mouseMoved && MouseDownEvent.Propagate )
+-			{
+-				var delta = StartHoldOffsetLocal - (DragTarget.MousePosition + DragTarget.ScrollOffset);
+-
+-				if ( delta.Length > 5.0f && !Dragged )
+-				{
+-					Dragged = true;
+-					DragTarget?.CreateEvent( new DragEvent( "ondragstart", DragTarget, StartHoldOffsetLocal, StartHoldOffsetScreen ) );
+-
+-					// We started dragging - stop active panel being active, no click events
+-					{
+-						Panel.Switch( PseudoClass.Active, false, Active );
+-						Panel.Switch( PseudoClass.Hover, false, Active );
+-						Active.CreateEvent( new MousePanelEvent( "onmouseup", Active, GetMouseButtonName( MouseButton ) ) );
+-						Active.OnButtonEvent( new ButtonEvent( MouseButton, false ) );
+-						Active = null;
+-					}
+-				}
+-
+-				if ( Dragged )
+-				{
+-					DragTarget?.CreateEvent( new DragEvent( "ondrag", DragTarget, StartHoldOffsetLocal, StartHoldOffsetScreen ) { MouseDelta = Mouse.Delta } );
+-				}
+-			}
+-
+-			if ( Pressed == down ) return;
++			if (Pressed == down) return;
+ 			Pressed = down;
+ 
+-			if ( down ) OnPressed( hovered );
+-			else OnReleased( hovered );
+-		}
+-
+-		string GetMouseButtonName( ButtonCode bc )
+-		{
+-			if ( bc == ButtonCode.MouseLeft ) return "mouseleft";
+-			if ( bc == ButtonCode.MouseRight ) return "mouseright";
+-			if ( bc == ButtonCode.MouseMiddle ) return "mousemiddle";
+-			if ( bc == ButtonCode.MouseBack ) return "mouseback";
+-			if ( bc == ButtonCode.MouseForward ) return "mouseforward";
+-
+-			return bc.ToString().ToLower();
++			if (down) OnPressed(hovered);
++			else OnReleased(hovered);
+ 		}
+ 
+-		void OnPressed( Panel hovered )
++		private void OnPressed(Panel? hovered)
+ 		{
+-			if ( MouseButton == ButtonCode.MouseBack )
+-			{
+-				hovered?.CreateEvent( new PanelEvent( "onback", hovered ) );
+-				hovered?.OnButtonEvent( new ButtonEvent( MouseButton, true ) );
+-				return;
+-			}
+-
+-			if ( MouseButton == ButtonCode.MouseForward )
+-			{
+-				hovered?.CreateEvent( new PanelEvent( "onforward", hovered ) );
+-				hovered?.OnButtonEvent( new ButtonEvent( MouseButton, true ) );
+-				return;
+-			}
+-
+ 			Active = hovered;
+ 
+-			IMenuDll.Current?.ClosePopups( hovered );
+-			IGameInstanceDll.Current?.ClosePopups( hovered );
++			//Console.WriteLine($"OnPressed: {ButtonName}, hovered={hovered?.GetType().Name}");
+ 
+-			if ( Active == null )
++			if (Active == null)
+ 				return;
+ 
+-			Panel.Switch( PseudoClass.Active, true, Active );
+-
+-			if ( MouseButton == ButtonCode.MouseLeft || MouseButton == ButtonCode.MouseRight )
+-			{
+-				Dragged = false;
+-				DragTarget = Active.FindDragTarget();
+-
+-				if ( DragTarget != null )
+-				{
+-					StartHoldOffsetLocal = DragTarget.MousePosition + DragTarget.ScrollOffset;
+-					StartHoldOffsetScreen = Mouse.Position;
+-				}
+-			}
++			// Use static Switch to propagate :active to ancestors
++			Panel.Switch(PseudoClass.Active, true, Active);
+ 
++			// Always call Focus() - it will walk up to find a focusable parent (matches S&box)
+ 			Active.Focus();
+ 
+-			MouseDownEvent = new MousePanelEvent( "onmousedown", Active, GetMouseButtonName( MouseButton ) );
+-			Active.CreateEvent( MouseDownEvent );
++			// Create and dispatch onmousedown event
++			var mouseDownEvent = new MousePanelEvent("onmousedown", Active, ButtonName);
++			Active.CreateEvent(mouseDownEvent);
++			Active.ProcessPendingEvents();
+ 
+-			Active.OnButtonEvent( new ButtonEvent( MouseButton, true ) );
++			Active.OnButtonEvent(new ButtonEvent(ButtonName, true));
+ 		}
+ 
+-		void OnReleased( Panel hovered )
++		private void OnReleased(Panel? hovered)
+ 		{
+-			if ( MouseButton == ButtonCode.MouseBack || MouseButton == ButtonCode.MouseForward )
+-			{
+-				hovered?.OnButtonEvent( new ButtonEvent( MouseButton, false ) );
+-				return;
+-			}
+-
+-			bool canClick = hovered == Active && !Dragged;
++			bool canClick = hovered == Active;
+ 
+-			if ( Dragged && DragTarget != null )
+-			{
+-				DragTarget.CreateEvent( new DragEvent( "ondragend", DragTarget, StartHoldOffsetLocal, StartHoldOffsetScreen ) );
+-
+-				Dragged = default;
+-				DragTarget = default;
+-				StartHoldOffsetLocal = default;
+-				StartHoldOffsetScreen = default;
+-			}
+-
+-			if ( Active == null )
++			if (Active == null)
+ 				return;
+ 
+-			if ( canClick )
++			if (canClick && ButtonName == "mouseleft")
+ 			{
+-				Active.CreateEvent( new MousePanelEvent( "onmouseup", Active, GetMouseButtonName( MouseButton ) ) );
++				// Create onmouseup event first, then onclick
++				Active.CreateEvent(new MousePanelEvent("onmouseup", Active, ButtonName));
+ 
+-				if ( MouseButton == ButtonCode.MouseLeft )
+-				{
+-					Active.CreateEvent( new MousePanelEvent( "onclick", Active, GetMouseButtonName( MouseButton ) ) );
+-				}
+-				else if ( MouseButton == ButtonCode.MouseMiddle )
+-				{
+-					Active.CreateEvent( new MousePanelEvent( "onmiddleclick", Active, GetMouseButtonName( MouseButton ) ) );
+-				}
+-				else if ( MouseButton == ButtonCode.MouseRight )
+-				{
+-					Active.CreateEvent( new MousePanelEvent( "onrightclick", Active, GetMouseButtonName( MouseButton ) ) );
+-				}
++				// Create onclick event for the active panel
++				var clickEvent = new MousePanelEvent("onclick", Active, ButtonName);
++				Active.CreateEvent(clickEvent);
++				Active.ProcessPendingEvents();
+ 			}
+ 			else
+ 			{
+-				Active.CreateEvent( new MousePanelEvent( "onmouseup", Active, GetMouseButtonName( MouseButton ) ) );
+-				Panel.Switch( PseudoClass.Hover, false, Active, hovered );
++				// Just send onmouseup and remove hover from active
++				Active.CreateEvent(new MousePanelEvent("onmouseup", Active, ButtonName));
++				Panel.Switch(PseudoClass.Hover, false, Active, hovered);
+ 			}
+ 
+-			Panel.Switch( PseudoClass.Active, false, Active );
++			// Use static Switch to propagate :active removal to ancestors
++			Panel.Switch(PseudoClass.Active, false, Active);
+ 
+-			Active.OnButtonEvent( new ButtonEvent( MouseButton, false ) );
++			Active.OnButtonEvent(new ButtonEvent(ButtonName, false));
+ 			Active = null;
+ 		}
+ 	}
+-
+-	internal MouseButtonState[] MouseStates;
+ }

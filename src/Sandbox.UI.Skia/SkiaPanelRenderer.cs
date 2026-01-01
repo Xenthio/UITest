@@ -48,7 +48,8 @@ public class SkiaPanelRenderer : IPanelRenderer
     {
         // Register text measurement function for Label layout calculations
         // This ensures measurement works even if RegisterAsActiveRenderer isn't called
-        Label.TextMeasureFunc = MeasureTextStatic;
+        Label.TextMeasureFunc = (text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping) => 
+            MeasureTextStatic(text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping);
     }
 
     /// <summary>
@@ -68,7 +69,8 @@ public class SkiaPanelRenderer : IPanelRenderer
     /// </summary>
     public void RegisterAsActiveRenderer()
     {
-        Label.TextMeasureFunc = MeasureText;
+        Label.TextMeasureFunc = (text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping) => 
+            MeasureTextStatic(text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping);
     }
 
     /// <summary>
@@ -76,30 +78,27 @@ public class SkiaPanelRenderer : IPanelRenderer
     /// </summary>
     public Vector2 MeasureText(string text, string? fontFamily, float fontSize, int fontWeight)
     {
-        return MeasureTextStatic(text, fontFamily, fontSize, fontWeight);
+        return MeasureTextStatic(text, fontFamily, fontSize, fontWeight, float.NaN, false);
     }
 
     /// <summary>
-    /// Static text measurement for use before renderer instance is created
+    /// Static text measurement for use before renderer instance is created.
+    /// Now uses RichTextKit for proper text layout matching s&box.
     /// </summary>
-    private static Vector2 MeasureTextStatic(string text, string? fontFamily, float fontSize, int fontWeight)
+    private static Vector2 MeasureTextStatic(string text, string? fontFamily, float fontSize, int fontWeight, float maxWidth, bool allowWrapping)
     {
-        var fontStyle = ToSKFontStyleStatic(fontWeight);
-        var typeface = GetCachedTypefaceStatic(fontFamily ?? "Arial", fontStyle);
+        // Create a TextBlock wrapper for measurement
+        var textBlock = new TextBlockWrapper();
+        textBlock.Update(text, fontFamily, fontSize, fontWeight);
         
-        using var paint = new SKPaint
+        // If wrapping is disabled or no width constraint, measure without width limit
+        if (!allowWrapping || float.IsNaN(maxWidth) || maxWidth <= 0)
         {
-            TextSize = fontSize,
-            Typeface = typeface,
-            IsAntialias = true
-        };
+            return textBlock.Measure(float.NaN, float.NaN);
+        }
         
-        var width = paint.MeasureText(text);
-        var metrics = paint.FontMetrics;
-        var height = metrics.Descent - metrics.Ascent;
-        
-        // Add 1 pixel buffer to prevent truncation (matches s&box's CeilToInt + 1 pattern)
-        return new Vector2((float)Math.Ceiling(width) + 1f, (float)Math.Ceiling(height));
+        // Measure with width constraint for wrapping
+        return textBlock.Measure(maxWidth, float.NaN);
     }
 
     private static SKFontStyle ToSKFontStyleStatic(int weight)
@@ -314,18 +313,17 @@ public class SkiaPanelRenderer : IPanelRenderer
         var skRect = ToSKRect(rect);
         var opacity = panel.Opacity * state.RenderOpacity;
 
-        // Border radius
+        // Border radius - each corner can have a different radius (matches s&box)
         var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
         var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
         var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
         var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
         var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0;
-        var avgRadius = hasRadius ? (radiusTL + radiusTR + radiusBL + radiusBR) / 4f : 0f;
 
         // Background gradient takes priority over solid color
         if (style.BackgroundGradient.HasValue && style.BackgroundGradient.Value.IsValid)
         {
-            DrawGradientBackground(canvas, skRect, style.BackgroundGradient.Value, opacity, hasRadius, avgRadius);
+            DrawGradientBackground(canvas, skRect, style.BackgroundGradient.Value, opacity, radiusTL, radiusTR, radiusBR, radiusBL);
         }
         // Background color
         else if (style.BackgroundColor.HasValue && style.BackgroundColor.Value.a > 0)
@@ -341,7 +339,8 @@ public class SkiaPanelRenderer : IPanelRenderer
 
             if (hasRadius)
             {
-                canvas.DrawRoundRect(skRect, avgRadius, avgRadius, paint);
+                using var path = CreateRoundedRectPath(skRect, radiusTL, radiusTR, radiusBR, radiusBL);
+                canvas.DrawPath(path, paint);
             }
             else
             {
@@ -350,13 +349,40 @@ public class SkiaPanelRenderer : IPanelRenderer
         }
         
         // Background image
-        DrawBackgroundImage(canvas, panel, skRect, opacity, hasRadius, avgRadius);
+        DrawBackgroundImage(canvas, panel, skRect, opacity, radiusTL, radiusTR, radiusBR, radiusBL);
 
         // Border
         DrawBorder(canvas, panel, ref state);
     }
     
-    private void DrawBackgroundImage(SKCanvas canvas, Panel panel, SKRect skRect, float opacity, bool hasRadius, float avgRadius)
+    /// <summary>
+    /// Create a rounded rectangle path with per-corner radii (matches s&box behavior)
+    /// Uses SKRoundRect for proper rounded corners
+    /// </summary>
+    private SKPath CreateRoundedRectPath(SKRect rect, float radiusTL, float radiusTR, float radiusBR, float radiusBL)
+    {
+        var path = new SKPath();
+        
+        // Create an SKRoundRect with individual corner radii
+        // SKRoundRect expects radii in a specific order
+        var roundRect = new SKRoundRect();
+        
+        // SetRectRadii takes an array of 4 SKPoint values, one for each corner
+        // Order: top-left, top-right, bottom-right, bottom-left
+        // Each SKPoint has X (horizontal radius) and Y (vertical radius)
+        roundRect.SetRectRadii(rect, new SKPoint[]
+        {
+            new SKPoint(radiusTL, radiusTL),  // Top-left
+            new SKPoint(radiusTR, radiusTR),  // Top-right
+            new SKPoint(radiusBR, radiusBR),  // Bottom-right
+            new SKPoint(radiusBL, radiusBL)   // Bottom-left
+        });
+        
+        path.AddRoundRect(roundRect);
+        return path;
+    }
+    
+    private void DrawBackgroundImage(SKCanvas canvas, Panel panel, SKRect skRect, float opacity, float radiusTL, float radiusTR, float radiusBR, float radiusBL)
     {
         var style = panel.ComputedStyle;
         if (style?.BackgroundImage == null || string.IsNullOrEmpty(style.BackgroundImage.Path))
@@ -393,12 +419,13 @@ public class SkiaPanelRenderer : IPanelRenderer
             IsAntialias = true
         };
         
-        // Apply clipping if has border radius
+        // Apply clipping if has border radius (per-corner)
+        var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBR > 0 || radiusBL > 0;
         if (hasRadius)
         {
             canvas.Save();
-            var rrect = new SKRoundRect(skRect, avgRadius, avgRadius);
-            canvas.ClipRoundRect(rrect, SKClipOperation.Intersect, true);
+            using var clipPath = CreateRoundedRectPath(skRect, radiusTL, radiusTR, radiusBR, radiusBL);
+            canvas.ClipPath(clipPath, SKClipOperation.Intersect, true);
         }
         
         // Calculate destination rect based on background-size (default is cover-like behavior)
@@ -494,7 +521,7 @@ public class SkiaPanelRenderer : IPanelRenderer
         return image;
     }
 
-    private void DrawGradientBackground(SKCanvas canvas, SKRect rect, GradientInfo gradient, float opacity, bool hasRadius, float avgRadius)
+    private void DrawGradientBackground(SKCanvas canvas, SKRect rect, GradientInfo gradient, float opacity, float radiusTL, float radiusTR, float radiusBR, float radiusBL)
     {
         SKShader? shader = null;
 
@@ -517,9 +544,11 @@ public class SkiaPanelRenderer : IPanelRenderer
             IsAntialias = true
         })
         {
+            var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBR > 0 || radiusBL > 0;
             if (hasRadius)
             {
-                canvas.DrawRoundRect(rect, avgRadius, avgRadius, paint);
+                using var path = CreateRoundedRectPath(rect, radiusTL, radiusTR, radiusBR, radiusBL);
+                canvas.DrawPath(path, paint);
             }
             else
             {
@@ -618,13 +647,12 @@ public class SkiaPanelRenderer : IPanelRenderer
         var hasBorder = leftWidth > 0 || topWidth > 0 || rightWidth > 0 || bottomWidth > 0;
         if (!hasBorder) return;
 
-        // Get border radius
+        // Get border radius - each corner can be different (matches s&box)
         var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
         var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
         var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
         var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
         var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0;
-        var avgRadius = hasRadius ? (radiusTL + radiusTR + radiusBL + radiusBR) / 4f : 0f;
 
         // Check if all borders are uniform (same color and width)
         var uniformColor = style.BorderLeftColor == style.BorderTopColor &&
@@ -635,8 +663,8 @@ public class SkiaPanelRenderer : IPanelRenderer
                           Math.Abs(rightWidth - bottomWidth) < BorderWidthTolerance;
         var borderWidth = (leftWidth + topWidth + rightWidth + bottomWidth) / 4f;
 
-        // If borders are uniform and we have radius, draw a rounded border
-        if (hasRadius && uniformColor && uniformWidth && style.BorderLeftColor.HasValue)
+        // If borders are uniform, use path-based stroke rendering (supports per-corner radii)
+        if (uniformColor && uniformWidth && style.BorderLeftColor.HasValue)
         {
             var color = ToSKColor(style.BorderLeftColor.Value, opacity);
             using var paint = new SKPaint
@@ -655,11 +683,23 @@ public class SkiaPanelRenderer : IPanelRenderer
                 skRect.Bottom - borderWidth / 2
             );
 
-            canvas.DrawRoundRect(adjustedRect, avgRadius, avgRadius, paint);
+            if (hasRadius)
+            {
+                // Use per-corner radii with path-based rendering
+                using var path = CreateRoundedRectPath(adjustedRect, radiusTL, radiusTR, radiusBR, radiusBL);
+                canvas.DrawPath(path, paint);
+            }
+            else
+            {
+                // Simple rectangle border
+                canvas.DrawRect(adjustedRect, paint);
+            }
         }
         else
         {
-            // Fall back to simple rectangle borders (non-rounded)
+            // Non-uniform borders: draw each edge separately (no radius support for mixed borders)
+            // This matches s&box behavior - per-edge colors/widths don't work well with rounded corners
+            
             // Left border
             if (leftWidth > 0 && style.BorderLeftColor.HasValue)
             {
@@ -747,147 +787,54 @@ public class SkiaPanelRenderer : IPanelRenderer
         var textColor = style.FontColor ?? new Color(0, 0, 0, 1);
         var fontSize = style.FontSize?.GetPixels(16f) ?? 16f;
         var fontFamily = style.FontFamily ?? "Arial";
-        var fontStyle = ToSKFontStyle(style.FontWeight ?? 400);
+        var fontWeight = style.FontWeight ?? 400;
         var fontSmooth = style.FontSmooth ?? FontSmooth.Auto;
         
-        // Get or create cached typeface
-        var typeface = GetCachedTypeface(fontFamily, fontStyle);
-
-        using var paint = new SKPaint
-        {
-            Color = ToSKColor(textColor, opacity),
-            TextSize = fontSize,
-            IsAntialias = fontSmooth != FontSmooth.None,
-            SubpixelText = fontSmooth != FontSmooth.None,
-            // Note: LcdRenderText can cause rendering issues when the background changes 
-            // or when rendering to offscreen textures, so only enable for subpixel antialiasing
-            LcdRenderText = fontSmooth == FontSmooth.SubpixelAntialiased,
-            Typeface = typeface
-        };
-
         // Get text rect
         var rect = label.Box.RectInner;
 
-        // Calculate text position
-        var metrics = paint.FontMetrics;
-        var x = rect.Left;
-        var y = rect.Top - metrics.Ascent;
+        // Create and configure TextBlock using RichTextKit (matches s&box approach)
+        var textBlock = new TextBlockWrapper();
+        textBlock.Update(processedText, fontFamily, fontSize, fontWeight, fontSmooth);
+        
+        // Measure with width constraint if wrapping is enabled
+        var shouldWrap = style.WhiteSpace != WhiteSpace.NoWrap;
+        if (shouldWrap && rect.Width > 0)
+        {
+            textBlock.Measure(rect.Width, rect.Height);
+        }
+        else
+        {
+            textBlock.Measure(float.NaN, float.NaN);
+        }
 
-        // Apply text alignment
+        // Calculate starting position based on text alignment
+        var x = rect.Left;
+        var y = rect.Top;
+
+        // Horizontal alignment
         if (style.TextAlign == TextAlign.Center)
         {
-            var textWidth = paint.MeasureText(processedText);
-            x = rect.Left + (rect.Width - textWidth) / 2;
+            x = rect.Left + (rect.Width - textBlock.MeasuredWidth) / 2;
         }
         else if (style.TextAlign == TextAlign.Right)
         {
-            var textWidth = paint.MeasureText(processedText);
-            x = rect.Right - textWidth;
+            x = rect.Right - textBlock.MeasuredWidth;
         }
 
-        // Check if text needs wrapping (only if width is constrained and there's something to wrap)
-        var textWidth2 = paint.MeasureText(processedText);
-        // Don't wrap if:
-        // - WhiteSpace is NoWrap
-        // - Text contains no spaces (nothing to wrap)
-        // - Rect width is too small to fit any text (overflow case)
-        var hasSpaces = processedText.Contains(' ') || processedText.Contains('\n');
-        var shouldWrap = rect.Width > 0 && 
-                         textWidth2 > rect.Width && 
-                         style.WhiteSpace != WhiteSpace.NoWrap &&
-                         hasSpaces;
-
-        if (shouldWrap)
+        // Vertical alignment (if needed, based on AlignItems)
+        if (style.AlignItems == Align.Center)
         {
-            DrawWrappedText(canvas, processedText, paint, rect, x, y, metrics, style.TextAlign);
+            y = rect.Top + (rect.Height - textBlock.MeasuredHeight) / 2;
         }
-        else
+        else if (style.AlignItems == Align.FlexEnd)
         {
-            canvas.DrawText(processedText, x, y, paint);
+            y = rect.Bottom - textBlock.MeasuredHeight;
         }
-    }
 
-    private void DrawWrappedText(SKCanvas canvas, string text, SKPaint paint, Rect rect, float startX, float startY, SKFontMetrics metrics, TextAlign? textAlign)
-    {
-        // Calculate line height - use descent - ascent as the base, add some spacing
-        // Note: Ascent is negative in SkiaSharp, so descent - ascent gives positive height
-        var lineHeight = metrics.Descent - metrics.Ascent;
-        if (metrics.Leading > 0)
-            lineHeight += metrics.Leading;
-        else
-            lineHeight *= 1.2f; // Add 20% spacing if no leading defined
-        
-        var y = startY;
-        
-        // First split by explicit newlines
-        var paragraphs = text.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
-        
-        foreach (var paragraph in paragraphs)
-        {
-            if (string.IsNullOrEmpty(paragraph))
-            {
-                // Empty paragraph = blank line
-                y += lineHeight;
-                if (y - metrics.Ascent > rect.Bottom)
-                    break;
-                continue;
-            }
-            
-            // Split paragraph into words
-            var words = paragraph.Split(' ');
-            var currentLine = "";
-
-            foreach (var word in words)
-            {
-                var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
-                var testWidth = paint.MeasureText(testLine);
-
-                if (testWidth > rect.Width && !string.IsNullOrEmpty(currentLine))
-                {
-                    // Draw the current line
-                    var x = CalculateTextX(rect, currentLine, paint, textAlign);
-                    canvas.DrawText(currentLine, x, y, paint);
-                    currentLine = word;
-                    y += lineHeight;
-
-                    // Stop if we've exceeded the rect height
-                    if (y - metrics.Ascent > rect.Bottom)
-                        break;
-                }
-                else
-                {
-                    currentLine = testLine;
-                }
-            }
-
-            // Draw the last line of this paragraph if we haven't exceeded bounds
-            if (!string.IsNullOrEmpty(currentLine) && y - metrics.Ascent <= rect.Bottom)
-            {
-                var x = CalculateTextX(rect, currentLine, paint, textAlign);
-                canvas.DrawText(currentLine, x, y, paint);
-                y += lineHeight;
-            }
-            
-            // Stop if we've exceeded the rect height
-            if (y - metrics.Ascent > rect.Bottom)
-                break;
-        }
-    }
-    
-    private float CalculateTextX(Rect rect, string text, SKPaint paint, TextAlign? textAlign)
-    {
-        var x = rect.Left;
-        if (textAlign == TextAlign.Center)
-        {
-            var lineWidth = paint.MeasureText(text);
-            x = rect.Left + (rect.Width - lineWidth) / 2;
-        }
-        else if (textAlign == TextAlign.Right)
-        {
-            var lineWidth = paint.MeasureText(text);
-            x = rect.Right - lineWidth;
-        }
-        return x;
+        // Paint the text using RichTextKit with font-smooth settings
+        var skColor = ToSKColor(textColor, opacity);
+        textBlock.Paint(canvas, x, y, skColor);
     }
 
     private static SKTypeface GetCachedTypeface(string fontFamily, SKFontStyle fontStyle)

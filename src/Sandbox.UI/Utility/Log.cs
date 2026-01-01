@@ -24,4 +24,9 @@ public static class Log
     {
         Console.WriteLine($"[ERROR] {ex}");
     }
+
+    public static void Error(string message)
+    {
+        Console.WriteLine($"[ERROR] {message}");
+    }
 }

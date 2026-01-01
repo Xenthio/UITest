@@ -1,0 +1,294 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Panel/Panel.Template.cs	2026-01-01 07:45:59.604934669 +0000
++++ ./src/Sandbox.UI/Panel/Panel.Template.cs	2026-01-01 07:45:47.902924524 +0000
+@@ -1,116 +1,180 @@
+-﻿namespace Sandbox.UI;
++using System.Reflection;
++
++namespace Sandbox.UI;
+ 
+ public partial class Panel
+ {
+-	string previouslyLoadedTemplateStylesheet;
++    private List<string>? _loadedTemplateStylesheets;
+ 
+-	private void LoadStyleSheet()
+-	{
+-		if ( LoadStyleSheetFromAttribute() )
+-			return;
+-
+-		if ( LoadStyleSheetAuto() )
+-			return;
+-	}
+-
+-	/// <summary>
+-	/// Loads a stylesheet from one specified within a [StyleSheet] attribute.
+-	/// </summary>
+-	/// <returns>True if the attribute exists and we loaded from it, otherwise false</returns>
+-	private bool LoadStyleSheetFromAttribute()
+-	{
+-		var type = Game.TypeLibrary?.GetType( GetType() );
+-		var attr = type?.GetAttribute<StyleSheetAttribute>( false );
+-
+-		if ( attr == null )
+-		{
+-			if ( !string.IsNullOrWhiteSpace( previouslyLoadedTemplateStylesheet ) )
+-				StyleSheet.Remove( previouslyLoadedTemplateStylesheet );
+-
+-			previouslyLoadedTemplateStylesheet = null;
+-			return false;
+-		}
+-
+-		var path = attr?.Name;
+-		var classFileLocation = type?.GetAttributes<Internal.ClassFileLocationAttribute>()
+-			.MinBy( x => x.Path.Length );
+-
+-		if ( path == null && classFileLocation == null )
+-		{
+-			Log.Warning( $"{this} has [StyleSheet] but ClassFileLocation wasn't generated!" );
+-		}
+-
+-		var fullPath = GetFullPath( path, classFileLocation );
+-		return LoadStyleSheetFromPath( fullPath, false );
+-	}
+-
+-	/// <summary>
+-	/// Loads a stylesheet from one based on the class name.
+-	/// </summary>
+-	/// <returns>True if the attribute exists and we loaded from it, otherwise false</returns>
+-	private bool LoadStyleSheetAuto()
+-	{
+-		var type = Game.TypeLibrary?.GetType( GetType() );
+-
+-		// Get the shortest class file (incase we have MyPanel.SomeStuff.Blah)
+-		var classFileLocation = type?.GetAttributes<Internal.ClassFileLocationAttribute>()
+-			.MinBy( x => x.Path.Length );
+-
+-		if ( classFileLocation == null )
+-		{
+-			// Couldn't find a stylesheet w/ the class name, but this isn't an error, fail silently.
+-			return false;
+-		}
+-
+-		var fullPath = GetFullPath( null, classFileLocation );
+-		return LoadStyleSheetFromPath( fullPath, true );
+-	}
+-
+-	/// <summary>
+-	/// Loads a stylesheet from the specified path.
+-	/// </summary>
+-	/// <returns>True if the stylesheet was loaded successfully, otherwise false</returns>
+-	private bool LoadStyleSheetFromPath( string path, bool failSilently )
+-	{
+-		path = BaseFileSystem.NormalizeFilename( path );
+-
+-		// Nothing to do
+-		if ( previouslyLoadedTemplateStylesheet == path )
+-			return true;
+-
+-		// Remove old sheet
+-		if ( !string.IsNullOrWhiteSpace( previouslyLoadedTemplateStylesheet ) )
+-			StyleSheet.Remove( previouslyLoadedTemplateStylesheet );
+-
+-		// Add new one
+-		previouslyLoadedTemplateStylesheet = path;
+-		StyleSheet.Load( previouslyLoadedTemplateStylesheet, true, failSilently );
+-
+-		return true;
+-	}
+-
+-	private string GetFullPath( string path, Internal.ClassFileLocationAttribute classFileLocation )
+-	{
+-		if ( string.IsNullOrWhiteSpace( path ) && classFileLocation != null )
+-		{
+-			return classFileLocation.Path + ".scss";
+-		}
+-		else if ( classFileLocation != null && (!path.StartsWith( '/' ) && !path.StartsWith( '\\' )) )
+-		{
+-			var newpath = System.IO.Path.GetDirectoryName( classFileLocation.Path );
+-			newpath = System.IO.Path.Combine( newpath, path );
+-			return newpath;
+-		}
+-
+-		return path;
+-	}
+-
+-	/// <summary>
+-	/// TODO: Obsolete this and instead maybe we have something like [PanelSlot( "slotname" )] that 
+-	/// is applied on properties. Then when we find a slot="slotname" we chase up the heirachy and set the property.
+-	/// </summary>
+-	public virtual void OnTemplateSlot( Html.INode element, string slotName, Panel panel )
+-	{
+-		Parent?.OnTemplateSlot( element, slotName, panel );
+-	}
++    /// <summary>
++    /// Load the stylesheet for this panel based on [StyleSheet] attributes
++    /// </summary>
++    protected void LoadStyleSheet()
++    {
++        if (LoadStyleSheetFromAttribute())
++            return;
++
++        if (LoadStyleSheetAuto())
++            return;
++    }
++
++    /// <summary>
++    /// Loads stylesheets from [StyleSheet] attributes.
++    /// </summary>
++    /// <returns>True if any attribute exists and we loaded from it, otherwise false</returns>
++    private bool LoadStyleSheetFromAttribute()
++    {
++        var type = GetType();
++        var attrs = type.GetCustomAttributes<StyleSheetAttribute>(false).ToList();
++
++        if (attrs.Count == 0)
++        {
++            // Clear any previously loaded stylesheets
++            ClearLoadedTemplateStylesheets();
++            return false;
++        }
++
++        // Clear old sheets and load new ones
++        ClearLoadedTemplateStylesheets();
++        _loadedTemplateStylesheets = new List<string>();
++
++        foreach (var attr in attrs)
++        {
++            var path = attr.Name;
++            var fullPath = ResolveStyleSheetPath(path, type);
++            if (fullPath != null)
++            {
++                if (LoadStyleSheetFromPath(fullPath, false))
++                {
++                    _loadedTemplateStylesheets.Add(fullPath);
++                }
++            }
++            else
++            {
++                System.Console.WriteLine($"Error opening stylesheet: {path} (File not found in search paths)");
++            }
++        }
++
++        return _loadedTemplateStylesheets.Count > 0;
++    }
++
++    /// <summary>
++    /// Loads a stylesheet from one based on the class name.
++    /// </summary>
++    /// <returns>True if loaded, otherwise false</returns>
++    private bool LoadStyleSheetAuto()
++    {
++        var type = GetType();
++        
++        // Try to find a stylesheet with the same name as the type
++        var fullPath = ResolveStyleSheetPath(type.Name + ".scss", type);
++        if (fullPath != null && LoadStyleSheetFromPath(fullPath, true))
++        {
++            _loadedTemplateStylesheets ??= new List<string>();
++            _loadedTemplateStylesheets.Add(fullPath);
++            return true;
++        }
++
++        return false;
++    }
++
++    /// <summary>
++    /// Clear all previously loaded template stylesheets
++    /// </summary>
++    private void ClearLoadedTemplateStylesheets()
++    {
++        if (_loadedTemplateStylesheets == null)
++            return;
++
++        foreach (var path in _loadedTemplateStylesheets)
++        {
++            StyleSheet.Remove(path);
++        }
++        _loadedTemplateStylesheets.Clear();
++    }
++
++    /// <summary>
++    /// Loads a stylesheet from the specified path.
++    /// </summary>
++    /// <returns>True if the stylesheet was loaded successfully, otherwise false</returns>
++    private bool LoadStyleSheetFromPath(string? path, bool failSilently)
++    {
++        if (string.IsNullOrWhiteSpace(path))
++            return false;
++
++        // Don't normalize to lowercase since we already have a resolved absolute path
++        // with correct casing from ResolveStyleSheetPath
++        path = path.NormalizeFilename(enforceInitialSlash: false, enforceLowerCase: false);
++
++        StyleSheet.Load(path, true, failSilently);
++        return true;
++    }
++
++    /// <summary>
++    /// Resolves a stylesheet path to an actual file path.
++    /// Searches in: output directory, relative to assembly, relative to executable.
++    /// </summary>
++    private string? ResolveStyleSheetPath(string path, Type type)
++    {
++        if (string.IsNullOrWhiteSpace(path))
++            return null;
++
++        // Normalize path separators
++        path = path.Replace('\\', '/');
++        
++        // Remove leading slash for relative resolution
++        var relativePath = path.TrimStart('/');
++
++        // Get the base directories to search
++        var searchPaths = GetStyleSheetSearchPaths(type);
++
++        foreach (var basePath in searchPaths)
++        {
++            if (string.IsNullOrEmpty(basePath))
++                continue;
++
++            var fullPath = System.IO.Path.Combine(basePath, relativePath);
++            fullPath = System.IO.Path.GetFullPath(fullPath);
++            
++            if (System.IO.File.Exists(fullPath))
++                return fullPath;
++        }
++
++        // If nothing found, return null to let the caller handle the missing file
++        return null;
++    }
++
++    /// <summary>
++    /// Gets a list of directories to search for stylesheets.
++    /// </summary>
++    private IEnumerable<string> GetStyleSheetSearchPaths(Type type)
++    {
++        // 1. Assembly location (where DLLs and output files are)
++        var assemblyLocation = type.Assembly.Location;
++        if (!string.IsNullOrEmpty(assemblyLocation))
++        {
++            var assemblyDir = System.IO.Path.GetDirectoryName(assemblyLocation);
++            if (!string.IsNullOrEmpty(assemblyDir))
++                yield return assemblyDir;
++        }
++
++        // 2. Current directory (where the app is running from)
++        yield return System.IO.Directory.GetCurrentDirectory();
++
++        // 3. AppContext.BaseDirectory (runtime base directory)
++        yield return AppContext.BaseDirectory;
++
++        // 4. Entry assembly location
++        var entryAssembly = System.Reflection.Assembly.GetEntryAssembly();
++        if (entryAssembly != null)
++        {
++            var entryLocation = entryAssembly.Location;
++            if (!string.IsNullOrEmpty(entryLocation))
++            {
++                var entryDir = System.IO.Path.GetDirectoryName(entryLocation);
++                if (!string.IsNullOrEmpty(entryDir))
++                    yield return entryDir;
++            }
++        }
++    }
+ }

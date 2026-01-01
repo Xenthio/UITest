@@ -667,7 +667,16 @@ public class Window : Panel
         }
 
         CurrentTheme = theme;
-        var styleToApply = UI.StyleSheet.FromFile(theme);
+        
+        // Resolve the stylesheet path using the same logic as StyleSheet attributes
+        var resolvedPath = ResolveThemePath(theme);
+        if (resolvedPath == null)
+        {
+            Console.WriteLine($"Error: Theme stylesheet not found: {theme}");
+            return;
+        }
+        
+        var styleToApply = UI.StyleSheet.FromFile(resolvedPath);
 
         // Apply the new style
         StyleSheet.Add(styleToApply);
@@ -682,6 +691,64 @@ public class Window : Panel
 
         // Force layout recalculation - traverse child hierarchy
         ForceStyleUpdateRecursive(this);
+    }
+    
+    /// <summary>
+    /// Resolve a theme path to an absolute file path
+    /// Uses the same search logic as StyleSheet attributes
+    /// </summary>
+    private string? ResolveThemePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return null;
+
+        // Normalize path separators
+        path = path.Replace('\\', '/');
+        
+        // Remove leading slash for relative resolution
+        var relativePath = path.TrimStart('/');
+
+        // Get the base directories to search
+        var searchPaths = GetThemeSearchPaths();
+
+        foreach (var basePath in searchPaths)
+        {
+            if (string.IsNullOrEmpty(basePath))
+                continue;
+
+            var fullPath = System.IO.Path.Combine(basePath, relativePath);
+            fullPath = System.IO.Path.GetFullPath(fullPath);
+            
+            if (System.IO.File.Exists(fullPath))
+                return fullPath;
+        }
+
+        return null;
+    }
+    
+    /// <summary>
+    /// Gets a list of directories to search for theme stylesheets
+    /// </summary>
+    private IEnumerable<string> GetThemeSearchPaths()
+    {
+        var type = GetType();
+        
+        // 1. Assembly location (where DLLs and output files are)
+        var assemblyLocation = type.Assembly.Location;
+        if (!string.IsNullOrEmpty(assemblyLocation))
+        {
+            var assemblyDir = System.IO.Path.GetDirectoryName(assemblyLocation);
+            if (!string.IsNullOrEmpty(assemblyDir))
+                yield return assemblyDir;
+        }
+
+        // 2. Current working directory
+        yield return System.IO.Directory.GetCurrentDirectory();
+        
+        // 3. Application base directory
+        var appBase = System.AppContext.BaseDirectory;
+        if (!string.IsNullOrEmpty(appBase))
+            yield return appBase;
     }
 
     private void ForceStyleUpdateRecursive(Panel panel)

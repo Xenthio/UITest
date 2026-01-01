@@ -1,0 +1,8 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Animation/KeyFrames.Parser.cs	2026-01-01 07:45:59.602934667 +0000
++++ ./src/Sandbox.UI/Animation/KeyFrames.Parser.cs	2026-01-01 07:45:47.899924522 +0000
+@@ -1,4 +1,4 @@
+-﻿namespace Sandbox.UI;
++namespace Sandbox.UI;
+ 
+ public partial class KeyFrames
+ {

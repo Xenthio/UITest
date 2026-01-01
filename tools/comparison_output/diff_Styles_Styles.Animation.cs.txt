@@ -1,0 +1,35 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Styles/Styles.Animation.cs	2026-01-01 07:45:59.606934670 +0000
++++ ./src/Sandbox.UI/Styles/Styles.Animation.cs	2026-01-01 07:45:47.904924526 +0000
+@@ -1,10 +1,10 @@
+-﻿namespace Sandbox.UI;
++namespace Sandbox.UI;
+ 
+ public partial class Styles
+ {
+-	KeyFrames currentFrames;
++	KeyFrames? currentFrames;
+ 	double animationStart;
+-	Styles animStyle;
++	Styles? animStyle;
+ 
+ 	/// <summary>
+ 	/// Stops the animation. If we have animation vars we'll start again.
+@@ -34,6 +34,12 @@
+ 		Dirty();
+ 	}
+ 
++	// NOTE: Animation support is partially implemented. Full implementation requires:
++	// - Easing utility functions (not yet ported)
++	// - Public TimeNow/TimeDelta properties on Panel (currently protected)
++	// This is disabled for now to avoid build errors. The critical style lifecycle
++	// fixes (From/Add methods) are in Styles.From.cs and work independently.
++	/*
+ 	public bool ApplyAnimation( Panel panel )
+ 	{
+ 		if ( !HasAnimation )
+@@ -126,4 +132,5 @@
+ 
+ 		return true;
+ 	}
++	*/
+ }

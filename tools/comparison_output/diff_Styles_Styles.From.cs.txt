@@ -1,0 +1,29 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Styles/Styles.From.cs	2026-01-01 07:45:59.606934670 +0000
++++ ./src/Sandbox.UI/Styles/Styles.From.cs	2026-01-01 07:45:47.904924526 +0000
+@@ -1,4 +1,4 @@
+-﻿namespace Sandbox.UI
++namespace Sandbox.UI
+ {
+ 	public partial class Styles
+ 	{
+@@ -21,7 +21,7 @@
+ 			TextShadow.AddFrom( a.TextShadow );
+ 			FilterDropShadow.AddFrom( a.FilterDropShadow );
+ 
+-			if ( !a.TextGradient.ColorOffsets.IsDefaultOrEmpty )
++			if ( a.TextGradient.HasValue )
+ 			{
+ 				TextGradient = a.TextGradient;
+ 			}
+@@ -44,7 +44,10 @@
+ 				Transitions.AddTransitions( a.Transitions );
+ 			}
+ 
+-			TextGradient = a.TextGradient;
++			if ( a.TextGradient.HasValue )
++			{
++				TextGradient = a.TextGradient;
++			}
+ 
+ 		}
+ 

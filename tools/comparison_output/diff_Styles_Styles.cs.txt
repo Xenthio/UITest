@@ -1,0 +1,96 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Styles/Styles.cs	2026-01-01 07:45:59.607934671 +0000
++++ ./src/Sandbox.UI/Styles/Styles.cs	2026-01-01 07:45:47.904924526 +0000
+@@ -1,15 +1,20 @@
+-﻿using Sandbox.Engine;
++﻿using System.Numerics;
+ 
+ namespace Sandbox.UI;
+ 
+ /// <summary>
+ /// Represents all supported CSS properties and their currently assigned values.
+ /// </summary>
+-[SkipHotload]
+ public partial class Styles : BaseStyles
+ {
+ 	internal Dictionary<string, IStyleBlock.StyleProperty> RawValues = new Dictionary<string, IStyleBlock.StyleProperty>( StringComparer.OrdinalIgnoreCase );
+-	internal GradientInfo TextGradient;
++	internal GradientInfo? TextGradient;
++	
++	/// <summary>
++	/// Background gradient (for linear-gradient, radial-gradient CSS functions)
++	/// Parsed from background-image property
++	/// </summary>
++	public GradientInfo? BackgroundGradient;
+ 
+ 	/// <summary>
+ 	/// Whether this style sheet has any transitions that would need to be run.
+@@ -19,7 +24,7 @@
+ 	/// <summary>
+ 	/// List of transitions this style sheet has.
+ 	/// </summary>
+-	public TransitionList Transitions;
++	public TransitionList? Transitions;
+ 
+ 	//
+ 	// Shadows
+@@ -38,6 +43,19 @@
+ 		// Nothing
+ 	}
+ 
++	/// <summary>
++	/// Get the value of a CSS custom property (CSS variable).
++	/// Custom properties start with -- (e.g., --custom-chrome)
++	/// </summary>
++	public string? GetCustomProperty(string propertyName)
++	{
++		if (RawValues.TryGetValue(propertyName, out var value))
++		{
++			return value.Value;
++		}
++		return null;
++	}
++
+ 	public Length? Padding
+ 	{
+ 		set
+@@ -143,7 +161,8 @@
+ 			bool wasSuccessful = Set( property, value );
+ 			if ( !wasSuccessful )
+ 			{
+-				Log.Error( $"{value} is not valid with {property} {p.FileAndLine}" );
++				// Silently ignore unsupported CSS properties to avoid console spam
++				// Console.WriteLine( $"{value} is not valid with {property} {p.FileAndLine}" );
+ 			}
+ 
+ 			var prop = new IStyleBlock.StyleProperty
+@@ -172,10 +191,10 @@
+ 	/// <summary>
+ 	/// Creates a matrix based on this style's "transform" and other related properties
+ 	/// </summary>
+-	public Matrix BuildTransformMatrix( Vector2 size )
++	public Matrix4x4 BuildTransformMatrix( Vector2 size )
+ 	{
+ 		if ( Transform?.IsEmpty() ?? true )
+-			return Matrix.Identity;
++			return Matrix4x4.Identity;
+ 
+ 		var t = Transform.Value;
+ 
+@@ -202,11 +221,12 @@
+ 	/// </summary>
+ 	internal void MarkPanelsDirty()
+ 	{
+-		foreach ( var panel in GlobalContext.Current.UISystem.RootPanels )
+-		{
+-			// Dirty all panels that contain this style
+-			panel.DirtyStylesWithStyle( this, true );
+-		}
++		// TODO: Implement when GlobalContext/UISystem is available
++		// foreach ( var panel in GlobalContext.Current.UISystem.RootPanels )
++		// {
++		// 	// Dirty all panels that contain this style
++		// 	panel.DirtyStylesWithStyle( this, true );
++		// }
+ 	}
+ 
+ 	public override void LerpProperty( string name, BaseStyles from, BaseStyles to, float delta )

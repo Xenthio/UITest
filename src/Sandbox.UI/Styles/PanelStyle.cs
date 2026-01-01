@@ -76,6 +76,21 @@ public sealed class PanelStyle : Styles
     /// </summary>
     int broadPhaseHash = 0;
 
+    bool _hasBeforeElement;
+    bool _hasAfterElement;
+
+    /// <summary>
+    /// This style has a ::before element available. This is signalling to the panel system that if we 
+    /// apply this style, we should also create a ::before element.
+    /// </summary>
+    public bool HasBeforeElement => _hasBeforeElement;
+
+    /// <summary>
+    /// This style has a ::after element available. This is signalling to the panel system that if we 
+    /// apply this style, we should also create a ::after element.
+    /// </summary>
+    public bool HasAfterElement => _hasAfterElement;
+
     /// <summary>
     /// Called when a stylesheet has been added or removed from ourselves or one of
     /// our ancestor panels - because under that condition we need to rebuild our
@@ -117,17 +132,30 @@ public sealed class PanelStyle : Styles
         }
         broadPhaseHash = hash;
 
+        _hasBeforeElement = false;
+        _hasAfterElement = false;
+
+        bool isBeforeOrAfter = panel.PseudoClass.HasFlag(PseudoClass.Before) || panel.PseudoClass.HasFlag(PseudoClass.After);
+
         if (StyleBlocks != null)
         {
-            var winningSelectors = StyleBlocks
-                .Select(c => c.Test(panel))
-                .Where(winningSelector => winningSelector != null)
-                .ToList();
-
-            if (winningSelectors.Count > 0)
+            foreach (var c in StyleBlocks)
             {
-                activeRules ??= new();
-                activeRules.AddRange(winningSelectors!);
+                //
+                // If we're not a ::before or ::after element, see if we have any styles with ::before or ::after elements.
+                //
+                if (!isBeforeOrAfter)
+                {
+                    _hasBeforeElement = _hasBeforeElement || c.Test(panel, PseudoClass.Before) != null;
+                    _hasAfterElement = _hasAfterElement || c.Test(panel, PseudoClass.After) != null;
+                }
+
+                var winningSelector = c.Test(panel);
+                if (winningSelector != null)
+                {
+                    activeRules ??= new();
+                    activeRules.Add(winningSelector);
+                }
             }
         }
 

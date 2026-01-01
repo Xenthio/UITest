@@ -1,0 +1,13 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Styles/StyleBlock.cs	2026-01-01 07:45:59.606934670 +0000
++++ ./src/Sandbox.UI/Styles/StyleBlock.cs	2026-01-01 07:45:47.904924526 +0000
+@@ -1,9 +1,8 @@
+-﻿namespace Sandbox.UI;
++namespace Sandbox.UI;
+ 
+ /// <summary>
+ /// A CSS rule - ie ".chin { width: 100%; height: 100%; }"
+ /// </summary>
+-[SkipHotload]
+ public sealed class StyleBlock : IStyleBlock
+ {
+ 	internal int LoadOrder = 0;

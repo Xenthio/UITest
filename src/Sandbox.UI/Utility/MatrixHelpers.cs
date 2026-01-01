@@ -8,6 +8,25 @@ namespace Sandbox.UI;
 public static class MatrixHelpers
 {
 	/// <summary>
+	/// Transform a 2D point by a 4x4 matrix.
+	/// </summary>
+	public static Vector2 Transform(this Matrix4x4 matrix, Vector2 point)
+	{
+		// Transform as a 3D point with z=0, w=1
+		var vec3 = Vector3.Transform(new Vector3(point.x, point.y, 0), matrix);
+		return new Vector2(vec3.X, vec3.Y);
+	}
+
+	/// <summary>
+	/// Get the inverse of a matrix.
+	/// </summary>
+	public static Matrix4x4 Inverted(this Matrix4x4 matrix)
+	{
+		Matrix4x4.Invert(matrix, out var result);
+		return result;
+	}
+
+	/// <summary>
 	/// Create a 4x4 matrix from 2D matrix values (6 values)
 	/// </summary>
 	public static Matrix4x4 CreateMatrix(float[] values)
