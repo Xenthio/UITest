@@ -313,18 +313,17 @@ public class SkiaPanelRenderer : IPanelRenderer
         var skRect = ToSKRect(rect);
         var opacity = panel.Opacity * state.RenderOpacity;
 
-        // Border radius
+        // Border radius - each corner can have a different radius (matches s&box)
         var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
         var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
         var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
         var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
         var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0;
-        var avgRadius = hasRadius ? (radiusTL + radiusTR + radiusBL + radiusBR) / 4f : 0f;
 
         // Background gradient takes priority over solid color
         if (style.BackgroundGradient.HasValue && style.BackgroundGradient.Value.IsValid)
         {
-            DrawGradientBackground(canvas, skRect, style.BackgroundGradient.Value, opacity, hasRadius, avgRadius);
+            DrawGradientBackground(canvas, skRect, style.BackgroundGradient.Value, opacity, radiusTL, radiusTR, radiusBR, radiusBL);
         }
         // Background color
         else if (style.BackgroundColor.HasValue && style.BackgroundColor.Value.a > 0)
@@ -340,7 +339,8 @@ public class SkiaPanelRenderer : IPanelRenderer
 
             if (hasRadius)
             {
-                canvas.DrawRoundRect(skRect, avgRadius, avgRadius, paint);
+                using var path = CreateRoundedRectPath(skRect, radiusTL, radiusTR, radiusBR, radiusBL);
+                canvas.DrawPath(path, paint);
             }
             else
             {
@@ -349,13 +349,25 @@ public class SkiaPanelRenderer : IPanelRenderer
         }
         
         // Background image
-        DrawBackgroundImage(canvas, panel, skRect, opacity, hasRadius, avgRadius);
+        DrawBackgroundImage(canvas, panel, skRect, opacity, radiusTL, radiusTR, radiusBR, radiusBL);
 
         // Border
         DrawBorder(canvas, panel, ref state);
     }
     
-    private void DrawBackgroundImage(SKCanvas canvas, Panel panel, SKRect skRect, float opacity, bool hasRadius, float avgRadius)
+    /// <summary>
+    /// Create a rounded rectangle path with per-corner radii (matches s&box behavior)
+    /// </summary>
+    private SKPath CreateRoundedRectPath(SKRect rect, float radiusTL, float radiusTR, float radiusBR, float radiusBL)
+    {
+        var path = new SKPath();
+        // AddRoundRect expects 8 values: [rx, ry] for each corner in order: TL, TR, BR, BL
+        // For circular corners we use the same value for both X and Y radius
+        path.AddRoundRect(rect, new[] { radiusTL, radiusTL, radiusTR, radiusTR, radiusBR, radiusBR, radiusBL, radiusBL });
+        return path;
+    }
+    
+    private void DrawBackgroundImage(SKCanvas canvas, Panel panel, SKRect skRect, float opacity, float radiusTL, float radiusTR, float radiusBR, float radiusBL)
     {
         var style = panel.ComputedStyle;
         if (style?.BackgroundImage == null || string.IsNullOrEmpty(style.BackgroundImage.Path))
@@ -392,12 +404,13 @@ public class SkiaPanelRenderer : IPanelRenderer
             IsAntialias = true
         };
         
-        // Apply clipping if has border radius
+        // Apply clipping if has border radius (per-corner)
+        var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBR > 0 || radiusBL > 0;
         if (hasRadius)
         {
             canvas.Save();
-            var rrect = new SKRoundRect(skRect, avgRadius, avgRadius);
-            canvas.ClipRoundRect(rrect, SKClipOperation.Intersect, true);
+            using var clipPath = CreateRoundedRectPath(skRect, radiusTL, radiusTR, radiusBR, radiusBL);
+            canvas.ClipPath(clipPath, SKClipOperation.Intersect, true);
         }
         
         // Calculate destination rect based on background-size (default is cover-like behavior)
@@ -493,7 +506,7 @@ public class SkiaPanelRenderer : IPanelRenderer
         return image;
     }
 
-    private void DrawGradientBackground(SKCanvas canvas, SKRect rect, GradientInfo gradient, float opacity, bool hasRadius, float avgRadius)
+    private void DrawGradientBackground(SKCanvas canvas, SKRect rect, GradientInfo gradient, float opacity, float radiusTL, float radiusTR, float radiusBR, float radiusBL)
     {
         SKShader? shader = null;
 
@@ -516,9 +529,11 @@ public class SkiaPanelRenderer : IPanelRenderer
             IsAntialias = true
         })
         {
+            var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBR > 0 || radiusBL > 0;
             if (hasRadius)
             {
-                canvas.DrawRoundRect(rect, avgRadius, avgRadius, paint);
+                using var path = CreateRoundedRectPath(rect, radiusTL, radiusTR, radiusBR, radiusBL);
+                canvas.DrawPath(path, paint);
             }
             else
             {
@@ -617,13 +632,12 @@ public class SkiaPanelRenderer : IPanelRenderer
         var hasBorder = leftWidth > 0 || topWidth > 0 || rightWidth > 0 || bottomWidth > 0;
         if (!hasBorder) return;
 
-        // Get border radius
+        // Get border radius - each corner can be different (matches s&box)
         var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
         var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
         var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
         var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
         var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0;
-        var avgRadius = hasRadius ? (radiusTL + radiusTR + radiusBL + radiusBR) / 4f : 0f;
 
         // Check if all borders are uniform (same color and width)
         var uniformColor = style.BorderLeftColor == style.BorderTopColor &&
@@ -634,8 +648,8 @@ public class SkiaPanelRenderer : IPanelRenderer
                           Math.Abs(rightWidth - bottomWidth) < BorderWidthTolerance;
         var borderWidth = (leftWidth + topWidth + rightWidth + bottomWidth) / 4f;
 
-        // If borders are uniform and we have radius, draw a rounded border
-        if (hasRadius && uniformColor && uniformWidth && style.BorderLeftColor.HasValue)
+        // If borders are uniform, use path-based stroke rendering (supports per-corner radii)
+        if (uniformColor && uniformWidth && style.BorderLeftColor.HasValue)
         {
             var color = ToSKColor(style.BorderLeftColor.Value, opacity);
             using var paint = new SKPaint
@@ -654,11 +668,23 @@ public class SkiaPanelRenderer : IPanelRenderer
                 skRect.Bottom - borderWidth / 2
             );
 
-            canvas.DrawRoundRect(adjustedRect, avgRadius, avgRadius, paint);
+            if (hasRadius)
+            {
+                // Use per-corner radii with path-based rendering
+                using var path = CreateRoundedRectPath(adjustedRect, radiusTL, radiusTR, radiusBR, radiusBL);
+                canvas.DrawPath(path, paint);
+            }
+            else
+            {
+                // Simple rectangle border
+                canvas.DrawRect(adjustedRect, paint);
+            }
         }
         else
         {
-            // Fall back to simple rectangle borders (non-rounded)
+            // Non-uniform borders: draw each edge separately (no radius support for mixed borders)
+            // This matches s&box behavior - per-edge colors/widths don't work well with rounded corners
+            
             // Left border
             if (leftWidth > 0 && style.BorderLeftColor.HasValue)
             {
