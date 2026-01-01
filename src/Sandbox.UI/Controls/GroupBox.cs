@@ -16,7 +16,7 @@ public class GroupBox : Panel
 
     public GroupBox()
     {
-        AddClass("groupbox");
+        AddClass("group-box");  // Fixed: Changed from "groupbox" to "group-box" to match XGUI-3
         ElementName = "groupbox";
     }
 
@@ -30,7 +30,7 @@ public class GroupBox : Panel
             // Check if we already have a title element
             if (_titleElement == null)
             {
-                _titleElement = AddChild(new Label("", "groupbox-title"));
+                _titleElement = AddChild(new Label("", "group-box-title"));  // Fixed: Changed from "groupbox-title" to "group-box-title" to match XGUI-3
                 _titleElement.Text = Title;
             }
             else
@@ -39,10 +39,12 @@ public class GroupBox : Panel
             }
 
             // Apply parent's background color to the title element
+            // This creates the "cut-out" effect for the border
             UpdateTitleBackground();
         }
     }
 
+    // Call this whenever the background might change
     public override void Tick()
     {
         base.Tick();
@@ -62,10 +64,8 @@ public class GroupBox : Panel
         var backgroundColor = FindAncestorBackgroundColor();
 
         // Apply the found background color or default to transparent
-        if (backgroundColor.HasValue)
-        {
-            _titleElement.Style.BackgroundColor = backgroundColor.Value;
-        }
+        _titleElement.Style.BackgroundColor = backgroundColor ?? Color.Transparent;
+        _titleElement.Style.Dirty();  // Added: Mark style as dirty to ensure update
     }
 
     private Color? FindAncestorBackgroundColor()
