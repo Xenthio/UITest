@@ -292,9 +292,7 @@ public class ComboBox : Button
                 {
                     Select(o, true);
                 }
-                
-                // Remove the option child as it was just used for data
-                child.Delete();
+                // Don't delete options - CSS handles hiding them with > option { display: none; }
             }
         }
     }
