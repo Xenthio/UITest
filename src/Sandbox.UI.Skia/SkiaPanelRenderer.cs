@@ -314,7 +314,8 @@ public class SkiaPanelRenderer : IPanelRenderer
         var opacity = panel.Opacity * state.RenderOpacity;
 
         // Border radius - each corner can have a different radius (matches s&box)
-        // Resolve percentages against the smallest dimension to ensure circular corners
+        // S&box uses the smallest dimension for percentage resolution to ensure circular corners
+        // (deviates from CSS spec which uses width for X-radii and height for Y-radii for elliptical corners)
         var resolutionSize = Math.Min(rect.Width, rect.Height);
         var radiusTL = style.BorderTopLeftRadius?.GetPixels(resolutionSize) ?? 0;
         var radiusTR = style.BorderTopRightRadius?.GetPixels(resolutionSize) ?? 0;
@@ -658,7 +659,8 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (!hasBorder) return;
 
         // Get border radius - each corner can be different (matches s&box)
-        // Resolve percentages against the smallest dimension
+        // S&box uses the smallest dimension for percentage resolution to ensure circular corners
+        // (deviates from CSS spec which uses width for X-radii and height for Y-radii for elliptical corners)
         var resolutionSize = Math.Min(rect.Width, rect.Height);
         var radiusTL = style.BorderTopLeftRadius?.GetPixels(resolutionSize) ?? 0;
         var radiusTR = style.BorderTopRightRadius?.GetPixels(resolutionSize) ?? 0;
@@ -842,15 +844,19 @@ public class SkiaPanelRenderer : IPanelRenderer
             innerRect.Bottom = cy;
         }
         
-        // Calculate inner radii (elliptical)
-        // We use SKPoint array for SetRectRadii to support elliptical radii
+        // Calculate inner radii (circular, to match circular outer radii)
+        // We use SKPoint array for SetRectRadii, but X and Y are equal per corner to maintain circular corners
         var innerRadii = new SKPoint[4];
-        innerRadii[0] = new SKPoint(Math.Max(0, radiusTL - leftWidth), Math.Max(0, radiusTL - topWidth));
-        innerRadii[1] = new SKPoint(Math.Max(0, radiusTR - rightWidth), Math.Max(0, radiusTR - topWidth));
-        innerRadii[2] = new SKPoint(Math.Max(0, radiusBR - rightWidth), Math.Max(0, radiusBR - bottomWidth));
-        innerRadii[3] = new SKPoint(Math.Max(0, radiusBL - leftWidth), Math.Max(0, radiusBL - bottomWidth));
+        var innerRadiusTL = (float)Math.Max(0, radiusTL - Math.Max(leftWidth, topWidth));
+        var innerRadiusTR = (float)Math.Max(0, radiusTR - Math.Max(rightWidth, topWidth));
+        var innerRadiusBR = (float)Math.Max(0, radiusBR - Math.Max(rightWidth, bottomWidth));
+        var innerRadiusBL = (float)Math.Max(0, radiusBL - Math.Max(leftWidth, bottomWidth));
+        innerRadii[0] = new SKPoint(innerRadiusTL, innerRadiusTL);
+        innerRadii[1] = new SKPoint(innerRadiusTR, innerRadiusTR);
+        innerRadii[2] = new SKPoint(innerRadiusBR, innerRadiusBR);
+        innerRadii[3] = new SKPoint(innerRadiusBL, innerRadiusBL);
         
-        var innerRoundRect = new SKRoundRect();
+        using var innerRoundRect = new SKRoundRect();
         innerRoundRect.SetRectRadii(innerRect, innerRadii);
         using var innerPath = new SKPath();
         innerPath.AddRoundRect(innerRoundRect);
