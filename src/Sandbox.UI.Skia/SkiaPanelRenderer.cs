@@ -750,17 +750,6 @@ public class SkiaPanelRenderer : IPanelRenderer
         var fontStyle = ToSKFontStyle(style.FontWeight ?? 400);
         var fontSmooth = style.FontSmooth ?? FontSmooth.Auto;
         
-        // Debug: Log checklabel info
-        if (label.HasClass("checklabel"))
-        {
-            var parent = label.Parent;
-            var parentClasses = parent?.Classes ?? "null";
-            var checkboxAncestor = label.Parent?.Parent;
-            var checkboxClasses = checkboxAncestor?.Classes ?? "null";
-            Console.WriteLine($"[CHECKLABEL] text='{processedText}' font={fontFamily} size={fontSize} color=({textColor.r:F2},{textColor.g:F2},{textColor.b:F2},{textColor.a:F2}) opacity={opacity:F2}");
-            Console.WriteLine($"[CHECKLABEL]   rect={label.Box.RectInner} parent={parentClasses} checkbox={checkboxClasses}");
-        }
-        
         // Get or create cached typeface
         var typeface = GetCachedTypeface(fontFamily, fontStyle);
 
