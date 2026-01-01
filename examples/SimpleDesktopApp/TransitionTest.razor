@@ -1,0 +1,130 @@
+@namespace SimpleDesktopApp
+@using Sandbox.UI
+@inherits Panel
+
+<root>
+    <style>
+        .transition-demo {
+            padding: 20px;
+            background-color: #1e1e1e;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .transition-box {
+            width: 100px;
+            height: 100px;
+            background-color: #3498db;
+            border-radius: 8px;
+            transition: all 0.5s ease-in-out;
+        }
+
+        .transition-box:hover {
+            width: 200px;
+            height: 200px;
+            background-color: #e74c3c;
+            border-radius: 50%;
+        }
+
+        .transition-box-2 {
+            width: 150px;
+            height: 80px;
+            background-color: #2ecc71;
+            border-radius: 4px;
+            transition: background-color 1s ease, transform 0.5s ease-out;
+            opacity: 1;
+        }
+
+        .transition-box-2:hover {
+            background-color: #f39c12;
+            opacity: 0.7;
+        }
+
+        .transition-box-3 {
+            width: 120px;
+            height: 120px;
+            background-color: #9b59b6;
+            border-radius: 8px;
+            transition: width 0.3s ease-in, height 0.3s 0.3s ease-out, border-radius 0.6s linear;
+        }
+
+        .transition-box-3:hover {
+            width: 180px;
+            height: 60px;
+            border-radius: 30px;
+        }
+
+        .button-container {
+            flex-direction: row;
+            gap: 10px;
+        }
+
+        .test-button {
+            padding: 10px 20px;
+            background-color: #34495e;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .test-button:hover {
+            background-color: #2c3e50;
+        }
+
+        .test-button.active {
+            background-color: #e74c3c;
+        }
+
+        .label {
+            color: white;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .section {
+            padding: 15px;
+            background-color: #2c2c2c;
+            border-radius: 8px;
+            gap: 10px;
+        }
+    </style>
+
+    <div class="transition-demo">
+        <div class="label">CSS Transition Test - Hover over the boxes to see transitions</div>
+        
+        <div class="section">
+            <div class="label">Box 1: All properties with ease-in-out (0.5s)</div>
+            <div class="transition-box"></div>
+        </div>
+
+        <div class="section">
+            <div class="label">Box 2: Background color (1s ease) and opacity</div>
+            <div class="transition-box-2"></div>
+        </div>
+
+        <div class="section">
+            <div class="label">Box 3: Chained transitions with delays</div>
+            <div class="transition-box-3"></div>
+        </div>
+
+        <div class="section">
+            <div class="label">Programmatic Toggle Test</div>
+            <div class="button-container">
+                <div class="test-button @(IsToggled ? "active" : "")" onclick=@ToggleState>
+                    Click to Toggle (0.2s transition)
+                </div>
+            </div>
+        </div>
+    </div>
+</root>
+
+@code {
+    bool IsToggled = false;
+
+    void ToggleState()
+    {
+        IsToggled = !IsToggled;
+        StateHasChanged();
+    }
+}
