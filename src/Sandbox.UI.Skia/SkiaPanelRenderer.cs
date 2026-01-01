@@ -339,13 +339,63 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (style == null) return;
 
         var rect = panel.Box.Rect;
+        var skRect = ToSKRect(rect);
         var opacity = panel.Opacity * state.RenderOpacity;
 
-        // Left border
-        if (style.BorderLeftColor.HasValue && style.BorderLeftWidth.HasValue)
+        // Get border widths
+        var leftWidth = style.BorderLeftWidth?.GetPixels(1f) ?? 0;
+        var topWidth = style.BorderTopWidth?.GetPixels(1f) ?? 0;
+        var rightWidth = style.BorderRightWidth?.GetPixels(1f) ?? 0;
+        var bottomWidth = style.BorderBottomWidth?.GetPixels(1f) ?? 0;
+        
+        // Check if any border exists
+        var hasBorder = leftWidth > 0 || topWidth > 0 || rightWidth > 0 || bottomWidth > 0;
+        if (!hasBorder) return;
+
+        // Get border radius
+        var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
+        var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
+        var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
+        var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
+        var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0;
+        var avgRadius = hasRadius ? (radiusTL + radiusTR + radiusBL + radiusBR) / 4f : 0f;
+
+        // Check if all borders are uniform (same color and width)
+        var uniformColor = style.BorderLeftColor == style.BorderTopColor &&
+                          style.BorderTopColor == style.BorderRightColor &&
+                          style.BorderRightColor == style.BorderBottomColor;
+        var uniformWidth = Math.Abs(leftWidth - topWidth) < 0.1f &&
+                          Math.Abs(topWidth - rightWidth) < 0.1f &&
+                          Math.Abs(rightWidth - bottomWidth) < 0.1f;
+        var borderWidth = (leftWidth + topWidth + rightWidth + bottomWidth) / 4f;
+
+        // If borders are uniform and we have radius, draw a rounded border
+        if (hasRadius && uniformColor && uniformWidth && style.BorderLeftColor.HasValue)
         {
-            var width = style.BorderLeftWidth.Value.GetPixels(1f);
-            if (width > 0)
+            var color = ToSKColor(style.BorderLeftColor.Value, opacity);
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = borderWidth,
+                IsAntialias = true
+            };
+
+            // Adjust rect to account for stroke being drawn on center of path
+            var adjustedRect = new SKRect(
+                skRect.Left + borderWidth / 2,
+                skRect.Top + borderWidth / 2,
+                skRect.Right - borderWidth / 2,
+                skRect.Bottom - borderWidth / 2
+            );
+
+            canvas.DrawRoundRect(adjustedRect, avgRadius, avgRadius, paint);
+        }
+        else
+        {
+            // Fall back to simple rectangle borders (non-rounded)
+            // Left border
+            if (leftWidth > 0 && style.BorderLeftColor.HasValue)
             {
                 var color = ToSKColor(style.BorderLeftColor.Value, opacity);
                 using var paint = new SKPaint
@@ -354,15 +404,11 @@ public class SkiaPanelRenderer : IPanelRenderer
                     Style = SKPaintStyle.Fill,
                     IsAntialias = true
                 };
-                canvas.DrawRect(rect.Left, rect.Top, width, rect.Height, paint);
+                canvas.DrawRect(rect.Left, rect.Top, leftWidth, rect.Height, paint);
             }
-        }
 
-        // Top border
-        if (style.BorderTopColor.HasValue && style.BorderTopWidth.HasValue)
-        {
-            var width = style.BorderTopWidth.Value.GetPixels(1f);
-            if (width > 0)
+            // Top border
+            if (topWidth > 0 && style.BorderTopColor.HasValue)
             {
                 var color = ToSKColor(style.BorderTopColor.Value, opacity);
                 using var paint = new SKPaint
@@ -371,15 +417,11 @@ public class SkiaPanelRenderer : IPanelRenderer
                     Style = SKPaintStyle.Fill,
                     IsAntialias = true
                 };
-                canvas.DrawRect(rect.Left, rect.Top, rect.Width, width, paint);
+                canvas.DrawRect(rect.Left, rect.Top, rect.Width, topWidth, paint);
             }
-        }
 
-        // Right border
-        if (style.BorderRightColor.HasValue && style.BorderRightWidth.HasValue)
-        {
-            var width = style.BorderRightWidth.Value.GetPixels(1f);
-            if (width > 0)
+            // Right border
+            if (rightWidth > 0 && style.BorderRightColor.HasValue)
             {
                 var color = ToSKColor(style.BorderRightColor.Value, opacity);
                 using var paint = new SKPaint
@@ -388,15 +430,11 @@ public class SkiaPanelRenderer : IPanelRenderer
                     Style = SKPaintStyle.Fill,
                     IsAntialias = true
                 };
-                canvas.DrawRect(rect.Right - width, rect.Top, width, rect.Height, paint);
+                canvas.DrawRect(rect.Right - rightWidth, rect.Top, rightWidth, rect.Height, paint);
             }
-        }
 
-        // Bottom border
-        if (style.BorderBottomColor.HasValue && style.BorderBottomWidth.HasValue)
-        {
-            var width = style.BorderBottomWidth.Value.GetPixels(1f);
-            if (width > 0)
+            // Bottom border
+            if (bottomWidth > 0 && style.BorderBottomColor.HasValue)
             {
                 var color = ToSKColor(style.BorderBottomColor.Value, opacity);
                 using var paint = new SKPaint
@@ -405,7 +443,7 @@ public class SkiaPanelRenderer : IPanelRenderer
                     Style = SKPaintStyle.Fill,
                     IsAntialias = true
                 };
-                canvas.DrawRect(rect.Left, rect.Bottom - width, rect.Width, width, paint);
+                canvas.DrawRect(rect.Left, rect.Bottom - bottomWidth, rect.Width, bottomWidth, paint);
             }
         }
     }
