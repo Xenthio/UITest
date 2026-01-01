@@ -17,6 +17,82 @@ public class SkiaPanelRenderer : IPanelRenderer
     // Use ConcurrentDictionary for thread safety when multiple windows are rendering simultaneously.
     private static readonly ConcurrentDictionary<(string family, SKFontStyle style), SKTypeface> _typefaceCache = new();
 
+    /// <summary>
+    /// Static constructor to set up text measurement for Labels (backward compatibility)
+    /// </summary>
+    static SkiaPanelRenderer()
+    {
+        // Register text measurement function for Label layout calculations
+        // This ensures measurement works even if RegisterAsActiveRenderer isn't called
+        Label.TextMeasureFunc = MeasureTextStatic;
+    }
+
+    /// <summary>
+    /// Register this renderer as the active renderer for text measurement.
+    /// Call this once when the renderer is created to enable accurate Label layout.
+    /// </summary>
+    public void RegisterAsActiveRenderer()
+    {
+        Label.TextMeasureFunc = MeasureText;
+    }
+
+    /// <summary>
+    /// Measure text using SkiaSharp for accurate layout calculations (IPanelRenderer implementation)
+    /// </summary>
+    public Vector2 MeasureText(string text, string? fontFamily, float fontSize, int fontWeight)
+    {
+        return MeasureTextStatic(text, fontFamily, fontSize, fontWeight);
+    }
+
+    /// <summary>
+    /// Static text measurement for use before renderer instance is created
+    /// </summary>
+    private static Vector2 MeasureTextStatic(string text, string? fontFamily, float fontSize, int fontWeight)
+    {
+        var fontStyle = ToSKFontStyleStatic(fontWeight);
+        var typeface = GetCachedTypefaceStatic(fontFamily ?? "Arial", fontStyle);
+        
+        using var paint = new SKPaint
+        {
+            TextSize = fontSize,
+            Typeface = typeface,
+            IsAntialias = true
+        };
+        
+        var width = paint.MeasureText(text);
+        var metrics = paint.FontMetrics;
+        var height = metrics.Descent - metrics.Ascent;
+        
+        return new Vector2(width, height);
+    }
+
+    private static SKFontStyle ToSKFontStyleStatic(int weight)
+    {
+        var skWeight = weight switch
+        {
+            <= 100 => SKFontStyleWeight.Thin,
+            <= 200 => SKFontStyleWeight.ExtraLight,
+            <= 300 => SKFontStyleWeight.Light,
+            <= 400 => SKFontStyleWeight.Normal,
+            <= 500 => SKFontStyleWeight.Medium,
+            <= 600 => SKFontStyleWeight.SemiBold,
+            <= 700 => SKFontStyleWeight.Bold,
+            <= 800 => SKFontStyleWeight.ExtraBold,
+            _ => SKFontStyleWeight.Black
+        };
+
+        return new SKFontStyle(skWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+    }
+
+    private static SKTypeface GetCachedTypefaceStatic(string fontFamily, SKFontStyle fontStyle)
+    {
+        return _typefaceCache.GetOrAdd((fontFamily, fontStyle), key =>
+        {
+            var typeface = SKTypeface.FromFamilyName(key.family, key.style);
+            return typeface ?? SKTypeface.Default;
+        });
+    }
+
     public Rect Screen { get; private set; }
 
     /// <summary>
