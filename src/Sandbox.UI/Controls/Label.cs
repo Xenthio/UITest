@@ -10,6 +10,13 @@ namespace Sandbox.UI;
 public partial class Label : Panel
 {
     /// <summary>
+    /// Delegate for measuring text. Renderers should set this to provide accurate text measurement.
+    /// Parameters: text, fontFamily, fontSize, fontWeight
+    /// Returns: Vector2 with width and height
+    /// </summary>
+    public static Func<string, string?, float, int, Vector2>? TextMeasureFunc { get; set; }
+
+    /// <summary>
     /// Information about the Text on a per-element scale.
     /// </summary>
     protected StringInfo StringInfo = new();
@@ -47,9 +54,25 @@ public partial class Label : Panel
         if (string.IsNullOrEmpty(_text))
             return new Vector2(2, 10);
 
-        // Default measurement - renderers should override this
+        // Process whitespace before measuring to get accurate dimensions
+        // This ensures the layout matches what will actually be rendered
+        var processedText = ProcessWhiteSpace(_text);
+        if (string.IsNullOrEmpty(processedText))
+            return new Vector2(2, 10);
+
         var fontSize = ComputedStyle?.FontSize?.GetPixels(16f) ?? 16f;
-        var estimated = new Vector2(_text.Length * fontSize * 0.6f, fontSize * 1.2f);
+        var fontFamily = ComputedStyle?.FontFamily;
+        var fontWeight = ComputedStyle?.FontWeight ?? 400;
+
+        // Use renderer-provided measurement if available
+        if (TextMeasureFunc != null)
+        {
+            return TextMeasureFunc(processedText, fontFamily, fontSize, fontWeight);
+        }
+
+        // Fallback: estimate based on character count
+        // Use 0.5 as average character width ratio for proportional fonts
+        var estimated = new Vector2(processedText.Length * fontSize * 0.5f, fontSize * 1.2f);
 
         return estimated;
     }

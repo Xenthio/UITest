@@ -1,5 +1,7 @@
 using SkiaSharp;
 using System.Collections.Concurrent;
+using System.IO;
+using System.Numerics;
 
 namespace Sandbox.UI.Skia;
 
@@ -11,11 +13,184 @@ public class SkiaPanelRenderer : IPanelRenderer
 {
     private SKCanvas? _canvas;
     
+    // Tolerance for comparing border widths to determine if they're uniform
+    private const float BorderWidthTolerance = 0.1f;
+    
     // Cache typefaces to avoid recreation each frame (which can cause font rendering issues on resize).
     // This cache is bounded by the finite number of font family/style combinations used by the application.
     // Typefaces are long-lived resources and should not be frequently created/destroyed.
     // Use ConcurrentDictionary for thread safety when multiple windows are rendering simultaneously.
     private static readonly ConcurrentDictionary<(string family, SKFontStyle style), SKTypeface> _typefaceCache = new();
+    
+    // Directories to search for font files
+    private static readonly List<string> _fontDirectories = new();
+    
+    // Cache for font file paths by family name (lowercase)
+    private static readonly ConcurrentDictionary<string, string?> _fontFileCache = new();
+    
+    /// <summary>
+    /// Add a directory to search for font files (.ttf, .otf)
+    /// </summary>
+    public static void AddFontDirectory(string directory)
+    {
+        if (!_fontDirectories.Contains(directory))
+        {
+            _fontDirectories.Add(directory);
+            // Clear cache when directories change
+            _fontFileCache.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Static constructor to set up text measurement for Labels (backward compatibility)
+    /// </summary>
+    static SkiaPanelRenderer()
+    {
+        // Register text measurement function for Label layout calculations
+        // This ensures measurement works even if RegisterAsActiveRenderer isn't called
+        Label.TextMeasureFunc = MeasureTextStatic;
+    }
+
+    /// <summary>
+    /// Ensures the static constructor has run and text measurement is available.
+    /// Call this before creating any panels to ensure accurate text layout.
+    /// </summary>
+    /// <returns>True when initialization is complete</returns>
+    public static bool EnsureInitialized()
+    {
+        // Simply accessing this triggers the static constructor if not already run
+        return Label.TextMeasureFunc != null;
+    }
+
+    /// <summary>
+    /// Register this renderer as the active renderer for text measurement.
+    /// Call this once when the renderer is created to enable accurate Label layout.
+    /// </summary>
+    public void RegisterAsActiveRenderer()
+    {
+        Label.TextMeasureFunc = MeasureText;
+    }
+
+    /// <summary>
+    /// Measure text using SkiaSharp for accurate layout calculations (IPanelRenderer implementation)
+    /// </summary>
+    public Vector2 MeasureText(string text, string? fontFamily, float fontSize, int fontWeight)
+    {
+        return MeasureTextStatic(text, fontFamily, fontSize, fontWeight);
+    }
+
+    /// <summary>
+    /// Static text measurement for use before renderer instance is created
+    /// </summary>
+    private static Vector2 MeasureTextStatic(string text, string? fontFamily, float fontSize, int fontWeight)
+    {
+        var fontStyle = ToSKFontStyleStatic(fontWeight);
+        var typeface = GetCachedTypefaceStatic(fontFamily ?? "Arial", fontStyle);
+        
+        using var paint = new SKPaint
+        {
+            TextSize = fontSize,
+            Typeface = typeface,
+            IsAntialias = true
+        };
+        
+        var width = paint.MeasureText(text);
+        var metrics = paint.FontMetrics;
+        var height = metrics.Descent - metrics.Ascent;
+        
+        // Add 1 pixel buffer to prevent truncation (matches s&box's CeilToInt + 1 pattern)
+        return new Vector2((float)Math.Ceiling(width) + 1f, (float)Math.Ceiling(height));
+    }
+
+    private static SKFontStyle ToSKFontStyleStatic(int weight)
+    {
+        var skWeight = weight switch
+        {
+            <= 100 => SKFontStyleWeight.Thin,
+            <= 200 => SKFontStyleWeight.ExtraLight,
+            <= 300 => SKFontStyleWeight.Light,
+            <= 400 => SKFontStyleWeight.Normal,
+            <= 500 => SKFontStyleWeight.Medium,
+            <= 600 => SKFontStyleWeight.SemiBold,
+            <= 700 => SKFontStyleWeight.Bold,
+            <= 800 => SKFontStyleWeight.ExtraBold,
+            _ => SKFontStyleWeight.Black
+        };
+
+        return new SKFontStyle(skWeight, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+    }
+
+    private static SKTypeface GetCachedTypefaceStatic(string fontFamily, SKFontStyle fontStyle)
+    {
+        return _typefaceCache.GetOrAdd((fontFamily, fontStyle), key =>
+        {
+            // First try to load from font file
+            var fontFile = FindFontFile(key.family);
+            if (fontFile != null)
+            {
+                var fileTypeface = SKTypeface.FromFile(fontFile);
+                if (fileTypeface != null)
+                    return fileTypeface;
+            }
+            
+            // Fall back to system font
+            var typeface = SKTypeface.FromFamilyName(key.family, key.style);
+            return typeface ?? SKTypeface.Default;
+        });
+    }
+    
+    /// <summary>
+    /// Find a font file by family name in registered directories
+    /// </summary>
+    private static string? FindFontFile(string fontFamily)
+    {
+        var lowerFamily = fontFamily.ToLowerInvariant();
+        
+        return _fontFileCache.GetOrAdd(lowerFamily, family =>
+        {
+            // Common font file name patterns
+            var patterns = new[]
+            {
+                $"{family}.ttf",
+                $"{family}.otf",
+                $"{fontFamily}.ttf",
+                $"{fontFamily}.otf",
+            };
+            
+            foreach (var dir in _fontDirectories)
+            {
+                if (!Directory.Exists(dir)) continue;
+                
+                foreach (var pattern in patterns)
+                {
+                    var path = Path.Combine(dir, pattern);
+                    if (File.Exists(path))
+                        return path;
+                }
+                
+                // Also try searching for files containing the font name
+                try
+                {
+                    foreach (var file in Directory.GetFiles(dir, "*.ttf"))
+                    {
+                        if (Path.GetFileNameWithoutExtension(file).ToLowerInvariant().Contains(family))
+                            return file;
+                    }
+                    foreach (var file in Directory.GetFiles(dir, "*.otf"))
+                    {
+                        if (Path.GetFileNameWithoutExtension(file).ToLowerInvariant().Contains(family))
+                            return file;
+                    }
+                }
+                catch
+                {
+                    // Ignore directory access errors
+                }
+            }
+            
+            return null;
+        });
+    }
 
     public Rect Screen { get; private set; }
 
@@ -71,6 +246,9 @@ public class SkiaPanelRenderer : IPanelRenderer
 
         _canvas.Save();
 
+        // Apply transform matrix if present
+        var hasTransform = ApplyPanelTransform(_canvas, panel);
+
         // Draw background
         if (panel.HasBackground)
         {
@@ -90,6 +268,41 @@ public class SkiaPanelRenderer : IPanelRenderer
         }
 
         _canvas.Restore();
+    }
+
+    /// <summary>
+    /// Apply the panel's transform matrix to the canvas.
+    /// </summary>
+    /// <param name="canvas">The canvas to transform</param>
+    /// <param name="panel">The panel whose transform to apply</param>
+    /// <returns>True if a transform was applied</returns>
+    private bool ApplyPanelTransform(SKCanvas canvas, Panel panel)
+    {
+        var style = panel.ComputedStyle;
+        if (style == null) return false;
+        
+        // Check if transform is empty
+        if (style.Transform?.IsEmpty() ?? true) return false;
+        if (panel.TransformMatrix == System.Numerics.Matrix4x4.Identity) return false;
+        
+        // Convert Matrix4x4 to SKMatrix (use 2D portion)
+        // The TransformMatrix already contains all the transform operations (translate, rotate, scale)
+        // built from PanelTransform.BuildTransform() which handles transform-origin for perspective
+        var m = panel.TransformMatrix;
+        var skMatrix = new SKMatrix(
+            m.M11, m.M21, m.M41,  // First row (scaleX, skewY, translateX)
+            m.M12, m.M22, m.M42,  // Second row (skewX, scaleY, translateY)
+            m.M14, m.M24, m.M44   // Perspective row
+        );
+        
+        canvas.Concat(ref skMatrix);
+        
+        // Update GlobalMatrix for child panels
+        // Note: We don't have full matrix chain support yet, but this provides the local transform
+        panel.LocalMatrix = panel.TransformMatrix;
+        panel.GlobalMatrix = panel.TransformMatrix;
+        
+        return true;
     }
 
     private void DrawBackground(SKCanvas canvas, Panel panel, ref RenderState state)
@@ -135,9 +348,150 @@ public class SkiaPanelRenderer : IPanelRenderer
                 canvas.DrawRect(skRect, paint);
             }
         }
+        
+        // Background image
+        DrawBackgroundImage(canvas, panel, skRect, opacity, hasRadius, avgRadius);
 
         // Border
         DrawBorder(canvas, panel, ref state);
+    }
+    
+    private void DrawBackgroundImage(SKCanvas canvas, Panel panel, SKRect skRect, float opacity, bool hasRadius, float avgRadius)
+    {
+        var style = panel.ComputedStyle;
+        if (style?.BackgroundImage == null || string.IsNullOrEmpty(style.BackgroundImage.Path))
+            return;
+            
+        var texture = style.BackgroundImage;
+        
+        // Load texture if not already loaded
+        if (texture.NativeHandle == null)
+        {
+            texture.LoadData();
+        }
+        
+        // Try to get SKImage from native handle
+        SKImage? image = texture.NativeHandle as SKImage;
+        if (image == null)
+        {
+            // Try to load from path using file system
+            image = LoadTextureFromPath(texture.Path);
+            if (image != null)
+            {
+                texture.NativeHandle = image;
+                texture.Width = image.Width;
+                texture.Height = image.Height;
+            }
+        }
+        
+        if (image == null) return;
+        
+        using var paint = new SKPaint
+        {
+            Color = new SKColor(255, 255, 255, (byte)(255 * opacity)),
+            FilterQuality = SKFilterQuality.High,
+            IsAntialias = true
+        };
+        
+        // Apply clipping if has border radius
+        if (hasRadius)
+        {
+            canvas.Save();
+            var rrect = new SKRoundRect(skRect, avgRadius, avgRadius);
+            canvas.ClipRoundRect(rrect, SKClipOperation.Intersect, true);
+        }
+        
+        // Calculate destination rect based on background-size (default is cover-like behavior)
+        var srcRect = new SKRect(0, 0, image.Width, image.Height);
+        var dstRect = CalculateBackgroundImageRect(skRect, image.Width, image.Height, style);
+        
+        canvas.DrawImage(image, srcRect, dstRect, paint);
+        
+        if (hasRadius)
+        {
+            canvas.Restore();
+        }
+    }
+    
+    private SKRect CalculateBackgroundImageRect(SKRect container, int imageWidth, int imageHeight, Styles style)
+    {
+        // Default: scale to fit container while maintaining aspect ratio (cover)
+        float containerAspect = container.Width / container.Height;
+        float imageAspect = (float)imageWidth / imageHeight;
+        
+        float destWidth, destHeight;
+        
+        if (imageAspect > containerAspect)
+        {
+            // Image is wider - fit height
+            destHeight = container.Height;
+            destWidth = destHeight * imageAspect;
+        }
+        else
+        {
+            // Image is taller - fit width
+            destWidth = container.Width;
+            destHeight = destWidth / imageAspect;
+        }
+        
+        // Center the image
+        float x = container.Left + (container.Width - destWidth) / 2;
+        float y = container.Top + (container.Height - destHeight) / 2;
+        
+        return new SKRect(x, y, x + destWidth, y + destHeight);
+    }
+    
+    // Cache for loaded texture images
+    private static readonly ConcurrentDictionary<string, SKImage?> _textureCache = new();
+    
+    private SKImage? LoadTextureFromPath(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return null;
+        
+        // Check cache first
+        if (_textureCache.TryGetValue(path, out var cached))
+            return cached;
+            
+        SKImage? image = null;
+        
+        try
+        {
+            // Try to load as file path
+            if (File.Exists(path))
+            {
+                using var stream = File.OpenRead(path);
+                image = SKImage.FromEncodedData(stream);
+            }
+            // Try common asset paths
+            else
+            {
+                var possiblePaths = new[]
+                {
+                    path,
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path.TrimStart('/')),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", path.TrimStart('/')),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", path.TrimStart('/'))
+                };
+                
+                foreach (var possiblePath in possiblePaths)
+                {
+                    if (File.Exists(possiblePath))
+                    {
+                        using var stream = File.OpenRead(possiblePath);
+                        image = SKImage.FromEncodedData(stream);
+                        if (image != null) break;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load texture '{path}': {ex.Message}");
+        }
+        
+        // Cache result (even if null to avoid repeated load attempts)
+        _textureCache[path] = image;
+        return image;
     }
 
     private void DrawGradientBackground(SKCanvas canvas, SKRect rect, GradientInfo gradient, float opacity, bool hasRadius, float avgRadius)
@@ -251,13 +605,63 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (style == null) return;
 
         var rect = panel.Box.Rect;
+        var skRect = ToSKRect(rect);
         var opacity = panel.Opacity * state.RenderOpacity;
 
-        // Left border
-        if (style.BorderLeftColor.HasValue && style.BorderLeftWidth.HasValue)
+        // Get border widths
+        var leftWidth = style.BorderLeftWidth?.GetPixels(1f) ?? 0;
+        var topWidth = style.BorderTopWidth?.GetPixels(1f) ?? 0;
+        var rightWidth = style.BorderRightWidth?.GetPixels(1f) ?? 0;
+        var bottomWidth = style.BorderBottomWidth?.GetPixels(1f) ?? 0;
+        
+        // Check if any border exists
+        var hasBorder = leftWidth > 0 || topWidth > 0 || rightWidth > 0 || bottomWidth > 0;
+        if (!hasBorder) return;
+
+        // Get border radius
+        var radiusTL = style.BorderTopLeftRadius?.GetPixels(1f) ?? 0;
+        var radiusTR = style.BorderTopRightRadius?.GetPixels(1f) ?? 0;
+        var radiusBL = style.BorderBottomLeftRadius?.GetPixels(1f) ?? 0;
+        var radiusBR = style.BorderBottomRightRadius?.GetPixels(1f) ?? 0;
+        var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBL > 0 || radiusBR > 0;
+        var avgRadius = hasRadius ? (radiusTL + radiusTR + radiusBL + radiusBR) / 4f : 0f;
+
+        // Check if all borders are uniform (same color and width)
+        var uniformColor = style.BorderLeftColor == style.BorderTopColor &&
+                          style.BorderTopColor == style.BorderRightColor &&
+                          style.BorderRightColor == style.BorderBottomColor;
+        var uniformWidth = Math.Abs(leftWidth - topWidth) < BorderWidthTolerance &&
+                          Math.Abs(topWidth - rightWidth) < BorderWidthTolerance &&
+                          Math.Abs(rightWidth - bottomWidth) < BorderWidthTolerance;
+        var borderWidth = (leftWidth + topWidth + rightWidth + bottomWidth) / 4f;
+
+        // If borders are uniform and we have radius, draw a rounded border
+        if (hasRadius && uniformColor && uniformWidth && style.BorderLeftColor.HasValue)
         {
-            var width = style.BorderLeftWidth.Value.GetPixels(1f);
-            if (width > 0)
+            var color = ToSKColor(style.BorderLeftColor.Value, opacity);
+            using var paint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = borderWidth,
+                IsAntialias = true
+            };
+
+            // Adjust rect to account for stroke being drawn on center of path
+            var adjustedRect = new SKRect(
+                skRect.Left + borderWidth / 2,
+                skRect.Top + borderWidth / 2,
+                skRect.Right - borderWidth / 2,
+                skRect.Bottom - borderWidth / 2
+            );
+
+            canvas.DrawRoundRect(adjustedRect, avgRadius, avgRadius, paint);
+        }
+        else
+        {
+            // Fall back to simple rectangle borders (non-rounded)
+            // Left border
+            if (leftWidth > 0 && style.BorderLeftColor.HasValue)
             {
                 var color = ToSKColor(style.BorderLeftColor.Value, opacity);
                 using var paint = new SKPaint
@@ -266,15 +670,11 @@ public class SkiaPanelRenderer : IPanelRenderer
                     Style = SKPaintStyle.Fill,
                     IsAntialias = true
                 };
-                canvas.DrawRect(rect.Left, rect.Top, width, rect.Height, paint);
+                canvas.DrawRect(rect.Left, rect.Top, leftWidth, rect.Height, paint);
             }
-        }
 
-        // Top border
-        if (style.BorderTopColor.HasValue && style.BorderTopWidth.HasValue)
-        {
-            var width = style.BorderTopWidth.Value.GetPixels(1f);
-            if (width > 0)
+            // Top border
+            if (topWidth > 0 && style.BorderTopColor.HasValue)
             {
                 var color = ToSKColor(style.BorderTopColor.Value, opacity);
                 using var paint = new SKPaint
@@ -283,15 +683,11 @@ public class SkiaPanelRenderer : IPanelRenderer
                     Style = SKPaintStyle.Fill,
                     IsAntialias = true
                 };
-                canvas.DrawRect(rect.Left, rect.Top, rect.Width, width, paint);
+                canvas.DrawRect(rect.Left, rect.Top, rect.Width, topWidth, paint);
             }
-        }
 
-        // Right border
-        if (style.BorderRightColor.HasValue && style.BorderRightWidth.HasValue)
-        {
-            var width = style.BorderRightWidth.Value.GetPixels(1f);
-            if (width > 0)
+            // Right border
+            if (rightWidth > 0 && style.BorderRightColor.HasValue)
             {
                 var color = ToSKColor(style.BorderRightColor.Value, opacity);
                 using var paint = new SKPaint
@@ -300,15 +696,11 @@ public class SkiaPanelRenderer : IPanelRenderer
                     Style = SKPaintStyle.Fill,
                     IsAntialias = true
                 };
-                canvas.DrawRect(rect.Right - width, rect.Top, width, rect.Height, paint);
+                canvas.DrawRect(rect.Right - rightWidth, rect.Top, rightWidth, rect.Height, paint);
             }
-        }
 
-        // Bottom border
-        if (style.BorderBottomColor.HasValue && style.BorderBottomWidth.HasValue)
-        {
-            var width = style.BorderBottomWidth.Value.GetPixels(1f);
-            if (width > 0)
+            // Bottom border
+            if (bottomWidth > 0 && style.BorderBottomColor.HasValue)
             {
                 var color = ToSKColor(style.BorderBottomColor.Value, opacity);
                 using var paint = new SKPaint
@@ -317,7 +709,7 @@ public class SkiaPanelRenderer : IPanelRenderer
                     Style = SKPaintStyle.Fill,
                     IsAntialias = true
                 };
-                canvas.DrawRect(rect.Left, rect.Bottom - width, rect.Width, width, paint);
+                canvas.DrawRect(rect.Left, rect.Bottom - bottomWidth, rect.Width, bottomWidth, paint);
             }
         }
     }
@@ -393,9 +785,17 @@ public class SkiaPanelRenderer : IPanelRenderer
             x = rect.Right - textWidth;
         }
 
-        // Check if text needs wrapping (only if width is constrained)
+        // Check if text needs wrapping (only if width is constrained and there's something to wrap)
         var textWidth2 = paint.MeasureText(processedText);
-        var shouldWrap = rect.Width > 0 && textWidth2 > rect.Width && style.WhiteSpace != WhiteSpace.NoWrap;
+        // Don't wrap if:
+        // - WhiteSpace is NoWrap
+        // - Text contains no spaces (nothing to wrap)
+        // - Rect width is too small to fit any text (overflow case)
+        var hasSpaces = processedText.Contains(' ') || processedText.Contains('\n');
+        var shouldWrap = rect.Width > 0 && 
+                         textWidth2 > rect.Width && 
+                         style.WhiteSpace != WhiteSpace.NoWrap &&
+                         hasSpaces;
 
         if (shouldWrap)
         {
@@ -409,62 +809,85 @@ public class SkiaPanelRenderer : IPanelRenderer
 
     private void DrawWrappedText(SKCanvas canvas, string text, SKPaint paint, Rect rect, float startX, float startY, SKFontMetrics metrics, TextAlign? textAlign)
     {
-        var lineHeight = metrics.Descent - metrics.Ascent + metrics.Leading;
+        // Calculate line height - use descent - ascent as the base, add some spacing
+        // Note: Ascent is negative in SkiaSharp, so descent - ascent gives positive height
+        var lineHeight = metrics.Descent - metrics.Ascent;
+        if (metrics.Leading > 0)
+            lineHeight += metrics.Leading;
+        else
+            lineHeight *= 1.2f; // Add 20% spacing if no leading defined
+        
         var y = startY;
-        var words = text.Split(' ');
-        var currentLine = "";
-
-        foreach (var word in words)
+        
+        // First split by explicit newlines
+        var paragraphs = text.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+        
+        foreach (var paragraph in paragraphs)
         {
-            var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
-            var testWidth = paint.MeasureText(testLine);
-
-            if (testWidth > rect.Width && !string.IsNullOrEmpty(currentLine))
+            if (string.IsNullOrEmpty(paragraph))
             {
-                // Draw the current line
-                var x = rect.Left;
-                if (textAlign == TextAlign.Center)
-                {
-                    var lineWidth = paint.MeasureText(currentLine);
-                    x = rect.Left + (rect.Width - lineWidth) / 2;
-                }
-                else if (textAlign == TextAlign.Right)
-                {
-                    var lineWidth = paint.MeasureText(currentLine);
-                    x = rect.Right - lineWidth;
-                }
-
-                canvas.DrawText(currentLine, x, y, paint);
-                currentLine = word;
+                // Empty paragraph = blank line
                 y += lineHeight;
-
-                // Stop if we've exceeded the rect height
                 if (y - metrics.Ascent > rect.Bottom)
                     break;
+                continue;
             }
-            else
-            {
-                currentLine = testLine;
-            }
-        }
+            
+            // Split paragraph into words
+            var words = paragraph.Split(' ');
+            var currentLine = "";
 
-        // Draw the last line if we haven't exceeded bounds
-        if (!string.IsNullOrEmpty(currentLine) && y - metrics.Ascent <= rect.Bottom)
+            foreach (var word in words)
+            {
+                var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
+                var testWidth = paint.MeasureText(testLine);
+
+                if (testWidth > rect.Width && !string.IsNullOrEmpty(currentLine))
+                {
+                    // Draw the current line
+                    var x = CalculateTextX(rect, currentLine, paint, textAlign);
+                    canvas.DrawText(currentLine, x, y, paint);
+                    currentLine = word;
+                    y += lineHeight;
+
+                    // Stop if we've exceeded the rect height
+                    if (y - metrics.Ascent > rect.Bottom)
+                        break;
+                }
+                else
+                {
+                    currentLine = testLine;
+                }
+            }
+
+            // Draw the last line of this paragraph if we haven't exceeded bounds
+            if (!string.IsNullOrEmpty(currentLine) && y - metrics.Ascent <= rect.Bottom)
+            {
+                var x = CalculateTextX(rect, currentLine, paint, textAlign);
+                canvas.DrawText(currentLine, x, y, paint);
+                y += lineHeight;
+            }
+            
+            // Stop if we've exceeded the rect height
+            if (y - metrics.Ascent > rect.Bottom)
+                break;
+        }
+    }
+    
+    private float CalculateTextX(Rect rect, string text, SKPaint paint, TextAlign? textAlign)
+    {
+        var x = rect.Left;
+        if (textAlign == TextAlign.Center)
         {
-            var x = rect.Left;
-            if (textAlign == TextAlign.Center)
-            {
-                var lineWidth = paint.MeasureText(currentLine);
-                x = rect.Left + (rect.Width - lineWidth) / 2;
-            }
-            else if (textAlign == TextAlign.Right)
-            {
-                var lineWidth = paint.MeasureText(currentLine);
-                x = rect.Right - lineWidth;
-            }
-
-            canvas.DrawText(currentLine, x, y, paint);
+            var lineWidth = paint.MeasureText(text);
+            x = rect.Left + (rect.Width - lineWidth) / 2;
         }
+        else if (textAlign == TextAlign.Right)
+        {
+            var lineWidth = paint.MeasureText(text);
+            x = rect.Right - lineWidth;
+        }
+        return x;
     }
 
     private static SKTypeface GetCachedTypeface(string fontFamily, SKFontStyle fontStyle)

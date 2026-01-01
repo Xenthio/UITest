@@ -25,5 +25,6 @@ class Program
 
 
         Avalazor.UI.AvalazorApplication.RunPanel<RefOnClickDemo>();
+        Avalazor.UI.AvalazorApplication.RunPanel<About>();
     }
 }

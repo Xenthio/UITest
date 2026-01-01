@@ -67,6 +67,26 @@ public class NativeWindow : INativeWindow, IDisposable
             _keyboard.KeyUp += OnKeyUp;
             _keyboard.KeyChar += OnKeyChar;
         }
+        
+        // Set system DPI scale for UI rendering
+        UpdateDpiScale();
+    }
+    
+    private void UpdateDpiScale()
+    {
+        // Try to get DPI from the window's monitor
+        // Silk.NET uses FramebufferSize / Size to calculate content scale
+        var size = _window.Size;
+        var fbSize = _window.FramebufferSize;
+        
+        if (size.X > 0 && fbSize.X > 0)
+        {
+            var dpiScaleX = (float)fbSize.X / size.X;
+            var dpiScaleY = (float)fbSize.Y / size.Y;
+            
+            // Use the larger scale (usually they're the same)
+            RootPanel.SystemDpiScale = Math.Max(dpiScaleX, dpiScaleY);
+        }
     }
 
     private void OnResize(Vector2D<int> size)

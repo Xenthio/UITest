@@ -6,31 +6,28 @@ namespace Sandbox.UI;
 /// </summary>
 public partial class Panel
 {
+    /// <inheritdoc cref="Children"/>
     internal List<Panel>? _children;
+
+    internal bool _renderChildrenDirty;
     internal List<Panel>? _renderChildren;
     internal HashSet<Panel>? _childrenHash;
+
+    /// <inheritdoc cref="Parent"/>
     internal Panel? _parent;
-    internal bool _renderChildrenDirty;
-    internal bool ParentHasChanged;
-    internal bool IndexesDirty;
 
     /// <summary>
-    /// List of panels that are attached/parented directly to this one.
+    /// List of panels that are attached/<see cref="Parent">parented</see> directly to this one.
     /// </summary>
-    public IEnumerable<Panel> Children => _children == null ? Enumerable.Empty<Panel>() : _children.Where(x => x != null);
+    public IEnumerable<Panel> Children => _children == null ? Enumerable.Empty<Panel>() : _children.Where(x => x is not null);
 
     /// <summary>
-    /// Whether this panel has any child panels at all.
+    /// Whether this panel has any <see cref="Children">child panels</see> at all.
     /// </summary>
-    public bool HasChildren => _children != null && _children.Count > 0;
+    public bool HasChildren => _children is not null && _children.Count > 0;
 
     /// <summary>
-    /// Amount of panels directly parented to this panel.
-    /// </summary>
-    public int ChildrenCount => _children?.Count ?? 0;
-
-    /// <summary>
-    /// The panel we are directly attached to.
+    /// The panel we are directly attached to. This panel will be positioned relative to the given parent, and therefore move with it, typically also be hidden by the parents bounds.
     /// </summary>
     public Panel? Parent
     {
@@ -43,10 +40,14 @@ public partial class Panel
             if (value == this)
                 throw new Exception("Can't parent a panel to itself");
 
-            if (_parent == value) return;
+            if (_parent == value)
+                return;
 
-            // Can't parent to panels without children (Label, Image)
-            if (value is Label or Image)
+            //
+            // These types can't have children, so set them as 
+            // siblings of us.
+            //
+            if (value is Label || value is Image)
             {
                 Parent = value.Parent;
                 Parent?.SetChildIndex(this, Parent.GetChildIndex(value) + 1);
@@ -56,29 +57,41 @@ public partial class Panel
             var oldParent = _parent;
             _parent = null;
 
-            oldParent?.RemoveChild(this);
+            if (oldParent != null)
+            {
+                oldParent.RemoveChild(this);
+            }
 
             _parent = value;
 
             if (_parent != null)
             {
                 _parent.InternalAddChild(this);
+
+                //
+                // We can set some inherited stuff here to get us started
+                //
                 ScaleToScreen = _parent.ScaleToScreen;
             }
 
             ParentHasChanged = true;
+            // Dirty
         }
     }
 
-    /// <summary>
-    /// The index of this panel in its parent's child list.
-    /// </summary>
-    public int SiblingIndex { get; internal set; } = -1;
+    bool ParentHasChanged;
+    bool IndexesDirty;
 
+    /// <summary>
+    /// Called internally when a child is removed, to remove from our Children list
+    /// </summary>
     private void RemoveChild(Panel p)
     {
-        if (IsDeleted) return;
-        if (_children == null) throw new Exception("RemoveChild but no children!");
+        if (IsDeleted)
+            return;
+
+        if (_children == null)
+            throw new System.Exception("RemoveChild but no children!");
 
         if (_childrenHash?.Remove(p) ?? false)
         {
@@ -86,7 +99,7 @@ public partial class Panel
             _renderChildren?.Remove(p);
             _renderChildrenDirty = true;
 
-            if (p.YogaNode != null)
+            if (p.YogaNode is not null)
             {
                 YogaNode?.RemoveChild(p.YogaNode);
             }
@@ -97,11 +110,18 @@ public partial class Panel
         }
     }
 
-    protected virtual void OnChildRemoved(Panel child) { }
+    /// <summary>
+    /// A child panel has been removed from this panel.
+    /// </summary>
+    protected virtual void OnChildRemoved(Panel child)
+    {
+
+    }
 
     /// <summary>
-    /// Deletes all child panels.
+    /// Deletes all child panels via <see cref="Delete"/>.
     /// </summary>
+    /// <inheritdoc cref="Delete"/>
     public void DeleteChildren(bool immediate = false)
     {
         foreach (var child in Children.ToArray())
@@ -116,10 +136,14 @@ public partial class Panel
     public T AddChild<T>(T p) where T : Panel
     {
         if (IsDeleted) throw new Exception("Cannot add child to deleted panel");
+
         p.Parent = this;
         return p;
     }
 
+    /// <summary>
+    /// Called internally when a child is added, to add to our <see cref="Children">children</see> list.
+    /// </summary>
     private void InternalAddChild(Panel child)
     {
         if (YogaNode?.IsMeasureDefined == true)
@@ -146,16 +170,23 @@ public partial class Panel
         IndexesDirty = true;
     }
 
-    protected virtual void OnChildAdded(Panel child) { }
+    /// <summary>
+    /// A child panel has been added to this panel.
+    /// </summary>
+    protected virtual void OnChildAdded(Panel child)
+    {
+
+    }
 
     /// <summary>
-    /// Sort the children using given comparison function.
+    /// Sort the <see cref="Children">children</see> using given comparison function.
     /// </summary>
     public void SortChildren(Comparison<Panel> sorter)
     {
-        if (_children == null || _children.Count <= 0) return;
+        if (_children == null || _children.Count <= 0)
+            return;
 
-        _children.RemoveAll(x => x == null);
+        _children.RemoveAll(x => x is null);
         _children.Sort(sorter);
 
         int i = 0;
@@ -169,13 +200,59 @@ public partial class Panel
         IndexesDirty = true;
     }
 
+    /// <summary>
+    /// Sort the <see cref="Children">children</see> using given comparison function.
+    /// </summary>
+    public void SortChildren<TargetType>(Func<TargetType, int> sorter)
+    {
+        if (_children == null || _children.Count <= 0)
+            return;
+
+        _children.RemoveAll(x => x is null);
+
+        var sorted = _children.OrderBy(x => { if (x is TargetType tt) { return sorter(tt); } return 0; }).ToArray();
+        _children.Clear();
+        _children.AddRange(sorted);
+
+        foreach (var child in _children)
+        {
+            YogaNode?.RemoveChild(child.YogaNode);
+            YogaNode?.AddChild(child.YogaNode);
+        }
+
+        IndexesDirty = true;
+    }
+
+    /// <summary>
+    /// Sort the <see cref="Children">children</see> using given comparison function.
+    /// </summary>
+    public void SortChildren(Func<Panel, int> sorter) => SortChildren<Panel>(sorter);
+
+    /// <summary>
+    /// Can be overridden by children to determine whether the panel is empty, and the :empty pseudo-class should be applied.
+    /// </summary>
+    protected virtual bool IsPanelEmpty()
+    {
+        return ChildrenCount == 0;
+    }
+
+    /// <summary>
+    /// Should be called if overriding IsEmpty to notify the panel that its empty state has changed.
+    /// </summary>
+    protected void EmptyStateChanged()
+    {
+        UpdateChildrenIndexes();
+    }
+
     void UpdateChildrenIndexes()
     {
         IndexesDirty = false;
+
         Switch(PseudoClass.Empty, IsPanelEmpty());
 
         var count = ChildrenCount;
-        if (count == 0) return;
+        if (count == 0)
+            return;
 
         for (int i = 0; i < count; i++)
         {
@@ -188,31 +265,61 @@ public partial class Panel
         Switch(PseudoClass.FirstChild, index == 0);
         Switch(PseudoClass.LastChild, index == siblings - 1);
         Switch(PseudoClass.OnlyChild, index == 0 && siblings == 1);
+
         SiblingIndex = index;
     }
 
-    protected virtual bool IsPanelEmpty() => ChildrenCount == 0;
+    /// <summary>
+    /// The index of this panel in its parent's child list.
+    /// </summary>
+    public int SiblingIndex { get; internal set; } = -1;
+
 
     /// <summary>
     /// Creates a panel of given type and makes it our child.
     /// </summary>
+    /// <typeparam name="T">The panel to create.</typeparam>
+    /// <param name="classnames">Optional CSS class names to apply to the newly created panel.</param>
+    /// <returns>The created panel.</returns>
     public T AddChild<T>(string? classnames = null) where T : Panel, new()
     {
         var t = new T();
         t.Parent = this;
+
         if (classnames != null)
             t.AddClass(classnames);
+
         return t;
     }
 
     /// <summary>
-    /// Returns this panel and all its ancestors.
+    /// Creates a panel of given type and makes it our child, returning it as an out argument.
+    /// </summary>
+    /// <typeparam name="T">The panel to create.</typeparam>
+    /// <param name="outPanel">The created panel.</param>
+    /// <param name="classnames">Optional CSS class names to apply to the newly created panel.</param>
+    /// <returns>Always returns <see langword="true"/>.</returns>
+    public bool AddChild<T>(out T outPanel, string? classnames = null) where T : Panel, new()
+    {
+        var t = new T();
+        t.Parent = this;
+
+        if (classnames != null)
+            t.AddClass(classnames);
+
+        outPanel = t;
+        return true;
+    }
+
+    /// <summary>
+    /// Returns this panel and all its <see cref="Ancestors">ancestors</see>, i.e. the <see cref="Parent">Parent</see>, parent of its parent, etc.
     /// </summary>
     public IEnumerable<Panel> AncestorsAndSelf
     {
         get
         {
             var p = this;
+
             while (p != null)
             {
                 yield return p;
@@ -222,13 +329,14 @@ public partial class Panel
     }
 
     /// <summary>
-    /// Returns all ancestors.
+    /// Returns all ancestors, i.e. the parent, parent of our parent, etc.
     /// </summary>
     public IEnumerable<Panel> Ancestors
     {
         get
         {
-            var p = Parent;
+            var p = this.Parent;
+
             while (p != null)
             {
                 yield return p;
@@ -238,7 +346,7 @@ public partial class Panel
     }
 
     /// <summary>
-    /// All descendants (children, grandchildren, etc.)
+    /// List of all panels that are attached to this panel, recursively, i.e. all <see cref="Children">children</see> of this panel, children of those children, etc.
     /// </summary>
     public IEnumerable<Panel> Descendants
     {
@@ -247,8 +355,11 @@ public partial class Panel
             foreach (var child in Children)
             {
                 yield return child;
+
                 foreach (var descendant in child.Descendants)
+                {
                     yield return descendant;
+                }
             }
         }
     }
@@ -264,7 +375,7 @@ public partial class Panel
     }
 
     /// <summary>
-    /// Returns the RootPanel we are ultimately attached to.
+    /// Returns the <see cref="RootPanel"/> we are ultimately attached to, if any.
     /// </summary>
     public RootPanel? FindRootPanel()
     {
@@ -273,12 +384,25 @@ public partial class Panel
     }
 
     /// <summary>
-    /// Returns the index at which the given panel is parented.
+    /// Returns the first <see cref="Ancestors">ancestor</see> panel that has no parent.
+    /// </summary>
+    public virtual Panel? FindPopupPanel()
+    {
+        if (Parent == null) return this;
+        return Parent?.FindPopupPanel();
+    }
+
+    /// <summary>
+    /// Returns the index at which the given panel is <see cref="Parent">parented</see> to this panel, or -1 if it is not.
     /// </summary>
     public int GetChildIndex(Panel? panel)
     {
-        if (panel == null || panel.Parent != this) return -1;
-        if (_children == null || _children.Count == 0) return -1;
+        if (panel == null || panel.Parent != this)
+            return -1;
+
+        if (_children == null || _children.Count == 0)
+            return -1;
+
         return _children.IndexOf(panel);
     }
 
@@ -310,9 +434,13 @@ public partial class Panel
     /// <summary>
     /// Return a child at given index.
     /// </summary>
+    /// <param name="index">Index at which to look.</param>
+    /// <param name="loop">Whether to loop indices when out of bounds, i.e. -1 becomes last child, 11 becomes second child in a list of 10, etc.</param>
+    /// <returns>Returns the requested child, or <see langword="null"/> if it was not found.</returns>
     public Panel? GetChild(int index, bool loop = false)
     {
-        if (_children == null || _children.Count == 0) return null;
+        if (_children == null || _children.Count == 0)
+            return null;
 
         if (loop)
         {
@@ -328,17 +456,28 @@ public partial class Panel
     }
 
     /// <summary>
-    /// Returns a list of child panels of given type.
+    /// Amount of panels directly <see cref="Parent">parented</see> to this panel.
     /// </summary>
+    public int ChildrenCount => _children?.Count ?? 0;
+
+    /// <summary>
+    /// Returns a list of <see cref="Children">child panels</see> of given type.
+    /// </summary>
+    /// <typeparam name="T">The type of panels to retrieve.</typeparam>
     public IEnumerable<T> ChildrenOfType<T>() where T : Panel
     {
         if (_children == null || _children.Count == 0)
             yield break;
 
-        for (int i = _children.Count - 1; i >= 0; i--)
+        var c = _children.Count;
+
+        for (int i = c - 1; i >= 0; i--)
         {
-            if (_children[i] is T t)
+            var child = _children[i];
+            if (child is T t)
+            {
                 yield return t;
+            }
         }
     }
 }

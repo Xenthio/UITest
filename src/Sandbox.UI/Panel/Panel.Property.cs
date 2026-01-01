@@ -80,6 +80,17 @@ public partial class Panel
     }
 
     /// <summary>
+    /// Get an attribute value from the panel with a default fallback.
+    /// </summary>
+    /// <param name="name">Attribute name</param>
+    /// <param name="defaultValue">Default value if attribute not found</param>
+    /// <returns>Attribute value, or defaultValue if not found</returns>
+    public string? GetAttribute(string name, string? defaultValue)
+    {
+        return GetAttribute(name) ?? defaultValue;
+    }
+
+    /// <summary>
     /// Check if the panel has an attribute.
     /// </summary>
     /// <param name="name">Attribute name</param>

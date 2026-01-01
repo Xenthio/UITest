@@ -130,14 +130,54 @@ public partial class PanelRenderTreeBuilder : Microsoft.AspNetCore.Components.Re
 
 	/// <summary>
 	/// Handles "style" and "class" attributes..
+	/// Also handles event delegates that get passed as object due to method group conversion.
 	/// </summary>
 	public void AddAttributeObject( int sequence, string attrName, object value )
 	{
 		var scope = CurrentScope;
 		scope.Sequence = sequence;
 
-		// Only set the value if it changed
+		// Check if the value is a delegate - this happens when method groups are passed
+		// and C# compiler chooses the object overload instead of Action overload
+		if ( value is Action action )
+		{
+			AddAttributeAction( sequence, attrName, action );
+			return;
+		}
 
+		if ( value is Action<PanelEvent> panelEventAction )
+		{
+			AddPanelEventAttribute( sequence, attrName, panelEventAction );
+			return;
+		}
+
+		if ( value is Func<Task> asyncAction )
+		{
+			AddAttributeAction( sequence, attrName, asyncAction );
+			return;
+		}
+
+		// Check for other delegate types that might be event handlers
+		if ( value is Delegate del )
+		{
+			// Try to convert to Action
+			var method = del.Method;
+			var target = del.Target;
+			
+			if ( method.GetParameters().Length == 0 && method.ReturnType == typeof(void) )
+			{
+				AddAttributeAction( sequence, attrName, () => method.Invoke( target, null ) );
+				return;
+			}
+			
+			if ( method.GetParameters().Length == 1 && method.GetParameters()[0].ParameterType == typeof(PanelEvent) && method.ReturnType == typeof(void) )
+			{
+				AddPanelEventAttribute( sequence, attrName, (e) => method.Invoke( target, new object[] { e } ) );
+				return;
+			}
+		}
+
+		// Only set the value if it changed
 		if ( CurrentBlock.CheckCacheValue( HashCode.Combine( scope.Element, attrName ), value?.GetHashCode() ?? 0 ) )
 			return;
 

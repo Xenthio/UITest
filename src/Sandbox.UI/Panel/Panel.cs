@@ -110,11 +110,17 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     /// </summary>
     public bool IsDeleted { get; private set; }
 
+    /// <summary>
+    /// The current time relative to the panel. Used for animations and events.
+    /// </summary>
+    protected double TimeNow => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+
     public Panel()
     {
         YogaNode = new YogaWrapper(this);
         Style = new PanelStyle(this);
         StyleSheet = new StyleSheetCollection(this);
+        Transitions = new Transitions(this);
 
         ElementName = GetType().Name.ToLower();
         Switch(PseudoClass.Empty, true);
@@ -147,6 +153,28 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
             PseudoClass &= ~c;
 
         return true;
+    }
+
+    /// <summary>
+    /// Switch a pseudo class on or off for a panel and all its ancestors.
+    /// This is how s&box applies :hover and :active - the states bubble up to parent panels.
+    /// </summary>
+    /// <param name="c">The pseudo class to switch</param>
+    /// <param name="state">Whether to turn it on or off</param>
+    /// <param name="panel">The panel to start from</param>
+    /// <param name="unlessAncestorOf">Optional panel - if the target is an ancestor of this panel, don't apply the state</param>
+    internal static void Switch(PseudoClass c, bool state, Panel? panel, Panel? unlessAncestorOf = null)
+    {
+        if (panel == null)
+            return;
+
+        foreach (var target in panel.AncestorsAndSelf)
+        {
+            if (unlessAncestorOf != null && unlessAncestorOf.IsAncestor(target))
+                continue;
+
+            target.Switch(c, state);
+        }
     }
 
     /// <summary>
@@ -211,11 +239,23 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
 
             // Process Razor render tree if dirty
             InternalTreeBinds();
-            if (razorTreeDirty && HasRenderTree)
+            
+            // Handle parameter changes and render tree - matches s&box order
+            if (HasRenderTree || _templateBindsChanged)
             {
-                bool firstTime = renderTree == null;
-                InternalRenderTree();
-                OnAfterTreeRender(firstTime);
+                if (_templateBindsChanged)
+                {
+                    _templateBindsChanged = false;
+                    razorTreeDirty = true;
+                    ParametersChanged(true);
+                }
+                
+                if (razorTreeDirty)
+                {
+                    bool firstTime = renderTree == null;
+                    InternalRenderTree();
+                    OnAfterTreeRender(firstTime);
+                }
             }
 
             // Tick styles if dirty
@@ -233,7 +273,10 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
                 }
             }
 
+            RunPendingEvents();
             Tick();
+            RunPendingEvents();
+            RunClassBinds();
         }
         catch (Exception e)
         {
@@ -294,7 +337,7 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
 
     public override string ToString()
     {
-        var classes = _classes?.Count > 0 ? $".{string.Join(".", _classes)}" : "";
+        var classes = _class?.Count > 0 ? $".{string.Join(".", _class)}" : "";
         return $"<{ElementName}{classes}>";
     }
 
@@ -321,47 +364,6 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     public string? SourceFile { get; set; }
     public int SourceLine { get; set; }
     
-    // Event listener management
-    public void AddEventListener(string eventName, Action<PanelEvent> handler)
-    {
-        EventListeners ??= new List<EventCallback>();
-
-        var ev = new EventCallback
-        {
-            EventName = eventName.ToLower(),
-            Action = handler,
-            Panel = this
-        };
-
-        EventListeners.Add(ev);
-    }
-    
-    public void AddEventListener(string eventName, Action handler)
-    {
-        EventListeners ??= new List<EventCallback>();
-
-        var ev = new EventCallback
-        {
-            EventName = eventName.ToLower(),
-            BaseAction = handler,
-            Panel = this
-        };
-
-        EventListeners.Add(ev);
-    }
-    
-    public void RemoveEventListener(string eventName, Action<PanelEvent> handler)
-    {
-        if (EventListeners == null) return;
-        // TODO: Implement proper removal
-    }
-    
-    public void RemoveEventListener(string eventName)
-    {
-        if (EventListeners == null) return;
-        EventListeners.RemoveAll(x => string.Equals(x.EventName, eventName, StringComparison.OrdinalIgnoreCase));
-    }
-    
     // Template slot handling for S&box compatibility
     // When a child has slot="name", it gets passed to OnTemplateSlot on the parent
     // which can handle it appropriately (e.g., TabContainer handles slot="tab")
@@ -377,10 +379,37 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
         // This could be used with [PanelSlot("slotname")] attributes on properties
     }
     
-    // Parameter change notification (stub for S&box compatibility)
-    public void ParametersChanged(bool firstTime)
+    /// <summary>
+    /// True when parameters have been set and OnParametersSet needs to be called
+    /// </summary>
+    private bool _templateBindsChanged = true;
+    
+    /// <summary>
+    /// Parameter change notification - marks panel for OnParametersSet callback
+    /// </summary>
+    public void ParametersChanged(bool immediately)
     {
-        // TODO: Implement parameter tracking
+        _templateBindsChanged = true;
+        
+        if (immediately)
+        {
+            _templateBindsChanged = false;
+            razorTreeDirty = true;
+            OnParametersSetInternal();
+        }
+    }
+    
+    internal void OnParametersSetInternal()
+    {
+        try
+        {
+            OnParametersSet();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Exception in OnParametersSet: {e.Message}");
+        }
+        StateHasChanged();
     }
 }
     #endregion

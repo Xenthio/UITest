@@ -1,5 +1,7 @@
 namespace Sandbox.UI;
 
+using Matrix = System.Numerics.Matrix4x4;
+
 /// <summary>
 /// Panel partial class: Layout computation
 /// Based on s&box's Panel.Layout.cs
@@ -12,19 +14,9 @@ public partial class Panel
     public Box Box { get; } = new Box();
 
     /// <summary>
-    /// Scale of the panel on the screen.
+    /// If true, calls <see cref="DrawContent( ref RenderState )"/>.
     /// </summary>
-    public float ScaleToScreen { get; internal set; } = 1.0f;
-
-    /// <summary>
-    /// Inverse scale
-    /// </summary>
-    public float ScaleFromScreen => 1.0f / ScaleToScreen;
-
-    /// <summary>
-    /// Offset of children for scrolling
-    /// </summary>
-    public Vector2 ScrollOffset { get; set; }
+    public virtual bool HasContent => false;
 
     /// <summary>
     /// The velocity of the current scroll
@@ -32,24 +24,84 @@ public partial class Panel
     public Vector2 ScrollVelocity;
 
     /// <summary>
-    /// Size of the scrollable area
+    /// Offset of the panel's children position for scrolling purposes.
     /// </summary>
-    public Vector2 ScrollSize { get; private set; }
+    public Vector2 ScrollOffset { get; set; }
 
     /// <summary>
-    /// The currently calculated opacity.
+    /// Scale of the panel on the screen.
     /// </summary>
-    public float Opacity { get; private set; } = 1.0f;
+    public float ScaleToScreen { get; internal set; } = 1.0f;
 
     /// <summary>
-    /// If true, calls DrawContent
+    /// Inverse scale of <see cref="ScaleToScreen"/>.
     /// </summary>
-    public virtual bool HasContent => false;
+    public float ScaleFromScreen => 1.0f / ScaleToScreen;
+
+    int LayoutCount = 0;
+
+    /// <summary>
+    /// If this panel has transforms, they'll be reflected here
+    /// </summary>
+    public Matrix? LocalMatrix { get; set; }
+
+    /// <summary>
+    /// If this panel or its parents have transforms, they'll be compounded here.
+    /// </summary>
+    public Matrix? GlobalMatrix { get; set; }
+
+    /// <summary>
+    /// The matrix that is applied as a result of transform: styles
+    /// </summary>
+    public Matrix TransformMatrix { get; set; }
+
+    /// <summary>
+    /// The computed style has a non-default backdrop filter property
+    /// </summary>
+    internal bool HasBackdropFilter { get; private set; }
+
+    /// <summary>
+    /// The computed style has a non-default filter property
+    /// </summary>
+    internal bool HasFilter { get; private set; }
 
     /// <summary>
     /// The computed style has a renderable background
     /// </summary>
     public bool HasBackground { get; internal set; }
+
+    /// <summary>
+    /// Whether the panel can scroll horizontally
+    /// </summary>
+    public bool HasScrollX => ScrollSize.x > 0 && ComputedStyle?.OverflowX == OverflowMode.Scroll;
+
+    /// <summary>
+    /// Whether the panel can scroll vertically
+    /// </summary>
+    public bool HasScrollY => ScrollSize.y > 0 && ComputedStyle?.OverflowY == OverflowMode.Scroll;
+
+    /// <summary>
+    /// The currently calculated opacity.
+    /// This is set by multiplying our current style opacity with our parent's opacity.
+    /// </summary>
+    public float Opacity { get; private set; } = 1.0f;
+
+    /// <summary>
+    /// If true, we'll try to stay scrolled to the bottom when the panel changes size
+    /// </summary>
+    public bool PreferScrollToBottom { get; set; }
+
+    /// <summary>
+    /// Whether the scrolling is currently pinned to the bottom of the panel as dictated by <see cref="PreferScrollToBottom"/>.
+    /// </summary>
+    public bool IsScrollAtBottom { get; private set; }
+
+    /// <summary>
+    /// The size of the scrollable area within this panel.
+    /// </summary>
+    public Vector2 ScrollSize { get; private set; }
+
+    bool IsDragScrolling;
 
     internal bool needsPreLayout = true;
     internal bool needsFinalLayout = true;
@@ -213,7 +265,7 @@ public partial class Panel
 
         PushLengthValues();
 
-        var hash = HashCode.Combine(offset, ScrollOffset, ScrollVelocity, Opacity, ComputedStyle.Display);
+        var hash = HashCode.Combine(offset, ScrollOffset, ScrollVelocity, ComputedStyle?.Transform, Opacity, ComputedStyle.Display);
         if (layoutHash == hash && !YogaNode.HasNewLayout && !needsFinalLayout) return;
 
         needsFinalLayout = false;
@@ -237,6 +289,10 @@ public partial class Panel
         Box.RectInner = Box.RectInner.Floor();
         Box.ClipRect = Box.ClipRect.Floor();
 
+        // Build the matrix that is generated from "transform" etc. We do this here after we have the size of the
+        // panel - which should be super duper fine.
+        TransformMatrix = ComputedStyle.BuildTransformMatrix(Box.Rect.Size);
+
         // Remove intro pseudo class after first layout
         if (HasIntro)
         {
@@ -244,10 +300,13 @@ public partial class Panel
         }
 
         if (ComputedStyle.Display == DisplayMode.None) return;
-        if (Opacity <= 0.0f) return;
+        // Only skip layout for opacity 0 after first layout - ensures Box values are set at least once
+        if (LayoutCount > 0 && Opacity <= 0.0f) return;
 
         offset = new Vector2(Box.Rect.Left, Box.Rect.Top) - ScrollOffset;
         FinalLayoutChildren(offset);
+        
+        LayoutCount++;
     }
 
     protected virtual void FinalLayoutChildren(Vector2 offset)

@@ -75,4 +75,20 @@ public interface IPanelRenderer
     /// Get the current screen/viewport rect
     /// </summary>
     Rect Screen { get; }
+
+    /// <summary>
+    /// Measure text dimensions for layout calculations.
+    /// </summary>
+    /// <param name="text">The text to measure</param>
+    /// <param name="fontFamily">Font family name</param>
+    /// <param name="fontSize">Font size in pixels</param>
+    /// <param name="fontWeight">Font weight (100-900)</param>
+    /// <returns>Vector2 containing width and height of the text</returns>
+    Vector2 MeasureText(string text, string? fontFamily, float fontSize, int fontWeight);
+
+    /// <summary>
+    /// Register this renderer as the active renderer for text measurement.
+    /// Call this once when the renderer is created to enable accurate Label layout.
+    /// </summary>
+    void RegisterAsActiveRenderer();
 }

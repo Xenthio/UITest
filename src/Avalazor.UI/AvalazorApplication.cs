@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Sandbox.UI;
 using Sandbox.UI.Reflection;
+using Sandbox.UI.Skia;
 
 namespace Avalazor.UI;
 
@@ -10,6 +11,16 @@ namespace Avalazor.UI;
 /// </summary>
 public static class AvalazorApplication
 {
+    /// <summary>
+    /// Static constructor to ensure text measurement is available before any panels are created
+    /// </summary>
+    static AvalazorApplication()
+    {
+        // Touch SkiaPanelRenderer to trigger its static constructor,
+        // which registers the text measurement function for Label layout
+        _ = SkiaPanelRenderer.EnsureInitialized();
+    }
+
     public static void Run(RootPanel rootPanel, int width = 1280, int height = 720, string title = "Avalazor Application")
     {
         using var window = new NativeWindow(width, height, title);

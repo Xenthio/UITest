@@ -131,7 +131,9 @@ internal class PanelInput
 		{
 			if (Hovered != null)
 			{
-				Hovered.Switch(PseudoClass.Hover, false);
+				// Use static Switch to propagate to ancestors, excluding common ancestors with new hover target
+				Panel.Switch(PseudoClass.Hover, false, Hovered, current);
+				Hovered.CreateEvent(new MousePanelEvent("onmouseout", Hovered, "none"));
 			}
 
 			Hovered = current;
@@ -139,7 +141,9 @@ internal class PanelInput
 			if (Hovered != null)
 			{
 				if (Active == null || Active == Hovered)
-					Hovered.Switch(PseudoClass.Hover, true);
+					Panel.Switch(PseudoClass.Hover, true, Hovered);
+
+				Hovered.CreateEvent(new MousePanelEvent("onmouseover", Hovered, "none"));
 			}
 		}
 	}
@@ -228,7 +232,8 @@ internal class PanelInput
 			if (Active == null)
 				return;
 
-			Active.Switch(PseudoClass.Active, true);
+			// Use static Switch to propagate :active to ancestors
+			Panel.Switch(PseudoClass.Active, true, Active);
 
 			// Always call Focus() - it will walk up to find a focusable parent (matches S&box)
 			Active.Focus();
@@ -250,13 +255,23 @@ internal class PanelInput
 
 			if (canClick && ButtonName == "mouseleft")
 			{
+				// Create onmouseup event first, then onclick
+				Active.CreateEvent(new MousePanelEvent("onmouseup", Active, ButtonName));
+
 				// Create onclick event for the active panel
 				var clickEvent = new MousePanelEvent("onclick", Active, ButtonName);
 				Active.CreateEvent(clickEvent);
 				Active.ProcessPendingEvents();
 			}
+			else
+			{
+				// Just send onmouseup and remove hover from active
+				Active.CreateEvent(new MousePanelEvent("onmouseup", Active, ButtonName));
+				Panel.Switch(PseudoClass.Hover, false, Active, hovered);
+			}
 
-			Active.Switch(PseudoClass.Active, false);
+			// Use static Switch to propagate :active removal to ancestors
+			Panel.Switch(PseudoClass.Active, false, Active);
 
 			Active.OnButtonEvent(new ButtonEvent(ButtonName, false));
 			Active = null;

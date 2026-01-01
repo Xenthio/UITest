@@ -6,23 +6,130 @@ namespace Sandbox.UI;
 /// </summary>
 public partial class Panel
 {
-    /// <summary>
-    /// Pending events that will be processed
-    /// </summary>
-    internal List<PanelEvent>? PendingEvents { get; set; }
-
-    /// <summary>
-    /// Event listeners registered on this panel
-    /// </summary>
-    internal List<EventCallback>? EventListeners { get; set; }
-
     internal struct EventCallback
     {
         public string EventName;
-        public Action<PanelEvent>? Action;
         public Action? BaseAction;
+        public Action<PanelEvent>? Action;
+        public bool Automatic;
+
+        public Action<EventCallback, PanelEvent>? Event;
         public Panel? Panel;
         public Panel? Context;
+    }
+
+    internal List<EventCallback>? EventListeners { get; set; }
+
+    /// <summary>
+    /// Called on creation and hotload to delete and re-initialize event listeners.
+    /// </summary>
+    protected virtual void InitializeEvents()
+    {
+        EventListeners?.RemoveAll(x => x.Automatic);
+        // TODO: Add reflection-based event listener initialization from PanelEventAttribute
+    }
+
+    internal void AddAutomaticEventListener(string name, Action<PanelEvent> e)
+    {
+        EventListeners ??= new List<EventCallback>();
+
+        var ev = new EventCallback
+        {
+            EventName = name,
+            Action = e,
+            Automatic = true
+        };
+
+        EventListeners.Add(ev);
+    }
+
+    /// <summary>
+    /// Remove all event listeners for a given event name.
+    /// </summary>
+    public void RemoveEventListener(string name)
+    {
+        EventListeners?.RemoveAll(x => x.EventName == name);
+    }
+
+    /// <summary>
+    /// Remove an event listener by name and handler.
+    /// </summary>
+    public void RemoveEventListener(string eventName, Action<PanelEvent> handler)
+    {
+        if (EventListeners == null) return;
+        EventListeners.RemoveAll(x => x.EventName == eventName && x.Action == handler);
+    }
+
+    /// <summary>
+    /// Remove an event listener by name and handler.
+    /// </summary>
+    public void RemoveEventListener(string eventName, Action handler)
+    {
+        if (EventListeners == null) return;
+        EventListeners.RemoveAll(x => x.EventName == eventName && x.BaseAction == handler);
+    }
+
+    /// <summary>
+    /// Runs given callback when the given event is triggered.
+    /// </summary>
+    public void AddEventListener(string eventName, Action<PanelEvent> e)
+    {
+        AddEventListener(new EventCallback
+        {
+            EventName = eventName,
+            Action = e
+        });
+    }
+
+    /// <summary>
+    /// Runs given callback when the given event is triggered, without access to the <see cref="PanelEvent"/>.
+    /// </summary>
+    public void AddEventListener(string eventName, Action action)
+    {
+        AddEventListener(new EventCallback
+        {
+            EventName = eventName,
+            BaseAction = action
+        });
+    }
+
+    internal void AddEventListener(EventCallback eventCallback)
+    {
+        EventListeners ??= new List<EventCallback>();
+        EventListeners.Add(eventCallback);
+    }
+
+    List<PanelEvent>? PendingEvents;
+
+    /// <summary>
+    /// Process pending events. This is the public API that calls RunPendingEvents internally.
+    /// </summary>
+    public void ProcessPendingEvents()
+    {
+        RunPendingEvents();
+    }
+
+    internal void RunPendingEvents()
+    {
+        if (PendingEvents is null || PendingEvents.Count == 0) return;
+
+        for (int i = 0; i < PendingEvents.Count; i++)
+        {
+            var e = PendingEvents[i];
+            if (e.Time > TimeNow) continue;
+
+            PendingEvents.RemoveAt(i);
+            i--;
+
+            try
+            {
+                OnEvent(e);
+            }
+            catch (System.Exception ex)
+            {
+                Console.WriteLine($"\"{ex.Message}\" when running panel event \"{e.Name}\" from \"{e.Target}\"");
+            }
+        }
     }
 
     /// <summary>
@@ -30,11 +137,22 @@ public partial class Panel
     /// </summary>
     /// <param name="name">Event name.</param>
     /// <param name="value">Event value.</param>
-    public virtual void CreateEvent(string name, object? value = null)
+    /// <param name="debounce">Time, in seconds, to wait before firing the event.</param>
+    public virtual void CreateEvent(string name, object? value = null, float? debounce = null)
     {
-        var e = new PanelEvent(name, this);
+        var e = PendingEvents?.FirstOrDefault(x => x.Name == name);
+        if (e == null)
+        {
+            e = new PanelEvent(name, this);
+            CreateEvent(e);
+        }
+
         e.Value = value;
-        CreateEvent(e);
+
+        if (debounce.HasValue)
+        {
+            e.Time = (float)(TimeNow + debounce.Value);
+        }
     }
 
     /// <summary>
@@ -56,29 +174,7 @@ public partial class Panel
     }
 
     /// <summary>
-    /// Process pending events
-    /// </summary>
-    public void ProcessPendingEvents()
-    {
-        if (PendingEvents == null || PendingEvents.Count == 0)
-            return;
-
-        var events = PendingEvents.ToList();
-        PendingEvents.Clear();
-
-        foreach (var e in events)
-        {
-            OnEvent(e);
-            
-            if (e.Propagate && Parent != null)
-            {
-                Parent.CreateEvent(e);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Called when various PanelEvents happen.
+    /// Called when various <see cref="PanelEvent"/>s happen. Handles event listeners and many standard events by default.
     /// </summary>
     protected virtual void OnEvent(PanelEvent e)
     {
@@ -102,25 +198,29 @@ public partial class Panel
             }
         }
 
+        if (e.Is("onfocus")) OnFocus(e);
+        if (e.Is("onblur")) OnBlur(e);
+        if (e.Is("onback")) OnBack(e);
+        if (e.Is("onforward")) OnForward(e);
+        if (e.Is("onescape")) OnEscape(e);
+
         if (!e.Propagate)
             return;
 
-        // Call event listeners
         if (EventListeners != null)
         {
-            foreach (var listener in EventListeners.ToList())
+            foreach (var listener in EventListeners)
             {
                 if (!e.Is(listener.EventName)) continue;
 
+                listener.Event?.Invoke(listener, e);
                 listener.Action?.Invoke(e);
                 listener.BaseAction?.Invoke();
             }
         }
 
-        if (!e.Propagate)
-            return;
+        if (!e.Propagate) return;
 
-        // Propagate event up the parent chain (matches S&box line 276 in Panel.Event.cs)
         Parent?.OnEvent(e);
     }
 
@@ -168,4 +268,33 @@ public partial class Panel
     /// Called when the cursor leaves this panel.
     /// </summary>
     protected virtual void OnMouseOut(MousePanelEvent e) { }
+
+    /// <summary>
+    /// Called when the player presses the "Back" button while hovering this panel, which is typically "mouse 5", aka one of the mouse buttons on its side.
+    /// </summary>
+    protected virtual void OnBack(PanelEvent e) { }
+
+    /// <summary>
+    /// Called when the player presses the "Forward" button while hovering this panel, which is typically "mouse 4", aka one of the mouse buttons on its side.
+    /// </summary>
+    protected virtual void OnForward(PanelEvent e) { }
+
+    /// <summary>
+    /// Called when the escape key is pressed
+    /// </summary>
+    protected virtual void OnEscape(PanelEvent e)
+    {
+        if (HasFocus)
+            Blur();
+    }
+
+    /// <summary>
+    /// Called when this panel receives input focus.
+    /// </summary>
+    protected virtual void OnFocus(PanelEvent e) { }
+
+    /// <summary>
+    /// Called when this panel loses input focus.
+    /// </summary>
+    protected virtual void OnBlur(PanelEvent e) { }
 }

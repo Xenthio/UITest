@@ -28,6 +28,11 @@ public sealed class PanelStyle : Styles
 
     private bool isDirty = true;
     bool rulesChanged = true;
+    
+    /// <summary>
+    /// If true, skip transitions on the next style build
+    /// </summary>
+    internal bool skipTransitions;
 
     public override void Dirty() => isDirty = true;
     internal bool IsDirty => isDirty;
@@ -43,6 +48,22 @@ public sealed class PanelStyle : Styles
     internal void UnderlyingStyleHasChanged()
     {
         ActiveRulesGuid = -1;
+    }
+
+    /// <summary>
+    /// Returns true if this style contains the given style in its active rules.
+    /// </summary>
+    internal bool ContainsStyle(Styles withStyles)
+    {
+        if (activeRules == null) return false;
+
+        foreach (var rule in activeRules)
+        {
+            if (rule.Block.Styles == withStyles)
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>

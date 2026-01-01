@@ -6,93 +6,213 @@ namespace Sandbox.UI;
 /// </summary>
 public partial class Panel
 {
-    internal HashSet<string>? _classes;
+    /// <summary>
+    /// A list of CSS classes applied to this panel.
+    /// </summary>
+    public IEnumerable<string> Class => _class ?? Enumerable.Empty<string>();
+
+    /// <inheritdoc cref="Class"/>
+    internal HashSet<string>? _class;
+    internal string? _classesString;
 
     /// <summary>
-    /// Holds all CSS classes that are assigned to this panel.
+    /// All CSS classes applied to this panel, separated with spaces.
     /// </summary>
-    public IEnumerable<string> Classes => _classes ?? Enumerable.Empty<string>();
-
-    /// <summary>
-    /// Returns true if this panel has the given class.
-    /// </summary>
-    public bool HasClass(string? classname)
+    public string Classes
     {
-        if (string.IsNullOrWhiteSpace(classname)) return false;
-        return _classes?.Contains(classname) ?? false;
-    }
-
-    /// <summary>
-    /// Add a CSS class to this panel.
-    /// </summary>
-    public void AddClass(string? classnames)
-    {
-        if (string.IsNullOrWhiteSpace(classnames)) return;
-
-        _classes ??= new();
-
-        foreach (var classname in classnames.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        get
         {
-            if (_classes.Add(classname))
-            {
-                StyleSelectorsChanged(false, false);
-            }
+            if (_classesString == null)
+                _classesString = string.Join(" ", Class);
+
+            return _classesString;
+        }
+        set
+        {
+            _class?.Clear();
+            AddClass(value);
         }
     }
 
     /// <summary>
-    /// Remove a CSS class from this panel.
+    /// Adds CSS class(es) separated by spaces to this panel.
+    /// </summary>
+    public void AddClass(string? classname)
+    {
+        if (string.IsNullOrWhiteSpace(classname))
+            return;
+
+        if (classname.Contains(' '))
+        {
+            AddClasses(classname);
+            return;
+        }
+
+        classname = classname.ToLowerInvariant();
+
+        _class ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (_class.Contains(classname)) return;
+
+        _class.Add(classname);
+        _classesString = null;
+
+        // Adding a class changes the selector so children
+        // may have rules that now match - need to update those too.
+        StyleSelectorsChanged(true, true);
+    }
+
+    /// <summary>
+    /// Sets a specific CSS class active or not.
+    /// </summary>
+    public void SetClass(string classname, bool active)
+    {
+        if (string.IsNullOrWhiteSpace(classname))
+            return;
+
+        if (active) AddClass(classname);
+        else RemoveClass(classname);
+    }
+
+    /// <summary>
+    /// Add a class for a set amount of seconds. If called multiple times, we will stomp the earlier call.
+    /// </summary>
+    public void FlashClass(string classname, float seconds)
+    {
+        if (string.IsNullOrWhiteSpace(classname))
+            return;
+
+        AddClass(classname);
+        // TODO: InvokeOnce($"FlashClass;{classname}", seconds, () => RemoveClass(classname));
+    }
+
+    /// <summary>
+    /// Add a class if we don't have it, remove a class if we do have it
+    /// </summary>
+    public void ToggleClass(string classname)
+    {
+        if (string.IsNullOrWhiteSpace(classname))
+            return;
+
+        SetClass(classname, !HasClass(classname));
+    }
+
+    /// <summary>
+    /// Add multiple CSS classes separated by spaces to this panel.
+    /// </summary>
+    void AddClasses(string? classname)
+    {
+        if (string.IsNullOrWhiteSpace(classname))
+            return;
+
+        foreach (var cname in classname.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            AddClass(cname);
+        }
+    }
+
+    /// <summary>
+    /// Removes given CSS class from this panel.
     /// </summary>
     public void RemoveClass(string? classname)
     {
+        if (_class == null) return;
         if (string.IsNullOrWhiteSpace(classname)) return;
-        if (_classes == null) return;
 
-        if (_classes.Remove(classname))
+        if (classname.Contains(' '))
         {
-            StyleSelectorsChanged(false, false);
+            foreach (var cname in classname.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                RemoveClass(cname);
+            }
+            return;
+        }
+
+        classname = classname.ToLowerInvariant();
+
+        if (_class.Remove(classname))
+        {
+            // Removing a class changes the selector so children
+            // may have rules that now match - need to update those too.
+            StyleSelectorsChanged(true, true);
+            _classesString = null;
         }
     }
 
     /// <summary>
-    /// Toggle a CSS class on this panel.
+    /// Whether we have the given CSS class or not.
     /// </summary>
-    public bool ToggleClass(string classname)
+    public bool HasClass(string? classname)
     {
-        if (HasClass(classname))
-        {
-            RemoveClass(classname);
-            return false;
-        }
+        if (_class == null) return false;
+        if (string.IsNullOrWhiteSpace(classname)) return false;
 
-        AddClass(classname);
-        return true;
+        if (_class.Contains(classname)) return true;
+        return false;
     }
 
     /// <summary>
-    /// Set a class conditionally.
+    /// Whether if we have <b>all</b> of these CSS classes.
     /// </summary>
-    public void SetClass(string classname, bool enabled)
+    internal bool HasClasses(string[] classes)
     {
-        if (enabled)
-            AddClass(classname);
-        else
-            RemoveClass(classname);
-    }
+        if (_class == null) return false;
 
-    /// <summary>
-    /// Returns true if this panel has all of the given classes.
-    /// </summary>
-    public bool HasClasses(string[] classes)
-    {
-        if (classes == null || classes.Length == 0) return true;
-        if (_classes == null) return false;
-
-        foreach (var classname in classes)
+        for (int i = 0; i < classes.Length; i++)
         {
-            if (!_classes.Contains(classname))
+            if (!_class.Contains(classes[i]))
                 return false;
         }
+
         return true;
+    }
+
+    /// <summary>
+    /// Dirty the styles on this panel
+    /// </summary>
+    internal void DirtyStylesRecursive()
+    {
+        StyleSelectorsChanged(true, true);
+        Style.InvalidateBroadphase();
+    }
+
+    /// <summary>
+    /// Dirty the styles of this class and its children recursively.
+    /// </summary>
+    internal void DirtyStylesWithStyle(Styles withStyles, bool skipTransitions = false)
+    {
+        if (Style.ContainsStyle(withStyles))
+        {
+            Style.UnderlyingStyleHasChanged();
+            StyleSelectorsChanged(false, false);
+
+            if (skipTransitions)
+                SkipTransitions();
+        }
+
+        foreach (var child in Children)
+        {
+            child.DirtyStylesWithStyle(withStyles, skipTransitions);
+        }
+    }
+
+    Dictionary<string, Func<bool>>? classBinds;
+
+    /// <summary>
+    /// Switch the class on or off depending on the value of the bool.
+    /// </summary>
+    public void BindClass(string className, Func<bool> func)
+    {
+        classBinds ??= new();
+        classBinds[className] = func;
+    }
+
+    private void RunClassBinds()
+    {
+        if (classBinds is null) return;
+
+        foreach (var c in classBinds)
+        {
+            SetClass(c.Key, c.Value());
+        }
     }
 }
