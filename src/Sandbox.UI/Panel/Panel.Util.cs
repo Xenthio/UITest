@@ -33,6 +33,7 @@ public partial class Panel
 
 	/// <summary>
 	/// Invoke a method after a delay. If the panel is deleted before this delay, the method will not be called.
+	/// This is async void by design to match s&box's fire-and-forget pattern.
 	/// </summary>
 	public async void Invoke(float seconds, Action action)
 	{
@@ -54,6 +55,7 @@ public partial class Panel
 	/// <summary>
 	/// Invoke a method after a delay. If the panel is deleted before this delay, the method will not be called.
 	/// If the invoke is called while the old one is waiting, the old one will be cancelled.
+	/// This is async void by design to match s&box's fire-and-forget pattern.
 	/// </summary>
 	public async void InvokeOnce(string name, float seconds, Action action)
 	{

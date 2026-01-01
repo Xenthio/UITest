@@ -372,6 +372,8 @@ public partial class Panel
     internal void SortChildrenOrder()
     {
         // Sort children by CSS order property and sibling index (for Yoga layout)
+        // This LINQ operation matches s&box exactly. While it could be optimized,
+        // keeping it identical to s&box ensures consistent behavior.
         if (NeedsOrderSort)
         {
             NeedsOrderSort = false;

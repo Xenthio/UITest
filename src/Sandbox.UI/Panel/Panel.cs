@@ -333,7 +333,9 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     }
 
     /// <summary>
-    /// Convert a point from screen space to a position relative to the top left of this panel
+    /// Convert a point from screen space to a position relative to the top left of this panel.
+    /// Note: GlobalMatrix transforms FROM screen space TO panel space, so we use it directly here.
+    /// This matches s&box implementation exactly.
     /// </summary>
     public Vector2 ScreenPositionToPanelPosition(Vector2 pos)
     {
@@ -349,7 +351,9 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     }
 
     /// <summary>
-    /// Convert a point from local panel space to screen space
+    /// Convert a point from local panel space to screen space.
+    /// Note: Since GlobalMatrix is screen-to-panel, we use its inverse for panel-to-screen.
+    /// This matches s&box implementation exactly.
     /// </summary>
     public Vector2 PanelPositionToScreenPosition(Vector2 pos)
     {
