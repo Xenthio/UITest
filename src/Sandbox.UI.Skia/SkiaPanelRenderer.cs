@@ -361,9 +361,39 @@ public class SkiaPanelRenderer : IPanelRenderer
     private SKPath CreateRoundedRectPath(SKRect rect, float radiusTL, float radiusTR, float radiusBR, float radiusBL)
     {
         var path = new SKPath();
-        // AddRoundRect expects 8 values: [rx, ry] for each corner in order: TL, TR, BR, BL
-        // For circular corners we use the same value for both X and Y radius
-        path.AddRoundRect(rect, new[] { radiusTL, radiusTL, radiusTR, radiusTR, radiusBR, radiusBR, radiusBL, radiusBL });
+        
+        // Clamp radii to fit within the rectangle
+        float maxRadiusX = rect.Width / 2f;
+        float maxRadiusY = rect.Height / 2f;
+        radiusTL = Math.Min(radiusTL, Math.Min(maxRadiusX, maxRadiusY));
+        radiusTR = Math.Min(radiusTR, Math.Min(maxRadiusX, maxRadiusY));
+        radiusBR = Math.Min(radiusBR, Math.Min(maxRadiusX, maxRadiusY));
+        radiusBL = Math.Min(radiusBL, Math.Min(maxRadiusX, maxRadiusY));
+        
+        // Start from top-left, after the corner arc
+        path.MoveTo(rect.Left + radiusTL, rect.Top);
+        
+        // Top edge and top-right corner
+        path.LineTo(rect.Right - radiusTR, rect.Top);
+        if (radiusTR > 0)
+            path.ArcTo(new SKRect(rect.Right - radiusTR * 2, rect.Top, rect.Right, rect.Top + radiusTR * 2), 270, 90, false);
+        
+        // Right edge and bottom-right corner
+        path.LineTo(rect.Right, rect.Bottom - radiusBR);
+        if (radiusBR > 0)
+            path.ArcTo(new SKRect(rect.Right - radiusBR * 2, rect.Bottom - radiusBR * 2, rect.Right, rect.Bottom), 0, 90, false);
+        
+        // Bottom edge and bottom-left corner
+        path.LineTo(rect.Left + radiusBL, rect.Bottom);
+        if (radiusBL > 0)
+            path.ArcTo(new SKRect(rect.Left, rect.Bottom - radiusBL * 2, rect.Left + radiusBL * 2, rect.Bottom), 90, 90, false);
+        
+        // Left edge and top-left corner
+        path.LineTo(rect.Left, rect.Top + radiusTL);
+        if (radiusTL > 0)
+            path.ArcTo(new SKRect(rect.Left, rect.Top, rect.Left + radiusTL * 2, rect.Top + radiusTL * 2), 180, 90, false);
+        
+        path.Close();
         return path;
     }
     
