@@ -777,7 +777,7 @@ public class SkiaPanelRenderer : IPanelRenderer
 
     /// <summary>
     /// Draw non-uniform borders with rounded corners
-    /// Uses path operations to create properly rounded border edges, matching S&box's visual output
+    /// Creates individual border paths for each edge that properly include their adjacent corners
     /// </summary>
     private void DrawNonUniformBorderWithRadius(SKCanvas canvas, Rect rect, Styles style, float opacity,
         float leftWidth, float topWidth, float rightWidth, float bottomWidth,
@@ -797,7 +797,7 @@ public class SkiaPanelRenderer : IPanelRenderer
         );
         
         // Adjust inner radii to account for border width (can't be negative)
-        // Use average of adjacent borders for corner radius reduction, matching how borders actually meet
+        // Use average of adjacent borders for corner radius reduction
         var innerRadiusTL = Math.Max(0, radiusTL - (leftWidth + topWidth) / 2);
         var innerRadiusTR = Math.Max(0, radiusTR - (rightWidth + topWidth) / 2);
         var innerRadiusBR = Math.Max(0, radiusBR - (rightWidth + bottomWidth) / 2);
@@ -805,62 +805,101 @@ public class SkiaPanelRenderer : IPanelRenderer
         
         using var innerPath = CreateRoundedRectPath(innerRect, innerRadiusTL, innerRadiusTR, innerRadiusBR, innerRadiusBL);
         
-        // Create the border region path once (difference between outer and inner)
-        using var borderPath = new SKPath();
-        outerPath.Op(innerPath, SKPathOp.Difference, borderPath);
+        // Create the full border region path
+        using var fullBorderPath = new SKPath();
+        outerPath.Op(innerPath, SKPathOp.Difference, fullBorderPath);
         
-        // Draw each border edge by clipping to the border region for that edge
-        // This approach matches S&box's shader which assigns each pixel to the appropriate border color
+        // For non-uniform borders with radius, we need to handle corners specially
+        // Corners are split between adjacent edges based on a 45-degree diagonal
+        // This matches typical CSS border rendering behavior
         
-        // Left border
-        if (leftWidth > 0 && style.BorderLeftColor.HasValue)
-        {
-            canvas.Save();
-            var leftClip = new SKRect(skRect.Left, skRect.Top, skRect.Left + leftWidth, skRect.Bottom);
-            canvas.ClipRect(leftClip);
-            
-            var color = ToSKColor(style.BorderLeftColor.Value, opacity);
-            using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
-            canvas.DrawPath(borderPath, paint);
-            canvas.Restore();
-        }
+        // Calculate the center points for corner splitting
+        var centerX = skRect.MidX;
+        var centerY = skRect.MidY;
         
-        // Top border
+        // Top border (includes top-left and top-right corners)
         if (topWidth > 0 && style.BorderTopColor.HasValue)
         {
             canvas.Save();
-            var topClip = new SKRect(skRect.Left, skRect.Top, skRect.Right, skRect.Top + topWidth);
-            canvas.ClipRect(topClip);
+            
+            // Create a clipping path that includes the top edge and portions of corners
+            // Split corners diagonally from center to outer corners
+            using var topClipPath = new SKPath();
+            topClipPath.MoveTo(skRect.Left, centerY);
+            topClipPath.LineTo(skRect.Left, skRect.Top);
+            topClipPath.LineTo(skRect.Right, skRect.Top);
+            topClipPath.LineTo(skRect.Right, centerY);
+            topClipPath.LineTo(centerX, centerY);
+            topClipPath.Close();
+            
+            canvas.ClipPath(topClipPath);
             
             var color = ToSKColor(style.BorderTopColor.Value, opacity);
             using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
-            canvas.DrawPath(borderPath, paint);
+            canvas.DrawPath(fullBorderPath, paint);
             canvas.Restore();
         }
         
-        // Right border
+        // Right border (includes top-right and bottom-right corners)
         if (rightWidth > 0 && style.BorderRightColor.HasValue)
         {
             canvas.Save();
-            var rightClip = new SKRect(skRect.Right - rightWidth, skRect.Top, skRect.Right, skRect.Bottom);
-            canvas.ClipRect(rightClip);
+            
+            using var rightClipPath = new SKPath();
+            rightClipPath.MoveTo(centerX, skRect.Top);
+            rightClipPath.LineTo(skRect.Right, skRect.Top);
+            rightClipPath.LineTo(skRect.Right, skRect.Bottom);
+            rightClipPath.LineTo(centerX, skRect.Bottom);
+            rightClipPath.LineTo(centerX, centerY);
+            rightClipPath.Close();
+            
+            canvas.ClipPath(rightClipPath);
             
             var color = ToSKColor(style.BorderRightColor.Value, opacity);
             using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
-            canvas.DrawPath(borderPath, paint);
+            canvas.DrawPath(fullBorderPath, paint);
             canvas.Restore();
         }
         
-        // Bottom border
+        // Bottom border (includes bottom-left and bottom-right corners)
         if (bottomWidth > 0 && style.BorderBottomColor.HasValue)
         {
             canvas.Save();
-            var bottomClip = new SKRect(skRect.Left, skRect.Bottom - bottomWidth, skRect.Right, skRect.Bottom);
-            canvas.ClipRect(bottomClip);
+            
+            using var bottomClipPath = new SKPath();
+            bottomClipPath.MoveTo(skRect.Left, centerY);
+            bottomClipPath.LineTo(centerX, centerY);
+            bottomClipPath.LineTo(skRect.Right, centerY);
+            bottomClipPath.LineTo(skRect.Right, skRect.Bottom);
+            bottomClipPath.LineTo(skRect.Left, skRect.Bottom);
+            bottomClipPath.Close();
+            
+            canvas.ClipPath(bottomClipPath);
             
             var color = ToSKColor(style.BorderBottomColor.Value, opacity);
             using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
-            canvas.DrawPath(borderPath, paint);
+            canvas.DrawPath(fullBorderPath, paint);
+            canvas.Restore();
+        }
+        
+        // Left border (includes top-left and bottom-left corners)
+        if (leftWidth > 0 && style.BorderLeftColor.HasValue)
+        {
+            canvas.Save();
+            
+            using var leftClipPath = new SKPath();
+            leftClipPath.MoveTo(skRect.Left, skRect.Top);
+            leftClipPath.LineTo(centerX, skRect.Top);
+            leftClipPath.LineTo(centerX, centerY);
+            leftClipPath.LineTo(centerX, skRect.Bottom);
+            leftClipPath.LineTo(skRect.Left, skRect.Bottom);
+            leftClipPath.Close();
+            
+            canvas.ClipPath(leftClipPath);
+            
+            var color = ToSKColor(style.BorderLeftColor.Value, opacity);
+            using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
+            canvas.DrawPath(fullBorderPath, paint);
             canvas.Restore();
         }
     }
