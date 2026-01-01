@@ -265,7 +265,7 @@ public partial class Panel
 
         PushLengthValues();
 
-        var hash = HashCode.Combine(offset, ScrollOffset, ScrollVelocity, Opacity, ComputedStyle.Display);
+        var hash = HashCode.Combine(offset, ScrollOffset, ScrollVelocity, ComputedStyle?.Transform, Opacity, ComputedStyle.Display);
         if (layoutHash == hash && !YogaNode.HasNewLayout && !needsFinalLayout) return;
 
         needsFinalLayout = false;
@@ -288,6 +288,10 @@ public partial class Panel
         Box.RectOuter = Box.RectOuter.Floor();
         Box.RectInner = Box.RectInner.Floor();
         Box.ClipRect = Box.ClipRect.Floor();
+
+        // Build the matrix that is generated from "transform" etc. We do this here after we have the size of the
+        // panel - which should be super duper fine.
+        TransformMatrix = ComputedStyle.BuildTransformMatrix(Box.Rect.Size);
 
         // Remove intro pseudo class after first layout
         if (HasIntro)

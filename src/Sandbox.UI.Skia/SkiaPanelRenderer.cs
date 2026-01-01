@@ -1,6 +1,7 @@
 using SkiaSharp;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Numerics;
 
 namespace Sandbox.UI.Skia;
 
@@ -163,6 +164,9 @@ public class SkiaPanelRenderer : IPanelRenderer
 
         _canvas.Save();
 
+        // Apply transform matrix if present
+        var hasTransform = ApplyPanelTransform(_canvas, panel);
+
         // Draw background
         if (panel.HasBackground)
         {
@@ -182,6 +186,53 @@ public class SkiaPanelRenderer : IPanelRenderer
         }
 
         _canvas.Restore();
+    }
+
+    /// <summary>
+    /// Apply the panel's transform matrix to the canvas.
+    /// </summary>
+    /// <param name="canvas">The canvas to transform</param>
+    /// <param name="panel">The panel whose transform to apply</param>
+    /// <returns>True if a transform was applied</returns>
+    private bool ApplyPanelTransform(SKCanvas canvas, Panel panel)
+    {
+        var style = panel.ComputedStyle;
+        if (style == null) return false;
+        
+        // Check if transform is empty
+        if (style.Transform?.IsEmpty() ?? true) return false;
+        if (panel.TransformMatrix == System.Numerics.Matrix4x4.Identity) return false;
+        
+        var rect = panel.Box.Rect;
+        
+        // Get transform origin (defaults to center)
+        var originX = style.TransformOriginX?.GetPixels(rect.Width) ?? rect.Width * 0.5f;
+        var originY = style.TransformOriginY?.GetPixels(rect.Height) ?? rect.Height * 0.5f;
+        
+        // Calculate origin in absolute coordinates
+        var absoluteOriginX = rect.Left + originX;
+        var absoluteOriginY = rect.Top + originY;
+        
+        // Translate to origin, apply transform, translate back
+        canvas.Translate(absoluteOriginX, absoluteOriginY);
+        
+        // Convert Matrix4x4 to SKMatrix (use 2D portion)
+        var m = panel.TransformMatrix;
+        var skMatrix = new SKMatrix(
+            m.M11, m.M21, m.M41,  // First row
+            m.M12, m.M22, m.M42,  // Second row
+            m.M14, m.M24, m.M44   // Perspective row
+        );
+        
+        canvas.Concat(ref skMatrix);
+        canvas.Translate(-absoluteOriginX, -absoluteOriginY);
+        
+        // Update GlobalMatrix for child panels
+        // Note: We don't have full matrix chain support yet, but this provides the local transform
+        panel.LocalMatrix = panel.TransformMatrix;
+        panel.GlobalMatrix = panel.TransformMatrix;
+        
+        return true;
     }
 
     private void DrawBackground(SKCanvas canvas, Panel panel, ref RenderState state)
