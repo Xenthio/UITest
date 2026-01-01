@@ -1,0 +1,95 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Parser/StyleParser.Sheet.cs	2026-01-01 07:45:59.605934670 +0000
++++ ./src/Sandbox.UI/Parser/StyleParser.Sheet.cs	2026-01-01 07:45:47.902924524 +0000
+@@ -1,5 +1,3 @@
+-﻿using Sandbox.Engine;
+-
+ namespace Sandbox.UI;
+ 
+ internal static partial class StyleParser
+@@ -24,7 +22,8 @@
+ 		IncludeLoops++;
+ 
+ 		filename ??= "none";
+-		filename = filename.NormalizeFilename();
++		// Normalize path separators but preserve case
++		filename = filename.NormalizeFilename(enforceInitialSlash: false, enforceLowerCase: false);
+ 
+ 		sheet.AddFilename( filename );
+ 
+@@ -88,10 +87,11 @@
+ 
+ 	private static void TryImport( StyleSheet sheet, string filename, string includeFileAndLine )
+ 	{
+-		if ( !GlobalContext.Current.FileMount.FileExists( filename ) )
++		// Try to resolve the file path
++		if ( !System.IO.File.Exists( filename ) )
+ 			throw new System.Exception( $"Missing import {filename} ({includeFileAndLine})" );
+ 
+-		var text = GlobalContext.Current.FileMount.ReadAllText( filename );
++		var text = System.IO.File.ReadAllText( filename );
+ 		ParseToSheet( text, filename, sheet );
+ 	}
+ 
+@@ -135,14 +135,49 @@
+ 				// if no extension clean it up as an include
+ 				if ( !System.IO.Path.HasExtension( cleanFile ) ) cleanFile = $"_{cleanFile}.scss";
+ 
+-				// try to find file in local directory, if not found then fall back
+-				var localPath = System.IO.Path.Combine( thisRoot, cleanFile ).ToLower();
+-				if ( !GlobalContext.Current.FileMount.FileExists( localPath ) )
++				string localPath;
++				
++				// Handle absolute paths starting with / (theme paths)
++				if ( cleanFile.StartsWith( "/" ) )
++				{
++					// Find the themes directory by going up from current file
++					var searchRoot = thisRoot;
++					while ( !string.IsNullOrEmpty( searchRoot ) )
++					{
++						var themesPath = System.IO.Path.Combine( searchRoot, "themes" );
++						if ( System.IO.Directory.Exists( themesPath ) )
++						{
++							localPath = System.IO.Path.Combine( themesPath, cleanFile.TrimStart( '/' ) );
++							if ( System.IO.File.Exists( localPath ) )
++							{
++								TryImport( sheet, localPath, p.FileAndLine );
++								goto nextFile;
++							}
++						}
++						searchRoot = System.IO.Path.GetDirectoryName( searchRoot );
++					}
++					
++					// If not found in themes, try relative to output directory
++					localPath = cleanFile.TrimStart( '/' );
++				}
++				else
++				{
++					// Relative path - combine with current file's directory
++					localPath = System.IO.Path.Combine( thisRoot ?? "", cleanFile );
++				}
++				
++				// Check if file exists, if not try lowercase variant (for case-insensitive systems)
++				if ( !System.IO.File.Exists( localPath ) )
+ 				{
+-					localPath = cleanFile.ToLower();
++					var lowerPath = localPath.ToLower();
++					if ( System.IO.File.Exists( lowerPath ) )
++					{
++						localPath = lowerPath;
++					}
+ 				}
+ 
+ 				TryImport( sheet, localPath, p.FileAndLine );
++				nextFile:;
+ 			}
+ 
+ 			if ( p.Is( ';' ) )
+@@ -175,7 +210,7 @@
+ 		var node = new StyleBlock();
+ 		node.LoadOrder = sheet.Nodes.Count();
+ 		node.FileName = p.FileName;
+-		node.AbsolutePath = GlobalContext.Current.FileMount?.GetFullPath( p.FileName );
++		node.AbsolutePath = System.IO.Path.GetFullPath( p.FileName );
+ 		node.FileLine = p.CurrentLine;
+ 		node.SetSelector( selectors, parentNode );
+ 

@@ -1,0 +1,613 @@
+			public Entry GetDefault()
+			public Matrix ToMatrix( float width, float height )
+		public Block()
+		public Matrix BuildTransform( float width, float height, Vector2 perspectiveOrigin )
+		public MouseButtonState(PanelInput input, string buttonName)
+		public Panel FindOrCreateElement( string elementName, Panel parent )
+		public Panel FindOrCreateElement<T>( Panel parent ) where T : IComponent, new()
+		public bool AddMatrix3D( Matrix matrix )
+		public bool AddPerspective( Length d )
+		public bool AddRotation( Vector3 angles ) => AddRotation( angles.X, angles.Y, angles.Z );
+		public bool AddRotation( float x, float y, float z )
+		public bool AddScale( Vector3 scale )
+		public bool AddScale( float scale )
+		public bool AddSkew( float x, float y, float z )
+		public bool AddTranslate( Length? lengthX, Length? lengthY, Length? lengthZ = null )
+		public bool AddTranslateX( Length? length )
+		public bool AddTranslateY( Length? length )
+		public bool AddTranslateZ( Length? length )
+		public bool CheckCacheValue( int i, int hashcode )
+		public bool IsEmpty()
+		public bool UpdateBinds()
+		public int Increment( int sequence )
+		public override bool Equals( object obj )
+		public override bool Set( string property, string value )
+		public override void Add( BaseStyles bs )
+		public override void From( BaseStyles bs )
+		public readonly override int GetHashCode()
+		public static Panel? Create(string name)
+		public static Type? GetType(string name)
+		public static bool IsRegistered(string name)
+		public static bool operator !=( PanelTransform a, PanelTransform b )
+		public static bool operator ==( PanelTransform a, PanelTransform b )
+		public static void Initialize()
+		public string Name => _name ?? (_name = _text.Substring( _namestartindex, _namelength ).ToLowerInvariant());
+		public string Value => _value ??= GetValue();
+		public void ApplyScale( float scale )
+		public void Update(bool down, Panel? hovered)
+	public (string, string) ReadKeyValue()
+	public AliasAttribute(params string[] aliases)
+	public Angles(float pitch, float yaw, float roll)
+	public Dictionary<string, KeyFrames> KeyFrames = new Dictionary<string, KeyFrames>( StringComparer.OrdinalIgnoreCase );
+	public Document()
+	public IEnumerable<(string key, string value)> CollectVariables()
+	public IEnumerable<Node> Ancestors( string name )
+	public IEnumerable<Node> Ancestors()
+	public IEnumerable<Node> AncestorsAndSelf( string name )
+	public IEnumerable<Node> AncestorsAndSelf()
+	public IEnumerable<Node> Descendants( int level )
+	public IEnumerable<Node> Descendants( string name )
+	public IEnumerable<Node> Descendants()
+	public IEnumerable<Node> DescendantsAndSelf( string name )
+	public IEnumerable<Node> DescendantsAndSelf()
+	public IEnumerable<Node> Elements( string name )
+	public IEnumerable<string> SelectorStrings => Selectors.Select( x => x.AsString );
+	public LibraryAttribute()
+	public LibraryAttribute(string name)
+	public List<Block> Blocks = new List<Block>();
+	public List<IStyleBlock.StyleProperty> GetRawValues()
+	public List<StyleBlock> Nodes { get; set; } = new List<StyleBlock>();
+	public List<StyleProperty> GetRawValues();
+	public List<TransitionDesc> List = new List<TransitionDesc>();
+	public List<string> IncludedFiles { get; set; } = new List<string>();
+	public Margin GetInset( Vector2 size )
+	public Margin GetOutset( Vector2 size ) => Sandbox.UI.Margin.GetEdges( size, MarginLeft, MarginTop, MarginRight, MarginBottom );
+	public Matrix4x4 BuildTransformMatrix( Vector2 size )
+	public Matrix4x4 ToMatrix()
+	public Node AppendChild( Node newChild )
+	public Node Element( string name )
+	public PanelInput()
+	public Parse JumpToEndOfLine( bool afterNewline )
+	public Parse SkipWhitespaceAndNewlines( string andCharacters = null )
+	public Parse( string value, string filename = "nofile", int lineOffset = 0 ) : this()
+	public Shadow LerpTo( Shadow shadow, float delta )
+	public Shadow Scale( float f )
+	public ShadowList BoxShadow = new ShadowList();
+	public ShadowList FilterDropShadow = new ShadowList();
+	public ShadowList TextShadow = new ShadowList();
+	public StyleSelector Test( IStyleTarget target, PseudoClass forceFlag = PseudoClass.None )
+	public Styles()
+	public T GetAttribute<T>( string name, T def = default )
+	public Vector3 AsVector3()
+	public abstract void Dirty();
+	public async void Invoke(float seconds, Action action)
+	public async void InvokeOnce(string name, float seconds, Action action)
+	public bool ApplyAnimation( Panel panel )
+	public bool GetAttributeBool( string name, bool def )
+	public bool Is( char v, int offset = 0, bool ignorecase = false )
+	public bool Is( string v, int offset = 0, bool ignorecase = false )
+	public bool IsDigit => char.IsDigit( Current );
+	public bool IsLetter => char.IsLetter( Current );
+	public bool IsOneOf( string chars )
+	public bool IsValid => !string.IsNullOrEmpty(Path) && Path != "invalid";
+	public bool IsWhitespace => char.IsWhiteSpace( Current );
+	public bool Set( string styles )
+	public bool SetRawValue( string key, string value, string originalValue = null )
+	public bool SetRawValue( string key, string value, string originalValue = null );
+	public bool SetSelector( string selector, StyleBlock parent = null )
+	public bool Test( IStyleTarget target, PseudoClass forceFlag = PseudoClass.None )
+	public bool TestBroadphase( IStyleTarget target )
+	public bool TestParent( IStyleTarget target, bool recusive = true )
+	public bool TryReadFloat( out float outval )
+	public bool TryReadTime( out float val )
+	public bool TrySkip( string v, int offset = 0, bool ignorecase = false )
+	public bool TrySkipCommaSeparation()
+	public float GetAttributeFloat( string name, float def )
+	public int GetAttributeInt( string name, int def )
+	public object Clone()
+	public override int GetHashCode()
+	public override string OuterHtml => _text ?? (_text = HttpUtility.HtmlDecode( base.OuterHtml ));
+	public override void AddAttribute( int sequence, string name, object value )
+	public override void AddAttribute<T>( int sequence, Action<T> value )
+	public override void AddBind<T>( int sequence, string propertyName, Func<T> get, Action<T> set )
+	public override void AddContent<T>( int sequence, T content )
+	public override void AddLocation( string filename, int line, int column )
+	public override void AddMarkupContent( int sequence, string markupContent )
+	public override void AddReferenceCapture<T>( int sequence, T current, Action<T> value )
+	public override void AddStyleDefinitions( int sequence, string styles )
+	public override void CloseElement()
+	public override void Dirty()
+	public override void FromLerp( BaseStyles from, BaseStyles to, float delta )
+	public override void LerpProperty( string name, BaseStyles from, BaseStyles to, float delta )
+	public override void OpenElement( int sequence, string elementName ) => OpenElement( sequence, elementName, null );
+	public override void OpenElement( int sequence, string elementName, object key = null )
+	public override void OpenElement<T>( int sequence ) => OpenElement<T>( sequence, null );
+	public override void OpenElement<T>( int sequence, object key )
+	public override void SetRenderFragment<T>( Action<T, RenderFragment> setter, RenderFragment builder )
+	public override void SetRenderFragmentWithContext<T, U>( Func<T, RenderFragment<U>> getter, Action<T, RenderFragment<U>> setter, RenderFragment<U> builder )
+	public readonly override int GetHashCode()
+	public static Angles Lerp(Angles a, Angles b, float t)
+	public static Angles Zero => new Angles(0, 0, 0);
+	public static Color Lerp(Color a, Color b, float t)
+	public static Color LerpTo(this Color from, Color to, float t)
+	public static Func<string, (int width, int height, object? handle)>? TextureLoader { get; set; }
+	public static INode Parse( string html )
+	public static Length LerpTo(this Length from, Length to, float t, bool clamp = true)
+	public static List<StyleSelector> Selector( string rule_string, StyleBlock parent = null )
+	public static List<StyleSheet> Loaded { get; internal set; } = new List<StyleSheet>();
+	public static Matrix4x4 CreateMatrix(float[] values)
+	public static Matrix4x4 CreateMatrix3D(float[] values)
+	public static Matrix4x4 CreateRotation(Vector3 eulerDegrees)
+	public static Matrix4x4 Inverted(this Matrix4x4 matrix)
+	public static Matrix4x4 Lerp(Matrix4x4 a, Matrix4x4 b, float t)
+	public static Node Parse( string html )
+	public static StyleSelector ParseSelector( string rule_string, StyleBlock parent = null )
+	public static StyleSelector ParseSingleSelector( string rule_string, StyleBlock parent )
+	public static StyleSheet FromFile( string filename, IEnumerable<(string key, string value)> variables = null, bool failSilently = false )
+	public static StyleSheet FromString( string styles, string filename = "none", IEnumerable<(string key, string value)> variables = null )
+	public static StyleSheet ParseSheet( string content, string filename = "none", IEnumerable<(string, string)> variables = null )
+	public static Texture Load(string path)
+	public static TransitionList? ParseProperty(string property, string value, TransitionList? existing)
+	public static Vector2 Transform(this Matrix4x4 matrix, Vector2 point)
+	public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
+	public static async Task<Texture> LoadAsync(string path)
+	public static bool Contains( this PseudoClass pseudoClass, PseudoClass flag )
+	public static bool IsDynamic(this LengthUnit unit) => unit is
+	public static bool IsWhiteSpace( int c )
+	public static bool TryParseFloat(string value, out float result)
+	public static bool TryParseLength(string value, out Length result)
+	public static bool WildcardMatch( this string str, string wildcard )
+	public static float Clamp(float value, float min, float max)
+	public static float DegToRad(float degrees)
+	public static float DegreeToRadian(float degrees)
+	public static float Lerp(float a, float b, float t)
+	public static float LerpInverse(float value, float min, float max, bool clamp = false)
+	public static float LerpTo(this float from, float to, float t, bool clamp = true)
+	public static float RadToDeg(float radians)
+	public static float RotationDegrees(float value, string unit)
+	public static float RotationDegrees(string value)
+	public static int BitsSet( this int i )
+	public static string CollapseSpacesAndPreserveLines(this string str)
+	public static string CollapseWhiteSpace(this string str)
+	public static string NormalizeFilename( this string str, bool enforceInitialSlash = true ) => NormalizeFilename( str, enforceInitialSlash, true );
+	public static string NormalizeFilename( this string str, bool enforceInitialSlash, bool enforceLowerCase )
+	public static string StripComments( string v )
+	public static string TrimQuoted(this string value, bool alsotrim = true)
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, Action value )
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, Action<PanelEvent> value )
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, Func<Task> value )
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, object value )
+	public static void AddAttribute( this RenderTreeBuilder self, int sequence, string attrName, string value )
+	public static void AddAttribute<T>( this RenderTreeBuilder self, int sequence, object value, Action<T> setter )
+	public string GetAttribute( string name, string def = null )
+	public string GetVariable( string name, string defaultValue = default )
+	public string Name => _optimizedName ?? (_optimizedName = _ownerdocument.Text.Substring( _namestartindex, _namelength ).ToLowerInvariant());
+	public string Read( int chars )
+	public string ReadChars( string chars = null, bool readUntilEnd = false )
+	public string ReadInnerBrackets( char inner = '(', char outer = ')' )
+	public string ReadRemaining( bool acceptNone = false )
+	public string ReadSentence()
+	public string ReadUntil( string c1 )
+	public string ReadUntilOrEnd( string c1, bool acceptNone = false )
+	public string ReadUntilWhitespaceOrNewlineOrEnd( string andCharacters = null )
+	public string ReadUntilWhitespaceOrNewlineOrEndAndObeyBrackets()
+	public string ReadWord( string endOnCharacter = null, bool readUntilEnd = false )
+	public string ReplaceVariables( string str )
+	public string? GetCustomProperty(string propertyName)
+	public virtual bool Set( string property, string value )
+	public virtual string InnerHtml => _innerhtml ?? (_innerhtml = _ownerdocument.Text.Substring( _innerstartindex, _innerlength ));
+	public virtual void Add( BaseStyles bs )
+	public virtual void From( BaseStyles bs )
+	public virtual void FromLerp( BaseStyles from, BaseStyles to, float delta )
+	public virtual void LerpProperty( string name, BaseStyles from, BaseStyles to, float delta )
+	public void Add( StyleSheet sheet )
+	public void AddAttributeAction( int sequence, string attrName, Action value )
+	public void AddAttributeAction( int sequence, string attrName, Func<Task> value )
+	public void AddAttributeObject( int sequence, string attrName, object value )
+	public void AddAttributeString( int sequence, string attrName, string value )
+	public void AddAttributeWithSetter<T>( int sequence, object value, Action<T> setter )
+	public void AddFrom( ShadowList other )
+	public void AddKeyFrames( KeyFrames frames )
+	public void AddMouseButton(string button, bool down)
+	public void ApplyCascading( BaseStyles parent )
+	public void CancelInvoke(string name)
+	public void Clear()
+	public void FillDefaults()
+	public void Finalize( StyleBlock block )
+	public void Load( TextReader reader )
+	public void Load( string filename, bool inheritVariables = true, bool failSilently = false )
+	public void LoadData()
+	public void LoadHtml( string html )
+	public void MoveAfterSibling(Panel previousSibling)
+	public void OnRenderFragmentChanged( Panel upTo )
+	public void Parse( string stylesheet, bool inheritVariables = true )
+	public void Release()
+	public void Remove( StyleSheet sheet )
+	public void Remove( string wildcardGlob )
+	public void ResetAnimation()
+	public void SetChildNodesId( Node childNode )
+	public void SetFromLerp( ShadowList a, ShadowList b, float frac )
+	public void SetRect( in Rect r, float scale = 1.0f )
+	public void StartAnimation( string name, float duration, int iterations = 1, float delay = 0.0f, string timing = "linear", string direction = "normal", string fillmode = "none" )
+	public void StateHasChanged()
+        public Entry(string property, double startTime, double length, int target, TransitionFunction action, Func<float, float> easingFunction) : this()
+        public Tab(TabContainer tabContainer, string title, string icon, Panel panel)
+        public float Ease(float delta) => EasingFunction?.Invoke(delta) ?? delta;
+        public override int GetHashCode()
+        public override string ToString()
+        public void Invoke(Styles style, float delta) => Action?.Invoke(style, delta);
+    [DllImport(DllName)] public static extern YGConfigRef YGConfigNew();
+    [DllImport(DllName)] public static extern YGNodeRef YGNodeNew();
+    [DllImport(DllName)] public static extern YGNodeRef YGNodeNewWithConfig(YGConfigRef config);
+    [DllImport(DllName)] public static extern bool YGNodeGetHasNewLayout(YGNodeRef node);
+    [DllImport(DllName)] public static extern float YGNodeLayoutGetBorder(YGNodeRef node, YGEdge edge);
+    [DllImport(DllName)] public static extern float YGNodeLayoutGetHeight(YGNodeRef node);
+    [DllImport(DllName)] public static extern float YGNodeLayoutGetLeft(YGNodeRef node);
+    [DllImport(DllName)] public static extern float YGNodeLayoutGetMargin(YGNodeRef node, YGEdge edge);
+    [DllImport(DllName)] public static extern float YGNodeLayoutGetPadding(YGNodeRef node, YGEdge edge);
+    [DllImport(DllName)] public static extern float YGNodeLayoutGetTop(YGNodeRef node);
+    [DllImport(DllName)] public static extern float YGNodeLayoutGetWidth(YGNodeRef node);
+    [DllImport(DllName)] public static extern uint YGNodeGetChildCount(YGNodeRef node);
+    [DllImport(DllName)] public static extern void YGConfigSetPointScaleFactor(YGConfigRef config, float scale);
+    [DllImport(DllName)] public static extern void YGConfigSetUseWebDefaults(YGConfigRef config, bool enabled);
+    [DllImport(DllName)] public static extern void YGNodeCalculateLayout(YGNodeRef node, float availableWidth, float availableHeight, YGDirection direction);
+    [DllImport(DllName)] public static extern void YGNodeFree(YGNodeRef node);
+    [DllImport(DllName)] public static extern void YGNodeInsertChild(YGNodeRef node, YGNodeRef child, int index);
+    [DllImport(DllName)] public static extern void YGNodeMarkDirty(YGNodeRef node);
+    [DllImport(DllName)] public static extern void YGNodeRemoveChild(YGNodeRef node, YGNodeRef child);
+    [DllImport(DllName)] public static extern void YGNodeSetHasNewLayout(YGNodeRef node, bool hasNewLayout);
+    [DllImport(DllName)] public static extern void YGNodeSetMeasureFunc(YGNodeRef node, IntPtr measureFunc);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetAlignContent(YGNodeRef node, YGAlign alignContent);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetAlignItems(YGNodeRef node, YGAlign alignItems);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetAlignSelf(YGNodeRef node, YGAlign alignSelf);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetAspectRatio(YGNodeRef node, float aspectRatio);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetBorder(YGNodeRef node, YGEdge edge, float border);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetDisplay(YGNodeRef node, YGDisplay display);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetFlexBasis(YGNodeRef node, float flexBasis);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetFlexBasisAuto(YGNodeRef node);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetFlexBasisPercent(YGNodeRef node, float flexBasis);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetFlexDirection(YGNodeRef node, YGFlexDirection flexDirection);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetFlexGrow(YGNodeRef node, float flexGrow);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetFlexShrink(YGNodeRef node, float flexShrink);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetFlexWrap(YGNodeRef node, YGWrap wrap);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetGap(YGNodeRef node, YGGutter gutter, float gapLength);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetHeight(YGNodeRef node, float height);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetHeightAuto(YGNodeRef node);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetHeightPercent(YGNodeRef node, float height);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetJustifyContent(YGNodeRef node, YGJustify justifyContent);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMargin(YGNodeRef node, YGEdge edge, float margin);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMarginAuto(YGNodeRef node, YGEdge edge);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMarginPercent(YGNodeRef node, YGEdge edge, float margin);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMaxHeight(YGNodeRef node, float maxHeight);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMaxHeightPercent(YGNodeRef node, float maxHeight);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMaxWidth(YGNodeRef node, float maxWidth);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMaxWidthPercent(YGNodeRef node, float maxWidth);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMinHeight(YGNodeRef node, float minHeight);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMinHeightPercent(YGNodeRef node, float minHeight);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMinWidth(YGNodeRef node, float minWidth);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetMinWidthPercent(YGNodeRef node, float minWidth);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetOverflow(YGNodeRef node, YGOverflow overflow);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetPadding(YGNodeRef node, YGEdge edge, float padding);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetPaddingPercent(YGNodeRef node, YGEdge edge, float padding);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetPosition(YGNodeRef node, YGEdge edge, float position);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetPositionPercent(YGNodeRef node, YGEdge edge, float position);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetPositionType(YGNodeRef node, YGPositionType positionType);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetWidth(YGNodeRef node, float width);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetWidthAuto(YGNodeRef node);
+    [DllImport(DllName)] public static extern void YGNodeStyleSetWidthPercent(YGNodeRef node, float width);
+    public Box Box { get; } = new Box();
+    public Button()
+    public Button(string text, Action action = default) : this()
+    public Button(string text, string icon) : this()
+    public Button(string text, string icon, Action onClick) : this(text, icon)
+    public Button(string text, string icon, string className, Action onClick) : this(text, icon, onClick)
+    public ButtonEvent(string button, bool pressed, KeyboardModifiers modifiers = KeyboardModifiers.None)
+    public CheckBox()
+    public Color WithAlpha(float alpha) => new(r, g, b, alpha);
+    public Color WithAlphaMultiplied(float alpha) => new(r, g, b, a * alpha);
+    public Color(float r, float g, float b, float a = 1.0f)
+    public ComboBox()
+    public ComboBox(Panel parent) : this()
+    public ControlLabel()
+    public GroupBox()
+    public IEnumerable<Panel> Children => _children == null ? Enumerable.Empty<Panel>() : _children.Where(x => x is not null);
+    public IEnumerable<Panel> FindInRect(Rect box, bool fullyInside)
+    public IEnumerable<T> ChildrenOfType<T>() where T : Panel
+    public IEnumerable<string> Class => _class ?? Enumerable.Empty<string>();
+    public IconPanel()
+    public IconPanel(string icon, string? classes = null) : this()
+    public Image()
+    public Label()
+    public Label(string? text, string? classname = null) : this()
+    public Length(float value, LengthUnit unit = LengthUnit.Pixels)
+    public Length? BorderBottomWidth { set => SetEdgeLengthNoPercent(value, YGEdge.Bottom, YogaNative.YGNodeStyleSetBorder); }
+    public Length? BorderLeftWidth { set => SetEdgeLengthNoPercent(value, YGEdge.Left, YogaNative.YGNodeStyleSetBorder); }
+    public Length? BorderRightWidth { set => SetEdgeLengthNoPercent(value, YGEdge.Right, YogaNative.YGNodeStyleSetBorder); }
+    public Length? BorderTopWidth { set => SetEdgeLengthNoPercent(value, YGEdge.Top, YogaNative.YGNodeStyleSetBorder); }
+    public Length? Bottom { set => SetEdgeLength(value, YGEdge.Bottom, YogaNative.YGNodeStyleSetPosition, YogaNative.YGNodeStyleSetPositionPercent); }
+    public Length? ColumnGap { set => YogaNative.YGNodeStyleSetGap(_native, YGGutter.Column, value?.GetPixels(0) ?? float.NaN); }
+    public Length? Left { set => SetEdgeLength(value, YGEdge.Left, YogaNative.YGNodeStyleSetPosition, YogaNative.YGNodeStyleSetPositionPercent); }
+    public Length? MarginBottom { set => SetEdgeLengthWithAuto(value, YGEdge.Bottom, YogaNative.YGNodeStyleSetMarginAuto, YogaNative.YGNodeStyleSetMargin, YogaNative.YGNodeStyleSetMarginPercent); }
+    public Length? MarginLeft { set => SetEdgeLengthWithAuto(value, YGEdge.Left, YogaNative.YGNodeStyleSetMarginAuto, YogaNative.YGNodeStyleSetMargin, YogaNative.YGNodeStyleSetMarginPercent); }
+    public Length? MarginRight { set => SetEdgeLengthWithAuto(value, YGEdge.Right, YogaNative.YGNodeStyleSetMarginAuto, YogaNative.YGNodeStyleSetMargin, YogaNative.YGNodeStyleSetMarginPercent); }
+    public Length? MarginTop { set => SetEdgeLengthWithAuto(value, YGEdge.Top, YogaNative.YGNodeStyleSetMarginAuto, YogaNative.YGNodeStyleSetMargin, YogaNative.YGNodeStyleSetMarginPercent); }
+    public Length? MaxHeight { set => SetLengthNoAuto(value, YogaNative.YGNodeStyleSetMaxHeight, YogaNative.YGNodeStyleSetMaxHeightPercent); }
+    public Length? MaxWidth { set => SetLengthNoAuto(value, YogaNative.YGNodeStyleSetMaxWidth, YogaNative.YGNodeStyleSetMaxWidthPercent); }
+    public Length? MinHeight { set => SetLengthNoAuto(value, YogaNative.YGNodeStyleSetMinHeight, YogaNative.YGNodeStyleSetMinHeightPercent); }
+    public Length? MinWidth { set => SetLengthNoAuto(value, YogaNative.YGNodeStyleSetMinWidth, YogaNative.YGNodeStyleSetMinWidthPercent); }
+    public Length? PaddingBottom { set => SetEdgeLength(value, YGEdge.Bottom, YogaNative.YGNodeStyleSetPadding, YogaNative.YGNodeStyleSetPaddingPercent); }
+    public Length? PaddingLeft { set => SetEdgeLength(value, YGEdge.Left, YogaNative.YGNodeStyleSetPadding, YogaNative.YGNodeStyleSetPaddingPercent); }
+    public Length? PaddingRight { set => SetEdgeLength(value, YGEdge.Right, YogaNative.YGNodeStyleSetPadding, YogaNative.YGNodeStyleSetPaddingPercent); }
+    public Length? PaddingTop { set => SetEdgeLength(value, YGEdge.Top, YogaNative.YGNodeStyleSetPadding, YogaNative.YGNodeStyleSetPaddingPercent); }
+    public Length? Right { set => SetEdgeLength(value, YGEdge.Right, YogaNative.YGNodeStyleSetPosition, YogaNative.YGNodeStyleSetPositionPercent); }
+    public Length? RowGap { set => YogaNative.YGNodeStyleSetGap(_native, YGGutter.Row, value?.GetPixels(0) ?? float.NaN); }
+    public Length? Top { set => SetEdgeLength(value, YGEdge.Top, YogaNative.YGNodeStyleSetPosition, YogaNative.YGNodeStyleSetPositionPercent); }
+    public List<Option> Options { get; set; } = new();
+    public List<Tab> Tabs = new();
+    public Margin(float all)
+    public Margin(float left, float top, float right, float bottom)
+    public MousePanelEvent(string event_name, Panel? active, string button) : base(event_name, active)
+    public Option()
+    public Option(string title, object? value)
+    public Option(string title, string? icon, object? value)
+    public Panel CreateWindowContentPanel()
+    public Panel()
+    public Panel(Panel? parent) : this()
+    public Panel(Panel? parent, string? classnames) : this(parent)
+    public Panel? GetChild(int index, bool loop = false)
+    public Panel? GetPanelAt(Vector2 position, bool checkVisible = true, bool checkPointerEvents = true)
+    public PanelEvent(string eventName, Panel? active = null)
+    public RadioButton()
+    public RadioButtons()
+    public Rect Floor()
+    public Rect Grow(float left, float top, float right, float bottom)
+    public Rect PanelBounds { get; set; } = new Rect(0, 0, 512, 512);
+    public Rect Shrink(float left, float top, float right, float bottom)
+    public Rect(Vector2 position, Vector2 size)
+    public Rect(float left, float top, float width, float height)
+    public Resizer()
+    public RootPanel()
+    public RootPanel? FindRootPanel()
+    public Slider()
+    public SliderScale()
+    public SliderScaleEntry()
+    public SourceLocationAttribute(string sourceFile = "", int sourceLine = 0)
+    public StyleSheetAttribute(string? name = null)
+    public T AddChild<T>(T p) where T : Panel
+    public T AddChild<T>(string? classnames = null) where T : Panel, new()
+    public Tab AddTab(Panel panel, string tabName, string title, string icon = null)
+    public Tab()
+    public TabContainer()
+    public TextEntry()
+    public TitleBar()
+    public Vector2 Center => new(Left + Width / 2, Top + Height / 2);
+    public Vector2 MinSize { get; set; } = new Vector2(100, 50);
+    public Vector2 PanelPositionToScreenPosition(Vector2 pos)
+    public Vector2 ScreenPositionToPanelDelta(Vector2 pos)
+    public Vector2 ScreenPositionToPanelPosition(Vector2 pos)
+    public Vector2(float x, float y)
+    public Window()
+    public YogaWrapper(Panel? panel = null)
+    public bool AddChild<T>(out T outPanel, string? classnames = null) where T : Panel, new()
+    public bool AnyChildHasFocus(Panel panel)
+    public bool Blur()
+    public bool Contains(Vector2 point)
+    public bool Contains(float x, float y) => Contains(new Vector2(x, y));
+    public bool Focus()
+    public bool HasActive => (PseudoClass & PseudoClass.Active) != 0;
+    public bool HasAlt => KeyboardModifiers.HasFlag(KeyboardModifiers.Alt);
+    public bool HasAttribute(string name)
+    public bool HasClass(string? classname)
+    public bool HasCtrl => KeyboardModifiers.HasFlag(KeyboardModifiers.Ctrl);
+    public bool HasFocus => (PseudoClass & PseudoClass.Focus) != 0;
+    public bool HasHovered => (PseudoClass & PseudoClass.Hover) != 0;
+    public bool HasIntro => (PseudoClass & PseudoClass.Intro) != 0;
+    public bool HasNewLayout => YogaNative.YGNodeGetHasNewLayout(_native);
+    public bool HasOutro => (PseudoClass & PseudoClass.Outro) != 0;
+    public bool HasShift => KeyboardModifiers.HasFlag(KeyboardModifiers.Shift);
+    public bool Is(string name)
+    public bool IsAncestor(Panel panel)
+    public bool IsInside(Rect rect, bool fullyInside)
+    public bool IsInside(Vector2 pos)
+    public bool IsNearZeroLength => Math.Abs(x) < 0.0001f && Math.Abs(y) < 0.0001f;
+    public bool IsValid() => YogaNode != null && !IsDeleted;
+    public bool PanelHasFocus(Panel panel)
+    public bool Switch(PseudoClass c, bool state)
+    public bool TryFindKeyframe(string name, out KeyFrames? keyframes)
+    public bool TryScroll(Vector2 value)
+    public bool TryScrollToBottom()
+    public delegate void TransitionFunction(Styles style, float delta);
+    public float GetFraction() => Unit == LengthUnit.Percentage ? Value / 100f : Value;
+    public float GetPixels(float parentSize)
+    public float LayoutHeight => YogaNative.YGNodeLayoutGetHeight(_native);
+    public float LayoutWidth => YogaNative.YGNodeLayoutGetWidth(_native);
+    public float LayoutX => YogaNative.YGNodeLayoutGetLeft(_native);
+    public float LayoutY => YogaNative.YGNodeLayoutGetTop(_native);
+    public float Length => MathF.Sqrt(x * x + y * y);
+    public float? AspectRatio { set => YogaNative.YGNodeStyleSetAspectRatio(_native, value ?? float.NaN); }
+    public float? FlexGrow { set => YogaNative.YGNodeStyleSetFlexGrow(_native, value ?? 0); }
+    public float? FlexShrink { set => YogaNative.YGNodeStyleSetFlexShrink(_native, value ?? 1); }
+    public int Compare(StyleSelector? x, StyleSelector? y)
+    public int GetChildIndex(Panel? panel)
+    public override bool Equals(object? obj) => obj is Color color && this == color;
+    public override bool Equals(object? obj) => obj is Length length && this == length;
+    public override bool Equals(object? obj) => obj is Vector2 v && this == v;
+    public override bool Set(string property, string value)
+    public override int GetHashCode()
+    public override int GetHashCode() => HashCode.Combine(Value, Unit);
+    public override int GetHashCode() => HashCode.Combine(r, g, b, a);
+    public override int GetHashCode() => HashCode.Combine(x, y);
+    public override string ToString()
+    public override string ToString() => $"({x}, {y})";
+    public override string ToString() => $"Color({r:F2}, {g:F2}, {b:F2}, {a:F2})";
+    public override string ToString() => $"Margin({Left}, {Top}, {Right}, {Bottom})";
+    public override string ToString() => $"Rect({Left}, {Top}, {Width}, {Height})";
+    public override string ToString() => $"{Button} {(Pressed ? "pressed" : "released")}";
+    public override string ToString() => Unit switch
+    public override void Delete(bool immediate = true)
+    public override void Dirty() => isDirty = true;
+    public override void DrawContent(ref RenderState state)
+    public override void FinalLayout(Vector2 offset)
+    public override void OnButtonTyped(ButtonEvent e)
+    public override void OnKeyTyped(char k)
+    public override void OnLayout(ref Rect layoutRect)
+    public override void OnTemplateSlot(Html.Node element, string slotName, Panel panel)
+    public override void SetContent(string value)
+    public override void SetContent(string? value)
+    public override void SetProperty(string name, string value)
+    public override void Tick()
+    public static Color Black => new(0, 0, 0, 1);
+    public static Color Blue => new(0, 0, 1, 1);
+    public static Color Cyan => new(0, 1, 1, 1);
+    public static Color FromRgba(byte r, byte g, byte b, byte a = 255)
+    public static Color Gray => new(0.5f, 0.5f, 0.5f, 1);
+    public static Color Green => new(0, 1, 0, 1);
+    public static Color Magenta => new(1, 0, 1, 1);
+    public static Color Red => new(1, 0, 0, 1);
+    public static Color Transparent => new(0, 0, 0, 0);
+    public static Color White => new(1, 1, 1, 1);
+    public static Color Yellow => new(1, 1, 0, 1);
+    public static Color? Parse(string value)
+    public static Length Auto => new(0, LengthUnit.Auto);
+    public static Length Contain => new(0, LengthUnit.Contain);
+    public static Length Cover => new(0, LengthUnit.Cover);
+    public static Length Fraction(float value) => new(value * 100f, LengthUnit.Percentage);
+    public static Length Percent(float value) => new(value, LengthUnit.Percentage);
+    public static Length Pixels(float value) => new(value, LengthUnit.Pixels);
+    public static Length Undefined => new(0, LengthUnit.Undefined);
+    public static Length? Lerp(Length a, Length b, float t)
+    public static Length? Lerp(Length a, Length b, float t, float dimension)
+    public static Length? Parse(string value)
+    public static Margin GetEdges(Vector2 size, Length? left, Length? top, Length? right, Length? bottom)
+    public static Margin Zero => new(0, 0, 0, 0);
+    public static Margin operator +(Margin a, Margin b)
+    public static Rect Empty => new(0, 0, 0, 0);
+    public static Vector2 One => new(1, 1);
+    public static Vector2 RootSize = new(1920, 1080);
+    public static Vector2 Zero => new(0, 0);
+    public static Vector2 operator *(Vector2 a, float b) => new(a.x * b, a.y * b);
+    public static Vector2 operator *(float a, Vector2 b) => new(a * b.x, a * b.y);
+    public static Vector2 operator +(Vector2 a, Vector2 b) => new(a.x + b.x, a.y + b.y);
+    public static Vector2 operator -(Vector2 a, Vector2 b) => new(a.x - b.x, a.y - b.y);
+    public static Vector2 operator /(Vector2 a, float b) => new(a.x / b, a.y / b);
+    public static YGNodeRef Null => new() { Ptr = IntPtr.Zero };
+    public static bool Clear()
+    public static bool Clear(Panel? panel)
+    public static bool Set(Panel? panel)
+    public static bool TryConvert(object value, Type targetType, out object? convertedValue)
+    public static bool TryParse(string value, out Length result)
+    public static bool operator !=(Color left, Color right) => !(left == right);
+    public static bool operator !=(Length a, Length b) => !(a == b);
+    public static bool operator !=(Vector2 a, Vector2 b) => !(a == b);
+    public static bool operator ==(Color left, Color right) =>
+    public static bool operator ==(Length a, Length b) => a.Value == b.Value && a.Unit == b.Unit;
+    public static bool operator ==(Vector2 a, Vector2 b) => a.x == b.x && a.y == b.y;
+    public static implicit operator Length(float value) => Pixels(value);
+    public static implicit operator System.Numerics.Vector2(Vector2 v) => new(v.x, v.y);
+    public static implicit operator Vector2(System.Numerics.Vector2 v) => new(v.X, v.Y);
+    public static implicit operator Vector2(float value) => new(value, value);
+    public static readonly Rect Zero = new(0, 0, 0, 0);
+    public static void AssertIsMainThread()
+    public static void Error(Exception ex)
+    public static void Error(string message)
+    public static void Info(string message)
+    public static void Scale(ref Length length, float scale)
+    public static void Warning(Exception ex, string message)
+    public static void Warning(string message)
+    public string ProcessWhiteSpace(string text)
+    public string? GetAttribute(string name)
+    public string? GetAttribute(string name, string? defaultValue)
+    public virtual Panel? FindPopupPanel()
+    public virtual Vector2 GetTransformPosition(Vector2 pos)
+    public virtual bool WantsMouseInput()
+    public virtual float MousePosToValue()
+    public virtual string? GetClipboardValue(bool cut)
+    public virtual void CreateEvent(PanelEvent evnt)
+    public virtual void CreateEvent(string name, object? value = null, float? debounce = null)
+    public virtual void Delete(bool immediate = true)
+    public virtual void DrawBackground(ref RenderState state)
+    public virtual void DrawContent(ref RenderState state)
+    public virtual void FinalLayout(Vector2 offset)
+    public virtual void LanguageChanged()
+    public virtual void OnButtonEvent(ButtonEvent e)
+    public virtual void OnButtonTyped(ButtonEvent e)
+    public virtual void OnClose()
+    public virtual void OnDeleted()
+    public virtual void OnHotloaded()
+    public virtual void OnKeyTyped(char k)
+    public virtual void OnLayout(ref Rect layoutRect)
+    public virtual void OnMouseWheel(Vector2 value)
+    public virtual void OnParentChanged()
+    public virtual void OnPaste(string text)
+    public virtual void OnTemplateSlot(Sandbox.Html.Node node, string? slotName, Panel panel)
+    public virtual void OnTemplateSlot(string slotName)
+    public virtual void OnValueChanged()
+    public virtual void SetContent(string? value)
+    public virtual void SetProperty(string name, string value)
+    public virtual void SetText(string text)
+    public virtual void SetTexture(string? name)
+    public virtual void Tick()
+    public void Add(Rect other)
+    public void AddChild(YogaWrapper? child)
+    public void AddClass(string? classname)
+    public void AddEventListener(string eventName, Action action)
+    public void AddEventListener(string eventName, Action<PanelEvent> e)
+    public void AddFrom(GradientInfo other)
+    public void ApplyCascading(Styles cached)
+    public void BindClass(string className, Func<bool> func)
+    public void CalculateLayout(float width = float.NaN, float height = float.NaN)
+    public void Click()
+    public void Close()
+    public void CopyFrom(GradientInfo other)
+    public void CreateTitleBar()
+    public void DeleteChildren(bool immediate = false)
+    public void DeleteIcon()
+    public void DeleteText()
+    public void Dispose()
+    public void FlashClass(string classname, float seconds)
+    public void FocusWindow()
+    public void InvalidateLayout()
+    public void Layout()
+    public void MarkDirty()
+    public void Maximise()
+    public void Minimise()
+    public void Open()
+    public void ParametersChanged(bool immediately)
+    public void ProcessButtonEvent(string button, bool pressed, KeyboardModifiers modifiers = KeyboardModifiers.None)
+    public void ProcessCharTyped(char character)
+    public void ProcessMouseWheel(Vector2 delta, KeyboardModifiers modifiers = KeyboardModifiers.None)
+    public void ProcessPendingEvents()
+    public void RemoveAttribute(string name)
+    public void RemoveChild(YogaWrapper? child)
+    public void RemoveClass(string? classname)
+    public void RemoveEventListener(string eventName, Action handler)
+    public void RemoveEventListener(string eventName, Action<PanelEvent> handler)
+    public void RemoveEventListener(string name)
+    public void RenderChildren(IPanelRenderer renderer, ref RenderState state)
+    public void RenderManual(IPanelRenderer renderer, float opacity = 1.0f)
+    public void Select()
+    public void SelectAllInChildren()
+    public void SelectByValue(string? value)
+    public void SelectOption(RadioButton option)
+    public void SetAttribute(string name, string value)
+    public void SetChildIndex(Panel panel, int index)
+    public void SetClass(string classname, bool active)
+    public void SetMeasureFunction(Func<YGNodeRef, float, YGMeasureMode, float, YGMeasureMode, Vector2> measureFunc)
+    public void SetMouseCapture(bool b)
+    public void SetNativeWindow(INativeWindow nativeWindow)
+    public void SetTheme(string theme)
+    public void SetTitle(string title)
+    public void SkipTransitions()
+    public void SortChildren(Comparison<Panel> sorter)
+    public void SortChildren(Func<Panel, int> sorter) => SortChildren<Panel>(sorter);
+    public void SortChildren<TargetType>(Func<TargetType, int> sorter)
+    public void StartDrag(Vector2 mousePos)
+    public void StopDrag()
+    public void StopPropagation()
+    public void SwitchTab(Tab tab, bool setCookie = true)
+    public void Toggle()
+    public void ToggleClass(string classname)
+    public void UnselectAllInChildren()
+    public void UpdateDrag(Vector2 mousePos)
+    public void UpdateInput(Vector2 mousePosition, bool mouseIsActive)
+public delegate Vector2 YGMeasureFunc(YGNodeRef node, float width, YGMeasureMode widthMode, float height, YGMeasureMode heightMode);

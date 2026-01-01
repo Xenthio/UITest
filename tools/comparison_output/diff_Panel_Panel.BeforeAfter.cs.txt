@@ -1,0 +1,95 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Panel/Panel.BeforeAfter.cs	2026-01-01 07:45:59.603934668 +0000
++++ ./src/Sandbox.UI/Panel/Panel.BeforeAfter.cs	2026-01-01 07:45:47.901924523 +0000
+@@ -1,18 +1,20 @@
+-﻿using Sandbox.Audio;
+-
+ namespace Sandbox.UI;
+ 
++/// <summary>
++/// Support for CSS ::before and ::after pseudo-elements.
++/// Ported from s&box engine/Sandbox.Engine/Systems/UI/Panel/Panel.BeforeAfter.cs
++/// </summary>
+ public partial class Panel
+ {
+ 	/// <summary>
+-	/// if we have a ::before element, this is it.
++	/// The ::before pseudo-element, if it exists.
+ 	/// </summary>
+-	Panel _beforeElement;
++	Panel? _beforeElement;
+ 
+ 	/// <summary>
+-	/// if we have a ::after element, this is it.
++	/// The ::after pseudo-element, if it exists.
+ 	/// </summary>
+-	Panel _afterElement;
++	Panel? _afterElement;
+ 
+ 	/// <summary>
+ 	/// Called during tick to create or destroy the ::before and ::after elements.
+@@ -20,28 +22,31 @@
+ 	void UpdateBeforeAfterElements()
+ 	{
+ 		// Don't do this if we ARE a ::before or ::after element.
+-		if ( PseudoClass.Contains( PseudoClass.Before ) ) return;
+-		if ( PseudoClass.Contains( PseudoClass.After ) ) return;
+-
+-		BuildPseudoElement( Style.HasBeforeElement, PseudoClass.Before, ref _beforeElement );
+-		BuildPseudoElement( Style.HasAfterElement, PseudoClass.After, ref _afterElement );
++		if (PseudoClass.HasFlag(PseudoClass.Before)) return;
++		if (PseudoClass.HasFlag(PseudoClass.After)) return;
+ 
+-		// Make sure it's always first
+-		if ( _beforeElement.IsValid() ) SetChildIndex( _beforeElement, 0 );
++		BuildPseudoElement(Style.HasBeforeElement, PseudoClass.Before, ref _beforeElement);
++		BuildPseudoElement(Style.HasAfterElement, PseudoClass.After, ref _afterElement);
+ 
+-		// Make sure it's always last
+-		if ( _afterElement.IsValid() ) SetChildIndex( _afterElement, _children.Count - 1 );
++		// Make sure ::before is always first
++		if (_beforeElement != null && _beforeElement.IsValid())
++			SetChildIndex(_beforeElement, 0);
++
++		// Make sure ::after is always last
++		if (_afterElement != null && _afterElement.IsValid() && _children != null)
++			SetChildIndex(_afterElement, _children.Count - 1);
+ 	}
+ 
+ 	/// <summary>
+-	/// Called to update the state of a before or after element. Either destroying it or creating it.
++	/// Called to update the state of a ::before or ::after element.
++	/// Either destroys it or creates it based on whether it should exist.
+ 	/// </summary>
+-	private void BuildPseudoElement( bool shouldExist, PseudoClass additionalClass, ref Panel panel )
++	private void BuildPseudoElement(bool shouldExist, PseudoClass additionalClass, ref Panel? panel)
+ 	{
+-		// destroy it if it exists
+-		if ( !shouldExist )
++		// Destroy it if it exists but shouldn't
++		if (!shouldExist)
+ 		{
+-			if ( panel is not null )
++			if (panel != null)
+ 			{
+ 				panel.Delete();
+ 				panel = null;
+@@ -50,15 +55,14 @@
+ 			return;
+ 		}
+ 
+-		// create it if it doesn't exist
+-		if ( !panel.IsValid() )
++		// Create it if it doesn't exist but should
++		if (panel == null || !panel.IsValid())
+ 		{
+ 			panel = new Label();
+ 			panel.ElementName = "element";
+-			panel.RemoveClass( "label" );
++			panel.RemoveClass("label");
+ 			panel.PseudoClass = additionalClass;
+-			AddChild( panel );
++			AddChild(panel);
+ 		}
+-
+ 	}
+ }

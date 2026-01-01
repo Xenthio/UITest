@@ -1,0 +1,134 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Styles/GradientInfo.cs	2026-01-01 07:45:59.606934670 +0000
++++ ./src/Sandbox.UI/Styles/GradientInfo.cs	2026-01-01 07:45:47.903924525 +0000
+@@ -1,63 +1,73 @@
+-﻿using System.Collections.Immutable;
++using System.Collections.Immutable;
+ 
+ namespace Sandbox.UI;
+ 
+-[SkipHotload]
+-internal struct GradientInfo
++/// <summary>
++/// Gradient information for CSS gradients (linear-gradient, radial-gradient)
++/// Ported from s&box's engine/Sandbox.Engine/Systems/UI/Styles/GradientInfo.cs
++/// </summary>
++public struct GradientInfo
+ {
+-
+-	public float Angle;
+-	public Length OffsetX;
+-	public Length OffsetY;
+-	public RadialSizeMode SizeMode;
+-	public GradientTypes GradientType;
+-	public ImmutableArray<Styles.GradientColorOffset> ColorOffsets;
+-
+-	public void CopyFrom( GradientInfo other )
+-	{
+-		ColorOffsets = ImmutableArray<Styles.GradientColorOffset>.Empty;
+-
+-		if ( !other.ColorOffsets.IsDefaultOrEmpty )
+-		{
+-			ColorOffsets = ColorOffsets.AddRange( other.ColorOffsets );
+-		}
+-
+-		Angle = other.Angle;
+-		SizeMode = other.SizeMode;
+-		OffsetX = other.OffsetX;
+-		OffsetY = other.OffsetY;
+-		GradientType = other.GradientType;
+-	}
+-
+-	public void AddFrom( GradientInfo other )
+-	{
+-		if ( other.ColorOffsets.IsDefaultOrEmpty )
+-			return;
+-
+-		CopyFrom( other );
+-	}
+-
+-	public override int GetHashCode()
+-	{
+-		if ( ColorOffsets.IsDefaultOrEmpty )
+-			return 0;
+-
+-		return HashCode.Combine( Angle, SizeMode, OffsetX, OffsetY, GradientType, ColorOffsets );
+-	}
+-
+-	public enum RadialSizeMode
+-	{
+-		FarthestSide = 0,
+-		FarthestCorner = 1,
+-		ClosestSide = 2,
+-		ClosestCorner = 3,
+-		Circle = 4
+-	}
+-
+-	public enum GradientTypes
+-	{
+-		Linear = 0,
+-		Radial = 1
+-	}
+-
++    public float Angle;
++    public Length OffsetX;
++    public Length OffsetY;
++    public RadialSizeMode SizeMode;
++    public GradientTypes GradientType;
++    public ImmutableArray<GradientColorOffset> ColorOffsets;
++
++    public bool IsValid => !ColorOffsets.IsDefaultOrEmpty && ColorOffsets.Length > 0;
++
++    public void CopyFrom(GradientInfo other)
++    {
++        // Copy color offsets directly - ImmutableArray assignment is efficient
++        ColorOffsets = other.ColorOffsets;
++
++        Angle = other.Angle;
++        SizeMode = other.SizeMode;
++        OffsetX = other.OffsetX;
++        OffsetY = other.OffsetY;
++        GradientType = other.GradientType;
++    }
++
++    public void AddFrom(GradientInfo other)
++    {
++        if (other.ColorOffsets.IsDefaultOrEmpty)
++            return;
++
++        CopyFrom(other);
++    }
++
++    public override int GetHashCode()
++    {
++        if (ColorOffsets.IsDefaultOrEmpty)
++            return 0;
++
++        return HashCode.Combine(Angle, SizeMode, OffsetX, OffsetY, GradientType, ColorOffsets);
++    }
++
++    public enum RadialSizeMode
++    {
++        FarthestSide = 0,
++        FarthestCorner = 1,
++        ClosestSide = 2,
++        ClosestCorner = 3,
++        Circle = 4
++    }
++
++    public enum GradientTypes
++    {
++        Linear = 0,
++        Radial = 1
++    }
++
++    public struct GradientColorOffset
++    {
++        public Color color;
++        public float? offset;
++
++        public override int GetHashCode()
++        {
++            return HashCode.Combine(color, offset);
++        }
++    }
+ }

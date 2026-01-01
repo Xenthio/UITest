@@ -1,0 +1,8 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/PanelInputType.cs	2026-01-01 07:45:59.604934669 +0000
++++ ./src/Sandbox.UI/PanelInputType.cs	2026-01-01 07:45:47.902924524 +0000
+@@ -1,4 +1,4 @@
+-﻿namespace Sandbox.UI
++namespace Sandbox.UI
+ {
+ 	public enum PanelInputType
+ 	{

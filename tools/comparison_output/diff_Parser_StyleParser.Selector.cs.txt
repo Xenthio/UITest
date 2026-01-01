@@ -1,0 +1,17 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Parser/StyleParser.Selector.cs	2026-01-01 07:45:59.605934670 +0000
++++ ./src/Sandbox.UI/Parser/StyleParser.Selector.cs	2026-01-01 07:45:47.902924524 +0000
+@@ -1,4 +1,4 @@
+-﻿//
++//
+ //
+ // Selectors = [selector], [selector], [selector]
+ // Selector = [rule] [rule] [rule] [rule]
+@@ -11,7 +11,7 @@
+ {
+ 	/// <summary>
+ 	/// Here we divide the selectors into groups
+-	/// .fucker, .cocks, .hairy
++	/// .class1, .class2, .class3
+ 	/// </summary>
+ 	public static List<StyleSelector> Selector( string rule_string, StyleBlock parent = null )
+ 	{

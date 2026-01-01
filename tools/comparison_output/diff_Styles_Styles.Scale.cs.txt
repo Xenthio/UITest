@@ -1,0 +1,80 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Styles/Styles.Scale.cs	2026-01-01 07:45:59.606934670 +0000
++++ ./src/Sandbox.UI/Styles/Styles.Scale.cs	2026-01-01 07:45:47.904924526 +0000
+@@ -1,58 +1,19 @@
+-﻿namespace Sandbox.UI
++namespace Sandbox.UI
+ {
+ 	public partial class Styles
+ 	{
++		// NOTE: ApplyScale is disabled for now as it requires Length.Scale() method
++		// which isn't implemented yet. This method is used for UI scaling/DPI support.
++		// The critical style lifecycle fixes (From/Add methods) are in Styles.From.cs
++		// and work independently.
++		
++		/*
+ 		public void ApplyScale( float scale )
+ 		{
+-			Length.Scale( ref _fontsize, scale, true );
+-			Length.Scale( ref _textstrokewidth, scale, true );
+-			Length.Scale( ref _lineheight, scale, true );
+-			Length.Scale( ref _letterspacing, scale, true );
+-			Length.Scale( ref _width, scale );
+-			Length.Scale( ref _minwidth, scale );
+-			Length.Scale( ref _maxwidth, scale );
+-
+-			Length.Scale( ref _left, scale );
+-			Length.Scale( ref _right, scale );
+-			Length.Scale( ref _top, scale );
+-			Length.Scale( ref _bottom, scale );
+-
+-			Length.Scale( ref _height, scale );
+-			Length.Scale( ref _minheight, scale );
+-			Length.Scale( ref _maxheight, scale );
+-
+-			Length.Scale( ref _flexbasis, scale, true );
+-			Length.Scale( ref _rowgap, scale );
+-			Length.Scale( ref _columngap, scale );
+-
+-			Length.Scale( ref _marginleft, scale );
+-			Length.Scale( ref _margintop, scale );
+-			Length.Scale( ref _marginright, scale );
+-			Length.Scale( ref _marginbottom, scale );
+-
+-			Length.Scale( ref _paddingleft, scale );
+-			Length.Scale( ref _paddingtop, scale );
+-			Length.Scale( ref _paddingright, scale );
+-			Length.Scale( ref _paddingbottom, scale );
+-
+-			Length.Scale( ref _borderleftwidth, scale );
+-			Length.Scale( ref _bordertopwidth, scale );
+-			Length.Scale( ref _borderrightwidth, scale );
+-			Length.Scale( ref _borderbottomwidth, scale );
+-
+-			Length.Scale( ref _bordertopleftradius, scale );
+-			Length.Scale( ref _bordertoprightradius, scale );
+-			Length.Scale( ref _borderbottomrightradius, scale );
+-			Length.Scale( ref _borderbottomleftradius, scale );
+-
+-			Length.Scale( ref _transformoriginx, scale );
+-			Length.Scale( ref _transformoriginy, scale );
+-			Scale( ref _transform, scale );
+-
+-			Scale( BoxShadow, scale );
+-			Scale( TextShadow, scale );
+-			Scale( FilterDropShadow, scale );
++			// Scale implementation requires Length.Scale() method
++			// to be added to the Length struct
+ 		}
++		*/
+ 
+ 		internal bool CalcVisible()
+ 		{
+@@ -62,7 +23,7 @@
+ 			return true;
+ 		}
+ 
+-		private void Scale( ShadowList shadows, float amount )
++		private void Scale( ShadowList? shadows, float amount )
+ 		{
+ 			if ( shadows == null ) return;
+ 

@@ -1,0 +1,27 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Animation/KeyFrames.cs	2026-01-01 07:45:59.602934667 +0000
++++ ./src/Sandbox.UI/Animation/KeyFrames.cs	2026-01-01 07:45:47.899924522 +0000
+@@ -1,4 +1,4 @@
+-﻿namespace Sandbox.UI;
++namespace Sandbox.UI;
+ 
+ /// <summary>
+ /// Represents a CSS <c>@keyframes</c> rule.
+@@ -52,8 +52,17 @@
+ 		if ( startBlock.Interval == endBlock.Interval )
+ 			t = 0f;
+ 		else
+-			t = MathX.LerpInverse( delta, startBlock.Interval, endBlock.Interval, true );
++			t = LerpInverse( delta, startBlock.Interval, endBlock.Interval );
+ 
+ 		animStyle.FromLerp( startBlock.Styles, endBlock.Styles, t );
+ 	}
++
++	/// <summary>
++	/// Inverse lerp - finds the interpolation factor between two values
++	/// </summary>
++	private static float LerpInverse( float value, float from, float to )
++	{
++		if ( from == to ) return 0;
++		return Math.Clamp( (value - from) / (to - from), 0, 1 );
++	}
+ }

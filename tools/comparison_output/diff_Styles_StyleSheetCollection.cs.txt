@@ -1,0 +1,7 @@
+--- /home/runner/sbox-public/engine/Sandbox.Engine/Systems/UI/Styles/StyleSheetCollection.cs	2026-01-01 07:45:59.606934670 +0000
++++ ./src/Sandbox.UI/Styles/StyleSheetCollection.cs	2026-01-01 07:45:47.904924526 +0000
+@@ -1,4 +1,3 @@
+-﻿
+ namespace Sandbox.UI;
+ 
+ /// <summary>
