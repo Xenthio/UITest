@@ -777,7 +777,7 @@ public class SkiaPanelRenderer : IPanelRenderer
 
     /// <summary>
     /// Draw non-uniform borders with rounded corners
-    /// Uses path operations to create properly rounded border edges
+    /// Uses path operations to create properly rounded border edges, matching S&box's visual output
     /// </summary>
     private void DrawNonUniformBorderWithRadius(SKCanvas canvas, Rect rect, Styles style, float opacity,
         float leftWidth, float topWidth, float rightWidth, float bottomWidth,
@@ -797,24 +797,27 @@ public class SkiaPanelRenderer : IPanelRenderer
         );
         
         // Adjust inner radii to account for border width (can't be negative)
-        var innerRadiusTL = Math.Max(0, radiusTL - Math.Max(leftWidth, topWidth));
-        var innerRadiusTR = Math.Max(0, radiusTR - Math.Max(rightWidth, topWidth));
-        var innerRadiusBR = Math.Max(0, radiusBR - Math.Max(rightWidth, bottomWidth));
-        var innerRadiusBL = Math.Max(0, radiusBL - Math.Max(leftWidth, bottomWidth));
+        // Use average of adjacent borders for corner radius reduction, matching how borders actually meet
+        var innerRadiusTL = Math.Max(0, radiusTL - (leftWidth + topWidth) / 2);
+        var innerRadiusTR = Math.Max(0, radiusTR - (rightWidth + topWidth) / 2);
+        var innerRadiusBR = Math.Max(0, radiusBR - (rightWidth + bottomWidth) / 2);
+        var innerRadiusBL = Math.Max(0, radiusBL - (leftWidth + bottomWidth) / 2);
         
         using var innerPath = CreateRoundedRectPath(innerRect, innerRadiusTL, innerRadiusTR, innerRadiusBR, innerRadiusBL);
         
+        // Create the border region path once (difference between outer and inner)
+        using var borderPath = new SKPath();
+        outerPath.Op(innerPath, SKPathOp.Difference, borderPath);
+        
         // Draw each border edge by clipping to the border region for that edge
+        // This approach matches S&box's shader which assigns each pixel to the appropriate border color
+        
         // Left border
         if (leftWidth > 0 && style.BorderLeftColor.HasValue)
         {
             canvas.Save();
             var leftClip = new SKRect(skRect.Left, skRect.Top, skRect.Left + leftWidth, skRect.Bottom);
             canvas.ClipRect(leftClip);
-            
-            using var borderPath = new SKPath();
-            borderPath.AddPath(outerPath);
-            borderPath.Op(innerPath, SKPathOp.Difference, borderPath);
             
             var color = ToSKColor(style.BorderLeftColor.Value, opacity);
             using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
@@ -829,10 +832,6 @@ public class SkiaPanelRenderer : IPanelRenderer
             var topClip = new SKRect(skRect.Left, skRect.Top, skRect.Right, skRect.Top + topWidth);
             canvas.ClipRect(topClip);
             
-            using var borderPath = new SKPath();
-            borderPath.AddPath(outerPath);
-            borderPath.Op(innerPath, SKPathOp.Difference, borderPath);
-            
             var color = ToSKColor(style.BorderTopColor.Value, opacity);
             using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
             canvas.DrawPath(borderPath, paint);
@@ -846,10 +845,6 @@ public class SkiaPanelRenderer : IPanelRenderer
             var rightClip = new SKRect(skRect.Right - rightWidth, skRect.Top, skRect.Right, skRect.Bottom);
             canvas.ClipRect(rightClip);
             
-            using var borderPath = new SKPath();
-            borderPath.AddPath(outerPath);
-            borderPath.Op(innerPath, SKPathOp.Difference, borderPath);
-            
             var color = ToSKColor(style.BorderRightColor.Value, opacity);
             using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
             canvas.DrawPath(borderPath, paint);
@@ -862,10 +857,6 @@ public class SkiaPanelRenderer : IPanelRenderer
             canvas.Save();
             var bottomClip = new SKRect(skRect.Left, skRect.Bottom - bottomWidth, skRect.Right, skRect.Bottom);
             canvas.ClipRect(bottomClip);
-            
-            using var borderPath = new SKPath();
-            borderPath.AddPath(outerPath);
-            borderPath.Op(innerPath, SKPathOp.Difference, borderPath);
             
             var color = ToSKColor(style.BorderBottomColor.Value, opacity);
             using var paint = new SKPaint { Color = color, Style = SKPaintStyle.Fill, IsAntialias = true };
