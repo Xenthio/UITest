@@ -683,7 +683,12 @@ public class SkiaPanelRenderer : IPanelRenderer
         // Debug: Log checklabel info
         if (label.HasClass("checklabel"))
         {
-            Console.WriteLine($"[CHECKLABEL] text='{processedText}' font={fontFamily} size={fontSize} color=({textColor.r},{textColor.g},{textColor.b},{textColor.a}) opacity={opacity} rect={label.Box.RectInner}");
+            var parent = label.Parent;
+            var parentClasses = parent?.Classes ?? "null";
+            var checkboxAncestor = label.Parent?.Parent;
+            var checkboxClasses = checkboxAncestor?.Classes ?? "null";
+            Console.WriteLine($"[CHECKLABEL] text='{processedText}' font={fontFamily} size={fontSize} color=({textColor.r:F2},{textColor.g:F2},{textColor.b:F2},{textColor.a:F2}) opacity={opacity:F2}");
+            Console.WriteLine($"[CHECKLABEL]   rect={label.Box.RectInner} parent={parentClasses} checkbox={checkboxClasses}");
         }
         
         // Get or create cached typeface
@@ -721,9 +726,17 @@ public class SkiaPanelRenderer : IPanelRenderer
             x = rect.Right - textWidth;
         }
 
-        // Check if text needs wrapping (only if width is constrained)
+        // Check if text needs wrapping (only if width is constrained and there's something to wrap)
         var textWidth2 = paint.MeasureText(processedText);
-        var shouldWrap = rect.Width > 0 && textWidth2 > rect.Width && style.WhiteSpace != WhiteSpace.NoWrap;
+        // Don't wrap if:
+        // - WhiteSpace is NoWrap
+        // - Text contains no spaces (nothing to wrap)
+        // - Rect width is too small to fit any text (overflow case)
+        var hasSpaces = processedText.Contains(' ') || processedText.Contains('\n');
+        var shouldWrap = rect.Width > 0 && 
+                         textWidth2 > rect.Width && 
+                         style.WhiteSpace != WhiteSpace.NoWrap &&
+                         hasSpaces;
 
         if (shouldWrap)
         {
@@ -737,62 +750,85 @@ public class SkiaPanelRenderer : IPanelRenderer
 
     private void DrawWrappedText(SKCanvas canvas, string text, SKPaint paint, Rect rect, float startX, float startY, SKFontMetrics metrics, TextAlign? textAlign)
     {
-        var lineHeight = metrics.Descent - metrics.Ascent + metrics.Leading;
+        // Calculate line height - use descent - ascent as the base, add some spacing
+        // Note: Ascent is negative in SkiaSharp, so descent - ascent gives positive height
+        var lineHeight = metrics.Descent - metrics.Ascent;
+        if (metrics.Leading > 0)
+            lineHeight += metrics.Leading;
+        else
+            lineHeight *= 1.2f; // Add 20% spacing if no leading defined
+        
         var y = startY;
-        var words = text.Split(' ');
-        var currentLine = "";
-
-        foreach (var word in words)
+        
+        // First split by explicit newlines
+        var paragraphs = text.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+        
+        foreach (var paragraph in paragraphs)
         {
-            var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
-            var testWidth = paint.MeasureText(testLine);
-
-            if (testWidth > rect.Width && !string.IsNullOrEmpty(currentLine))
+            if (string.IsNullOrEmpty(paragraph))
             {
-                // Draw the current line
-                var x = rect.Left;
-                if (textAlign == TextAlign.Center)
-                {
-                    var lineWidth = paint.MeasureText(currentLine);
-                    x = rect.Left + (rect.Width - lineWidth) / 2;
-                }
-                else if (textAlign == TextAlign.Right)
-                {
-                    var lineWidth = paint.MeasureText(currentLine);
-                    x = rect.Right - lineWidth;
-                }
-
-                canvas.DrawText(currentLine, x, y, paint);
-                currentLine = word;
+                // Empty paragraph = blank line
                 y += lineHeight;
-
-                // Stop if we've exceeded the rect height
                 if (y - metrics.Ascent > rect.Bottom)
                     break;
+                continue;
             }
-            else
-            {
-                currentLine = testLine;
-            }
-        }
+            
+            // Split paragraph into words
+            var words = paragraph.Split(' ');
+            var currentLine = "";
 
-        // Draw the last line if we haven't exceeded bounds
-        if (!string.IsNullOrEmpty(currentLine) && y - metrics.Ascent <= rect.Bottom)
+            foreach (var word in words)
+            {
+                var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
+                var testWidth = paint.MeasureText(testLine);
+
+                if (testWidth > rect.Width && !string.IsNullOrEmpty(currentLine))
+                {
+                    // Draw the current line
+                    var x = CalculateTextX(rect, currentLine, paint, textAlign);
+                    canvas.DrawText(currentLine, x, y, paint);
+                    currentLine = word;
+                    y += lineHeight;
+
+                    // Stop if we've exceeded the rect height
+                    if (y - metrics.Ascent > rect.Bottom)
+                        break;
+                }
+                else
+                {
+                    currentLine = testLine;
+                }
+            }
+
+            // Draw the last line of this paragraph if we haven't exceeded bounds
+            if (!string.IsNullOrEmpty(currentLine) && y - metrics.Ascent <= rect.Bottom)
+            {
+                var x = CalculateTextX(rect, currentLine, paint, textAlign);
+                canvas.DrawText(currentLine, x, y, paint);
+                y += lineHeight;
+            }
+            
+            // Stop if we've exceeded the rect height
+            if (y - metrics.Ascent > rect.Bottom)
+                break;
+        }
+    }
+    
+    private float CalculateTextX(Rect rect, string text, SKPaint paint, TextAlign? textAlign)
+    {
+        var x = rect.Left;
+        if (textAlign == TextAlign.Center)
         {
-            var x = rect.Left;
-            if (textAlign == TextAlign.Center)
-            {
-                var lineWidth = paint.MeasureText(currentLine);
-                x = rect.Left + (rect.Width - lineWidth) / 2;
-            }
-            else if (textAlign == TextAlign.Right)
-            {
-                var lineWidth = paint.MeasureText(currentLine);
-                x = rect.Right - lineWidth;
-            }
-
-            canvas.DrawText(currentLine, x, y, paint);
+            var lineWidth = paint.MeasureText(text);
+            x = rect.Left + (rect.Width - lineWidth) / 2;
         }
+        else if (textAlign == TextAlign.Right)
+        {
+            var lineWidth = paint.MeasureText(text);
+            x = rect.Right - lineWidth;
+        }
+        return x;
     }
 
     private static SKTypeface GetCachedTypeface(string fontFamily, SKFontStyle fontStyle)
