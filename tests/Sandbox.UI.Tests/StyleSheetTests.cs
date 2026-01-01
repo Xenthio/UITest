@@ -414,6 +414,67 @@ public class StyleSheetTests
         Assert.Equal("background-color", sheet.Nodes[0].Styles.Transitions!.List[0].Property);
         Assert.Equal(200, sheet.Nodes[0].Styles.Transitions.List[0].Duration);
     }
+
+    [Fact]
+    public void Transitions_LerpsBackgroundColorCorrectly()
+    {
+        // Set up the time
+        PanelRealTime.TimeNow = 1.0;
+        PanelRealTime.TimeDelta = 0.016;
+
+        // Create a panel with transitions
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+        panel.AddClass("button");
+
+        // Create stylesheet with normal and hover states
+        var css = @"
+            .button { 
+                background-color: #FF0000; 
+                transition: all 0.3s linear; 
+            }
+            .button:hover { 
+                background-color: #00FF00; 
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        panel.StyleSheet.Add(sheet);
+
+        // Initial layout - should have red background
+        rootPanel.Layout();
+        
+        var initialColor = panel.ComputedStyle!.BackgroundColor;
+        Assert.NotNull(initialColor);
+        Assert.Equal(1.0f, initialColor.Value.r, 0.01);  // Red
+        Assert.Equal(0.0f, initialColor.Value.g, 0.01);
+        Assert.Equal(0.0f, initialColor.Value.b, 0.01);
+
+        // Capture computed style before hover
+        var beforeHoverColor = panel.ComputedStyle!.BackgroundColor;
+
+        // Trigger hover
+        PanelRealTime.Update(0.016);  // Advance time
+        panel.Switch(PseudoClass.Hover, true);
+        
+        rootPanel.Layout();
+
+        // On first frame after hover, should be interpolating (not black)
+        var hoverColor = panel.ComputedStyle!.BackgroundColor;
+        Assert.NotNull(hoverColor);
+        
+        // Debug output
+        var output = new System.IO.StringWriter();
+        output.WriteLine($"Before hover: {beforeHoverColor?.ToString() ?? "null"}");
+        output.WriteLine($"Hover frame 1: R={hoverColor.Value.r}, G={hoverColor.Value.g}, B={hoverColor.Value.b}, A={hoverColor.Value.a}");
+        output.WriteLine($"TimeNow={PanelRealTime.TimeNow}, TimeDelta={PanelRealTime.TimeDelta}");
+        output.WriteLine($"Transitions entries count: {panel.Transitions?.Entries?.Count ?? 0}");
+        
+        // Should be between red (1,0,0) and green (0,1,0), not black (0,0,0)
+        // With 5% interpolation (0.016/0.3), should be about (0.95, 0.05, 0)
+        Assert.True(hoverColor.Value.r > 0.5f, $"Expected red > 0.5 but got {hoverColor.Value.r}. Debug: {output}");
+        Assert.True(hoverColor.Value.a > 0.9f, $"Expected alpha > 0.9 but got {hoverColor.Value.a}");  // Should be mostly opaque
+    }
 }
 
 /// <summary>

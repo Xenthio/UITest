@@ -27,10 +27,10 @@ namespace Sandbox.UI
 		{
 			t = Math.Clamp(t, 0f, 1f);
 			return new Color(
-				(byte)MathX.Lerp(a.r, b.r, t),
-				(byte)MathX.Lerp(a.g, b.g, t),
-				(byte)MathX.Lerp(a.b, b.b, t),
-				(byte)MathX.Lerp(a.a, b.a, t)
+				MathX.Lerp(a.r, b.r, t),
+				MathX.Lerp(a.g, b.g, t),
+				MathX.Lerp(a.b, b.b, t),
+				MathX.Lerp(a.a, b.a, t)
 			);
 		}
 
