@@ -777,7 +777,8 @@ public class SkiaPanelRenderer : IPanelRenderer
 
     /// <summary>
     /// Draw non-uniform borders with rounded corners
-    /// Uses individual stroked paths for each edge with proper corner handling
+    /// Properly implements CSS border rendering with miter joins at corners
+    /// Each border edge owns half of each adjacent corner, split at 45-degree miter line
     /// </summary>
     private void DrawNonUniformBorderWithRadius(SKCanvas canvas, Rect rect, Styles style, float opacity,
         float leftWidth, float topWidth, float rightWidth, float bottomWidth,
@@ -785,203 +786,210 @@ public class SkiaPanelRenderer : IPanelRenderer
     {
         var skRect = ToSKRect(rect);
         
-        // For each border, we'll draw a stroked path that follows the outer edge
-        // This ensures smooth rounded corners that match the uniform border rendering
+        // For proper CSS-style borders, we need to draw each edge as a separate shape
+        // with miter joins at the corners. This is complex with rounded corners, so we'll
+        // use the fill approach with proper corner splitting.
         
-        // Top border
-        if (topWidth > 0 && style.BorderTopColor.HasValue)
+        // Create outer and inner paths
+        using var outerPath = CreateRoundedRectPath(skRect, radiusTL, radiusTR, radiusBR, radiusBL);
+        
+        var innerRect = new SKRect(
+            skRect.Left + leftWidth,
+            skRect.Top + topWidth,
+            skRect.Right - rightWidth,
+            skRect.Bottom - bottomWidth
+        );
+        
+        // Calculate inner radii properly - subtract border width from outer radius
+        // Using max of adjacent borders ensures we don't go negative
+        var innerRadiusTL = Math.Max(0, radiusTL - Math.Max(leftWidth, topWidth));
+        var innerRadiusTR = Math.Max(0, radiusTR - Math.Max(rightWidth, topWidth));
+        var innerRadiusBR = Math.Max(0, radiusBR - Math.Max(rightWidth, bottomWidth));
+        var innerRadiusBL = Math.Max(0, radiusBL - Math.Max(leftWidth, bottomWidth));
+        
+        using var innerPath = CreateRoundedRectPath(innerRect, innerRadiusTL, innerRadiusTR, innerRadiusBR, innerRadiusBL);
+        
+        // Create border region
+        using var borderPath = new SKPath();
+        outerPath.Op(innerPath, SKPathOp.Difference, borderPath);
+        
+        // Draw each border with proper corner clipping
+        // Corners are split at 45-degree angle from the corner center point (in the border area)
+        
+        DrawBorderEdgeWithMiter(canvas, borderPath, skRect, style.BorderTopColor, opacity, topWidth,
+            leftWidth, topWidth, rightWidth, topWidth,
+            radiusTL, radiusTR, radiusBR, radiusBL,
+            BorderEdge.Top);
+        
+        DrawBorderEdgeWithMiter(canvas, borderPath, skRect, style.BorderRightColor, opacity, rightWidth,
+            rightWidth, topWidth, rightWidth, bottomWidth,
+            radiusTL, radiusTR, radiusBR, radiusBL,
+            BorderEdge.Right);
+        
+        DrawBorderEdgeWithMiter(canvas, borderPath, skRect, style.BorderBottomColor, opacity, bottomWidth,
+            leftWidth, bottomWidth, rightWidth, bottomWidth,
+            radiusTL, radiusTR, radiusBR, radiusBL,
+            BorderEdge.Bottom);
+        
+        DrawBorderEdgeWithMiter(canvas, borderPath, skRect, style.BorderLeftColor, opacity, leftWidth,
+            leftWidth, topWidth, leftWidth, bottomWidth,
+            radiusTL, radiusTR, radiusBR, radiusBL,
+            BorderEdge.Left);
+    }
+    
+    private enum BorderEdge { Top, Right, Bottom, Left }
+    
+    /// <summary>
+    /// Draw a single border edge with proper miter joins at corners
+    /// </summary>
+    private void DrawBorderEdgeWithMiter(SKCanvas canvas, SKPath borderPath, SKRect rect, 
+        Color? color, float opacity, float edgeWidth,
+        float leftWidth, float topWidth, float rightWidth, float bottomWidth,
+        float radiusTL, float radiusTR, float radiusBR, float radiusBL,
+        BorderEdge edge)
+    {
+        if (edgeWidth <= 0 || !color.HasValue) return;
+        
+        canvas.Save();
+        
+        // Create a clipping path for this edge with proper miter joins
+        using var clipPath = new SKPath();
+        
+        switch (edge)
         {
-            using var path = new SKPath();
-            
-            // Start from top-left corner (accounting for left border width)
-            var startX = skRect.Left + leftWidth / 2;
-            var startY = skRect.Top + topWidth / 2;
-            
-            // End at top-right corner (accounting for right border width)
-            var endX = skRect.Right - rightWidth / 2;
-            var endY = skRect.Top + topWidth / 2;
-            
-            // Create path along top edge with rounded corners
-            if (radiusTL > 0)
-            {
-                // Start after the top-left corner arc
-                path.MoveTo(skRect.Left + radiusTL, startY);
-            }
-            else
-            {
-                path.MoveTo(startX, startY);
-            }
-            
-            // Line to top-right corner start
-            if (radiusTR > 0)
-            {
-                path.LineTo(skRect.Right - radiusTR, endY);
-                // Arc around top-right corner
-                var arcRect = new SKRect(
-                    skRect.Right - radiusTR * 2, 
-                    skRect.Top, 
-                    skRect.Right, 
-                    skRect.Top + radiusTR * 2
-                );
-                path.ArcTo(arcRect, 270, 90, false);
-            }
-            else
-            {
-                path.LineTo(endX, endY);
-            }
-            
-            var color = ToSKColor(style.BorderTopColor.Value, opacity);
-            using var paint = new SKPaint
-            {
-                Color = color,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = topWidth,
-                IsAntialias = true,
-                StrokeCap = SKStrokeCap.Round
-            };
-            canvas.DrawPath(path, paint);
+            case BorderEdge.Top:
+                // Top edge: from left-top corner miter to right-top corner miter
+                // Start at bottom-left miter point
+                clipPath.MoveTo(rect.Left + leftWidth, rect.Top + topWidth);
+                
+                // Line to outer edge start (account for corner radius)
+                if (radiusTL > 0)
+                {
+                    // Miter point on the inner corner
+                    var innerCornerX = rect.Left + leftWidth;
+                    var innerCornerY = rect.Top + topWidth;
+                    var outerCornerX = rect.Left + radiusTL;
+                    var outerCornerY = rect.Top;
+                    
+                    // Line from inner miter to where top edge meets the corner radius
+                    clipPath.LineTo(innerCornerX, innerCornerY);
+                    // Move to outer top edge
+                    clipPath.LineTo(outerCornerX, outerCornerY);
+                }
+                else
+                {
+                    clipPath.LineTo(rect.Left, rect.Top);
+                }
+                
+                // Top edge
+                clipPath.LineTo(radiusTR > 0 ? rect.Right - radiusTR : rect.Right, rect.Top);
+                
+                // Right-top corner miter
+                if (radiusTR > 0)
+                {
+                    clipPath.LineTo(rect.Right - rightWidth, rect.Top + topWidth);
+                }
+                else
+                {
+                    clipPath.LineTo(rect.Right, rect.Top);
+                    clipPath.LineTo(rect.Right - rightWidth, rect.Top + topWidth);
+                }
+                
+                clipPath.Close();
+                break;
+                
+            case BorderEdge.Right:
+                // Similar logic for right edge
+                clipPath.MoveTo(rect.Right - rightWidth, rect.Top + topWidth);
+                
+                if (radiusTR > 0)
+                {
+                    clipPath.LineTo(rect.Right - radiusTR, rect.Top);
+                    clipPath.LineTo(rect.Right, rect.Top + radiusTR);
+                }
+                else
+                {
+                    clipPath.LineTo(rect.Right, rect.Top);
+                }
+                
+                clipPath.LineTo(rect.Right, radiusBR > 0 ? rect.Bottom - radiusBR : rect.Bottom);
+                
+                if (radiusBR > 0)
+                {
+                    clipPath.LineTo(rect.Right - rightWidth, rect.Bottom - bottomWidth);
+                }
+                else
+                {
+                    clipPath.LineTo(rect.Right, rect.Bottom);
+                    clipPath.LineTo(rect.Right - rightWidth, rect.Bottom - bottomWidth);
+                }
+                
+                clipPath.Close();
+                break;
+                
+            case BorderEdge.Bottom:
+                clipPath.MoveTo(rect.Right - rightWidth, rect.Bottom - bottomWidth);
+                
+                if (radiusBR > 0)
+                {
+                    clipPath.LineTo(rect.Right - radiusBR, rect.Bottom);
+                }
+                else
+                {
+                    clipPath.LineTo(rect.Right, rect.Bottom);
+                }
+                
+                clipPath.LineTo(radiusBL > 0 ? rect.Left + radiusBL : rect.Left, rect.Bottom);
+                
+                if (radiusBL > 0)
+                {
+                    clipPath.LineTo(rect.Left + leftWidth, rect.Bottom - bottomWidth);
+                }
+                else
+                {
+                    clipPath.LineTo(rect.Left, rect.Bottom);
+                    clipPath.LineTo(rect.Left + leftWidth, rect.Bottom - bottomWidth);
+                }
+                
+                clipPath.Close();
+                break;
+                
+            case BorderEdge.Left:
+                clipPath.MoveTo(rect.Left + leftWidth, rect.Bottom - bottomWidth);
+                
+                if (radiusBL > 0)
+                {
+                    clipPath.LineTo(rect.Left, rect.Bottom - radiusBL);
+                    clipPath.LineTo(rect.Left + radiusBL, rect.Bottom);
+                }
+                else
+                {
+                    clipPath.LineTo(rect.Left, rect.Bottom);
+                }
+                
+                clipPath.LineTo(rect.Left, radiusTL > 0 ? rect.Top + radiusTL : rect.Top);
+                
+                if (radiusTL > 0)
+                {
+                    clipPath.LineTo(rect.Left + leftWidth, rect.Top + topWidth);
+                }
+                else
+                {
+                    clipPath.LineTo(rect.Left, rect.Top);
+                    clipPath.LineTo(rect.Left + leftWidth, rect.Top + topWidth);
+                }
+                
+                clipPath.Close();
+                break;
         }
         
-        // Right border
-        if (rightWidth > 0 && style.BorderRightColor.HasValue)
-        {
-            using var path = new SKPath();
-            
-            var startX = skRect.Right - rightWidth / 2;
-            var startY = skRect.Top + topWidth / 2;
-            var endX = skRect.Right - rightWidth / 2;
-            var endY = skRect.Bottom - bottomWidth / 2;
-            
-            if (radiusTR > 0)
-            {
-                path.MoveTo(startX, skRect.Top + radiusTR);
-            }
-            else
-            {
-                path.MoveTo(startX, startY);
-            }
-            
-            if (radiusBR > 0)
-            {
-                path.LineTo(endX, skRect.Bottom - radiusBR);
-                var arcRect = new SKRect(
-                    skRect.Right - radiusBR * 2,
-                    skRect.Bottom - radiusBR * 2,
-                    skRect.Right,
-                    skRect.Bottom
-                );
-                path.ArcTo(arcRect, 0, 90, false);
-            }
-            else
-            {
-                path.LineTo(endX, endY);
-            }
-            
-            var color = ToSKColor(style.BorderRightColor.Value, opacity);
-            using var paint = new SKPaint
-            {
-                Color = color,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = rightWidth,
-                IsAntialias = true,
-                StrokeCap = SKStrokeCap.Round
-            };
-            canvas.DrawPath(path, paint);
-        }
+        canvas.ClipPath(clipPath, SKClipOperation.Intersect, true);
         
-        // Bottom border
-        if (bottomWidth > 0 && style.BorderBottomColor.HasValue)
-        {
-            using var path = new SKPath();
-            
-            var startX = skRect.Right - rightWidth / 2;
-            var startY = skRect.Bottom - bottomWidth / 2;
-            var endX = skRect.Left + leftWidth / 2;
-            var endY = skRect.Bottom - bottomWidth / 2;
-            
-            if (radiusBR > 0)
-            {
-                path.MoveTo(skRect.Right - radiusBR, startY);
-            }
-            else
-            {
-                path.MoveTo(startX, startY);
-            }
-            
-            if (radiusBL > 0)
-            {
-                path.LineTo(skRect.Left + radiusBL, endY);
-                var arcRect = new SKRect(
-                    skRect.Left,
-                    skRect.Bottom - radiusBL * 2,
-                    skRect.Left + radiusBL * 2,
-                    skRect.Bottom
-                );
-                path.ArcTo(arcRect, 90, 90, false);
-            }
-            else
-            {
-                path.LineTo(endX, endY);
-            }
-            
-            var color = ToSKColor(style.BorderBottomColor.Value, opacity);
-            using var paint = new SKPaint
-            {
-                Color = color,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = bottomWidth,
-                IsAntialias = true,
-                StrokeCap = SKStrokeCap.Round
-            };
-            canvas.DrawPath(path, paint);
-        }
+        var skColor = ToSKColor(color.Value, opacity);
+        using var paint = new SKPaint { Color = skColor, Style = SKPaintStyle.Fill, IsAntialias = true };
+        canvas.DrawPath(borderPath, paint);
         
-        // Left border
-        if (leftWidth > 0 && style.BorderLeftColor.HasValue)
-        {
-            using var path = new SKPath();
-            
-            var startX = skRect.Left + leftWidth / 2;
-            var startY = skRect.Bottom - bottomWidth / 2;
-            var endX = skRect.Left + leftWidth / 2;
-            var endY = skRect.Top + topWidth / 2;
-            
-            if (radiusBL > 0)
-            {
-                path.MoveTo(startX, skRect.Bottom - radiusBL);
-            }
-            else
-            {
-                path.MoveTo(startX, startY);
-            }
-            
-            if (radiusTL > 0)
-            {
-                path.LineTo(endX, skRect.Top + radiusTL);
-                var arcRect = new SKRect(
-                    skRect.Left,
-                    skRect.Top,
-                    skRect.Left + radiusTL * 2,
-                    skRect.Top + radiusTL * 2
-                );
-                path.ArcTo(arcRect, 180, 90, false);
-            }
-            else
-            {
-                path.LineTo(endX, endY);
-            }
-            
-            var color = ToSKColor(style.BorderLeftColor.Value, opacity);
-            using var paint = new SKPaint
-            {
-                Color = color,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = leftWidth,
-                IsAntialias = true,
-                StrokeCap = SKStrokeCap.Round
-            };
-            canvas.DrawPath(path, paint);
-        }
+        canvas.Restore();
     }
 
     private void DrawContent(SKCanvas canvas, Panel panel, ref RenderState state)
