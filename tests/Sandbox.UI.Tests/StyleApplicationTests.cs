@@ -1,3 +1,4 @@
+using System.Linq;
 using Xunit;
 using Sandbox.UI;
 
@@ -443,5 +444,64 @@ public class StyleApplicationTests
         Assert.NotNull(panel.ComputedStyle);
         Assert.True(panel.ComputedStyle.FontSmooth.HasValue);
         Assert.Equal(FontSmooth.Antialiased, panel.ComputedStyle.FontSmooth.Value);
+    }
+
+    [Fact]
+    public void Panel_ActiveStyleBlocks_CreatesDefensiveCopy()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        panel.AddClass("test-panel");
+        rootPanel.AddChild(panel);
+
+        // Create a stylesheet with multiple rules
+        var css = @"
+            * {
+                width: 100px;
+            }
+            .test-panel {
+                height: 50px;
+                background-color: #ff0000;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act - Run layout to apply styles
+        rootPanel.Layout();
+
+        // Assert - ActiveStyleBlocks should be accessible without throwing collection modification error
+        var styleBlocks = panel.ActiveStyleBlocks;
+        Assert.NotNull(styleBlocks);
+
+        // Convert to list to force enumeration (this could throw if defensive copy isn't made)
+        var blocksList = styleBlocks.ToList();
+        Assert.NotEmpty(blocksList);
+
+        // Verify we can iterate multiple times (defensive copy allows this)
+        var firstCount = panel.ActiveStyleBlocks.Count();
+        var secondCount = panel.ActiveStyleBlocks.Count();
+        Assert.Equal(firstCount, secondCount);
+
+        // Trigger another layout while iterating to simulate the race condition
+        // This should not throw "Collection was modified" error
+        var enumerator = panel.ActiveStyleBlocks.GetEnumerator();
+        Assert.True(enumerator.MoveNext());
+        
+        // Force a style rebuild (this would modify LastActiveRules if not defensive)
+        panel.RemoveClass("test-panel");
+        panel.AddClass("test-panel");
+        rootPanel.Layout();
+        
+        // This should still work because we made a defensive copy
+        var remainingBlocks = new List<IStyleBlock>();
+        while (enumerator.MoveNext())
+        {
+            remainingBlocks.Add(enumerator.Current);
+        }
+        
+        // We should have successfully iterated without errors
+        Assert.NotNull(remainingBlocks);
     }
 }

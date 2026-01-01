@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Sandbox.UI;
 
 public partial class Panel : IStyleTarget
@@ -18,13 +20,12 @@ public partial class Panel : IStyleTarget
 		get
 		{
 			if (Style?.LastActiveRules == null)
-				yield break;
+				return Enumerable.Empty<IStyleBlock>();
 
-			foreach (var rule in Style.LastActiveRules)
-			{
-				if (rule?.Block != null)
-					yield return rule.Block;
-			}
+			// Create a defensive copy to prevent "Collection was modified" errors
+			// when the style is rebuilt during iteration
+			var rulesCopy = Style.LastActiveRules.ToList();
+			return rulesCopy.Where(x => x?.Block != null).Select(x => x.Block);
 		}
 	}
 }
