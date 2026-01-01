@@ -357,43 +357,28 @@ public class SkiaPanelRenderer : IPanelRenderer
     
     /// <summary>
     /// Create a rounded rectangle path with per-corner radii (matches s&box behavior)
+    /// Uses SKRoundRect for proper rounded corners
     /// </summary>
     private SKPath CreateRoundedRectPath(SKRect rect, float radiusTL, float radiusTR, float radiusBR, float radiusBL)
     {
         var path = new SKPath();
         
-        // Clamp radii to fit within the rectangle
-        float maxRadiusX = rect.Width / 2f;
-        float maxRadiusY = rect.Height / 2f;
-        radiusTL = Math.Min(radiusTL, Math.Min(maxRadiusX, maxRadiusY));
-        radiusTR = Math.Min(radiusTR, Math.Min(maxRadiusX, maxRadiusY));
-        radiusBR = Math.Min(radiusBR, Math.Min(maxRadiusX, maxRadiusY));
-        radiusBL = Math.Min(radiusBL, Math.Min(maxRadiusX, maxRadiusY));
+        // Create an SKRoundRect with individual corner radii
+        // SKRoundRect expects radii in a specific order
+        var roundRect = new SKRoundRect();
         
-        // Start from top-left, after the corner arc
-        path.MoveTo(rect.Left + radiusTL, rect.Top);
+        // SetRectRadii takes an array of 4 SKPoint values, one for each corner
+        // Order: top-left, top-right, bottom-right, bottom-left
+        // Each SKPoint has X (horizontal radius) and Y (vertical radius)
+        roundRect.SetRectRadii(rect, new SKPoint[]
+        {
+            new SKPoint(radiusTL, radiusTL),  // Top-left
+            new SKPoint(radiusTR, radiusTR),  // Top-right
+            new SKPoint(radiusBR, radiusBR),  // Bottom-right
+            new SKPoint(radiusBL, radiusBL)   // Bottom-left
+        });
         
-        // Top edge and top-right corner
-        path.LineTo(rect.Right - radiusTR, rect.Top);
-        if (radiusTR > 0)
-            path.ArcTo(new SKRect(rect.Right - radiusTR * 2, rect.Top, rect.Right, rect.Top + radiusTR * 2), 270, 90, false);
-        
-        // Right edge and bottom-right corner
-        path.LineTo(rect.Right, rect.Bottom - radiusBR);
-        if (radiusBR > 0)
-            path.ArcTo(new SKRect(rect.Right - radiusBR * 2, rect.Bottom - radiusBR * 2, rect.Right, rect.Bottom), 0, 90, false);
-        
-        // Bottom edge and bottom-left corner
-        path.LineTo(rect.Left + radiusBL, rect.Bottom);
-        if (radiusBL > 0)
-            path.ArcTo(new SKRect(rect.Left, rect.Bottom - radiusBL * 2, rect.Left + radiusBL * 2, rect.Bottom), 90, 90, false);
-        
-        // Left edge and top-left corner
-        path.LineTo(rect.Left, rect.Top + radiusTL);
-        if (radiusTL > 0)
-            path.ArcTo(new SKRect(rect.Left, rect.Top, rect.Left + radiusTL * 2, rect.Top + radiusTL * 2), 180, 90, false);
-        
-        path.Close();
+        path.AddRoundRect(roundRect);
         return path;
     }
     
