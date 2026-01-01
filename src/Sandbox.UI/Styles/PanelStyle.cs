@@ -30,9 +30,10 @@ public sealed class PanelStyle : Styles
     bool rulesChanged = true;
     
     /// <summary>
-    /// If true, skip transitions on the next style build
+    /// If true, skip transitions on the next style build.
+    /// Starts as true to ensure first style build doesn't try to transition from uninitialized state.
     /// </summary>
-    internal bool skipTransitions;
+    internal bool skipTransitions = true;
 
     public override void Dirty() => isDirty = true;
     internal bool IsDirty => isDirty;
