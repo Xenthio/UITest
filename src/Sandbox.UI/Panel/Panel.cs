@@ -239,11 +239,23 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
 
             // Process Razor render tree if dirty
             InternalTreeBinds();
-            if (razorTreeDirty && HasRenderTree)
+            
+            // Handle parameter changes and render tree - matches s&box order
+            if (HasRenderTree || _templateBindsChanged)
             {
-                bool firstTime = renderTree == null;
-                InternalRenderTree();
-                OnAfterTreeRender(firstTime);
+                if (_templateBindsChanged)
+                {
+                    _templateBindsChanged = false;
+                    razorTreeDirty = true;
+                    ParametersChanged(true);
+                }
+                
+                if (razorTreeDirty)
+                {
+                    bool firstTime = renderTree == null;
+                    InternalRenderTree();
+                    OnAfterTreeRender(firstTime);
+                }
             }
 
             // Tick styles if dirty
@@ -367,10 +379,37 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
         // This could be used with [PanelSlot("slotname")] attributes on properties
     }
     
-    // Parameter change notification (stub for S&box compatibility)
-    public void ParametersChanged(bool firstTime)
+    /// <summary>
+    /// True when parameters have been set and OnParametersSet needs to be called
+    /// </summary>
+    private bool _templateBindsChanged = true;
+    
+    /// <summary>
+    /// Parameter change notification - marks panel for OnParametersSet callback
+    /// </summary>
+    public void ParametersChanged(bool immediately)
     {
-        // TODO: Implement parameter tracking
+        _templateBindsChanged = true;
+        
+        if (immediately)
+        {
+            _templateBindsChanged = false;
+            razorTreeDirty = true;
+            OnParametersSetInternal();
+        }
+    }
+    
+    internal void OnParametersSetInternal()
+    {
+        try
+        {
+            OnParametersSet();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Exception in OnParametersSet: {e.Message}");
+        }
+        StateHasChanged();
     }
 }
     #endregion

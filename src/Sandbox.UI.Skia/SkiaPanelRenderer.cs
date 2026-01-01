@@ -1,5 +1,6 @@
 using SkiaSharp;
 using System.Collections.Concurrent;
+using System.IO;
 
 namespace Sandbox.UI.Skia;
 
@@ -226,9 +227,150 @@ public class SkiaPanelRenderer : IPanelRenderer
                 canvas.DrawRect(skRect, paint);
             }
         }
+        
+        // Background image
+        DrawBackgroundImage(canvas, panel, skRect, opacity, hasRadius, avgRadius);
 
         // Border
         DrawBorder(canvas, panel, ref state);
+    }
+    
+    private void DrawBackgroundImage(SKCanvas canvas, Panel panel, SKRect skRect, float opacity, bool hasRadius, float avgRadius)
+    {
+        var style = panel.ComputedStyle;
+        if (style?.BackgroundImage == null || string.IsNullOrEmpty(style.BackgroundImage.Path))
+            return;
+            
+        var texture = style.BackgroundImage;
+        
+        // Load texture if not already loaded
+        if (texture.NativeHandle == null)
+        {
+            texture.LoadData();
+        }
+        
+        // Try to get SKImage from native handle
+        SKImage? image = texture.NativeHandle as SKImage;
+        if (image == null)
+        {
+            // Try to load from path using file system
+            image = LoadTextureFromPath(texture.Path);
+            if (image != null)
+            {
+                texture.NativeHandle = image;
+                texture.Width = image.Width;
+                texture.Height = image.Height;
+            }
+        }
+        
+        if (image == null) return;
+        
+        using var paint = new SKPaint
+        {
+            Color = new SKColor(255, 255, 255, (byte)(255 * opacity)),
+            FilterQuality = SKFilterQuality.High,
+            IsAntialias = true
+        };
+        
+        // Apply clipping if has border radius
+        if (hasRadius)
+        {
+            canvas.Save();
+            var rrect = new SKRoundRect(skRect, avgRadius, avgRadius);
+            canvas.ClipRoundRect(rrect, SKClipOperation.Intersect, true);
+        }
+        
+        // Calculate destination rect based on background-size (default is cover-like behavior)
+        var srcRect = new SKRect(0, 0, image.Width, image.Height);
+        var dstRect = CalculateBackgroundImageRect(skRect, image.Width, image.Height, style);
+        
+        canvas.DrawImage(image, srcRect, dstRect, paint);
+        
+        if (hasRadius)
+        {
+            canvas.Restore();
+        }
+    }
+    
+    private SKRect CalculateBackgroundImageRect(SKRect container, int imageWidth, int imageHeight, Styles style)
+    {
+        // Default: scale to fit container while maintaining aspect ratio (cover)
+        float containerAspect = container.Width / container.Height;
+        float imageAspect = (float)imageWidth / imageHeight;
+        
+        float destWidth, destHeight;
+        
+        if (imageAspect > containerAspect)
+        {
+            // Image is wider - fit height
+            destHeight = container.Height;
+            destWidth = destHeight * imageAspect;
+        }
+        else
+        {
+            // Image is taller - fit width
+            destWidth = container.Width;
+            destHeight = destWidth / imageAspect;
+        }
+        
+        // Center the image
+        float x = container.Left + (container.Width - destWidth) / 2;
+        float y = container.Top + (container.Height - destHeight) / 2;
+        
+        return new SKRect(x, y, x + destWidth, y + destHeight);
+    }
+    
+    // Cache for loaded texture images
+    private static readonly ConcurrentDictionary<string, SKImage?> _textureCache = new();
+    
+    private SKImage? LoadTextureFromPath(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return null;
+        
+        // Check cache first
+        if (_textureCache.TryGetValue(path, out var cached))
+            return cached;
+            
+        SKImage? image = null;
+        
+        try
+        {
+            // Try to load as file path
+            if (File.Exists(path))
+            {
+                using var stream = File.OpenRead(path);
+                image = SKImage.FromEncodedData(stream);
+            }
+            // Try common asset paths
+            else
+            {
+                var possiblePaths = new[]
+                {
+                    path,
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path.TrimStart('/')),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", path.TrimStart('/')),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", path.TrimStart('/'))
+                };
+                
+                foreach (var possiblePath in possiblePaths)
+                {
+                    if (File.Exists(possiblePath))
+                    {
+                        using var stream = File.OpenRead(possiblePath);
+                        image = SKImage.FromEncodedData(stream);
+                        if (image != null) break;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load texture '{path}': {ex.Message}");
+        }
+        
+        // Cache result (even if null to avoid repeated load attempts)
+        _textureCache[path] = image;
+        return image;
     }
 
     private void DrawGradientBackground(SKCanvas canvas, SKRect rect, GradientInfo gradient, float opacity, bool hasRadius, float avgRadius)

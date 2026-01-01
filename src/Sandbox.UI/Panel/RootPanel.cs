@@ -28,6 +28,12 @@ public partial class RootPanel : Panel
     public float Scale { get; protected set; } = 1.0f;
 
     /// <summary>
+    /// System DPI scale factor. Set by the windowing system.
+    /// Default is 1.0 (96 DPI). Value of 1.5 means 144 DPI, 2.0 means 192 DPI, etc.
+    /// </summary>
+    public static float SystemDpiScale { get; set; } = 1.0f;
+
+    /// <summary>
     /// If set to true this panel won't be rendered to the screen like a normal panel
     /// </summary>
     public bool RenderedManually { get; set; }
@@ -116,11 +122,20 @@ public partial class RootPanel : Panel
     }
 
     /// <summary>
-    /// Work out scaling here. Default is to scale relative to 1080p height.
+    /// Work out scaling here. Uses system DPI if available, otherwise falls back to resolution-based scaling.
     /// </summary>
     protected virtual void UpdateScale(Rect screenSize)
     {
-        Scale = screenSize.Height / 1080.0f;
+        // Use system DPI scale if set (preferred), otherwise fall back to resolution-based scaling
+        if (SystemDpiScale > 0.1f && Math.Abs(SystemDpiScale - 1.0f) > 0.001f)
+        {
+            Scale = SystemDpiScale;
+        }
+        else
+        {
+            // Fall back to resolution-based scaling relative to 1080p
+            Scale = screenSize.Height / 1080.0f;
+        }
         Scale = Math.Clamp(Scale, 0.1f, 10.0f);
     }
 

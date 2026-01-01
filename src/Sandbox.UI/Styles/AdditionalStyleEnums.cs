@@ -207,22 +207,76 @@ Luminosity = 15
 }
 
 /// <summary>
-/// Stub Texture class for compilation - will be replaced with proper implementation
+/// Texture class for UI images. Compatible with s&box's Texture API.
 /// </summary>
 public class Texture
 {
+	/// <summary>
+	/// The file path or URL of the texture
+	/// </summary>
 	public string Path { get; set; } = string.Empty;
+	
+	/// <summary>
+	/// Width of the texture in pixels
+	/// </summary>
 	public int Width { get; set; }
+	
+	/// <summary>
+	/// Height of the texture in pixels
+	/// </summary>
 	public int Height { get; set; }
+	
+	/// <summary>
+	/// Native handle to the loaded texture data (implementation-specific)
+	/// Can be cast to SKImage, SKBitmap, etc. by the renderer
+	/// </summary>
+	public object? NativeHandle { get; set; }
+	
+	/// <summary>
+	/// Returns true if the texture has been loaded and is valid
+	/// </summary>
+	public bool IsValid => !string.IsNullOrEmpty(Path) && Path != "invalid";
 
 	/// <summary>
 	/// Invalid/placeholder texture
 	/// </summary>
 	public static Texture Invalid => new Texture { Path = "invalid" };
 
+	/// <summary>
+	/// Load a texture from file path synchronously
+	/// </summary>
 	public static Texture Load(string path)
 	{
 		return new Texture { Path = path };
+	}
+	
+	/// <summary>
+	/// Load a texture from file path asynchronously
+	/// </summary>
+	public static async Task<Texture> LoadAsync(string path)
+	{
+		// Simple async wrapper - actual loading happens in renderer
+		await Task.Yield();
+		return new Texture { Path = path };
+	}
+	
+	/// <summary>
+	/// Texture loader callback. Set by renderer to handle actual texture loading.
+	/// Takes path, returns (width, height, nativeHandle)
+	/// </summary>
+	public static Func<string, (int width, int height, object? handle)>? TextureLoader { get; set; }
+	
+	/// <summary>
+	/// Load texture data using the registered loader
+	/// </summary>
+	public void LoadData()
+	{
+		if (TextureLoader == null || string.IsNullOrEmpty(Path)) return;
+		
+		var (width, height, handle) = TextureLoader(Path);
+		Width = width;
+		Height = height;
+		NativeHandle = handle;
 	}
 }
 

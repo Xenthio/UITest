@@ -136,9 +136,9 @@ public class ComboBox : Button
 
     public bool IsOpen { get; private set; } = false;
 
-    protected override void OnClick(MousePanelEvent e)
+    protected override void OnMouseDown(MousePanelEvent e)
     {
-        base.OnClick(e);
+        base.OnMouseDown(e);
         
         if (!IsOpen)
         {
@@ -148,8 +148,6 @@ public class ComboBox : Button
         {
             Close();
         }
-        
-        e.StopPropagation();
     }
 
     /// <summary>
