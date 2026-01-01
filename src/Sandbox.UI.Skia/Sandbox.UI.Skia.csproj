@@ -13,6 +13,8 @@
     <!-- SkiaSharp for rendering -->
     <PackageReference Include="SkiaSharp" Version="2.88.7" />
     <PackageReference Include="HarfBuzzSharp" Version="7.3.0.3" />
+    <!-- RichTextKit for professional text layout (matches s&box) -->
+    <PackageReference Include="Topten.RichTextKit" Version="0.4.167" />
   </ItemGroup>
 
   <ItemGroup>
