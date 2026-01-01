@@ -11,10 +11,10 @@ public partial class Label : Panel
 {
     /// <summary>
     /// Delegate for measuring text. Renderers should set this to provide accurate text measurement.
-    /// Parameters: text, fontFamily, fontSize, fontWeight
+    /// Parameters: text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping
     /// Returns: Vector2 with width and height
     /// </summary>
-    public static Func<string, string?, float, int, Vector2>? TextMeasureFunc { get; set; }
+    public static Func<string, string?, float, int, float, bool, Vector2>? TextMeasureFunc { get; set; }
 
     /// <summary>
     /// Information about the Text on a per-element scale.
@@ -63,11 +63,18 @@ public partial class Label : Panel
         var fontSize = ComputedStyle?.FontSize?.GetPixels(16f) ?? 16f;
         var fontFamily = ComputedStyle?.FontFamily;
         var fontWeight = ComputedStyle?.FontWeight ?? 400;
+        
+        // Determine if text should wrap based on white-space property and width constraint
+        var whiteSpace = ComputedStyle?.WhiteSpace;
+        var allowWrapping = whiteSpace != WhiteSpace.NoWrap && 
+                           widthMode != YGMeasureMode.Undefined && 
+                           !float.IsNaN(width) && 
+                           width > 0;
 
         // Use renderer-provided measurement if available
         if (TextMeasureFunc != null)
         {
-            return TextMeasureFunc(processedText, fontFamily, fontSize, fontWeight);
+            return TextMeasureFunc(processedText, fontFamily, fontSize, fontWeight, width, allowWrapping);
         }
 
         // Fallback: estimate based on character count

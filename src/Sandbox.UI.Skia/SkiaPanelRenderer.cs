@@ -48,7 +48,8 @@ public class SkiaPanelRenderer : IPanelRenderer
     {
         // Register text measurement function for Label layout calculations
         // This ensures measurement works even if RegisterAsActiveRenderer isn't called
-        Label.TextMeasureFunc = MeasureTextStatic;
+        Label.TextMeasureFunc = (text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping) => 
+            MeasureTextStatic(text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping);
     }
 
     /// <summary>
@@ -68,7 +69,8 @@ public class SkiaPanelRenderer : IPanelRenderer
     /// </summary>
     public void RegisterAsActiveRenderer()
     {
-        Label.TextMeasureFunc = MeasureText;
+        Label.TextMeasureFunc = (text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping) => 
+            MeasureTextStatic(text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping);
     }
 
     /// <summary>
@@ -76,13 +78,13 @@ public class SkiaPanelRenderer : IPanelRenderer
     /// </summary>
     public Vector2 MeasureText(string text, string? fontFamily, float fontSize, int fontWeight)
     {
-        return MeasureTextStatic(text, fontFamily, fontSize, fontWeight);
+        return MeasureTextStatic(text, fontFamily, fontSize, fontWeight, float.NaN, false);
     }
 
     /// <summary>
     /// Static text measurement for use before renderer instance is created
     /// </summary>
-    private static Vector2 MeasureTextStatic(string text, string? fontFamily, float fontSize, int fontWeight)
+    private static Vector2 MeasureTextStatic(string text, string? fontFamily, float fontSize, int fontWeight, float maxWidth, bool allowWrapping)
     {
         var fontStyle = ToSKFontStyleStatic(fontWeight);
         var typeface = GetCachedTypefaceStatic(fontFamily ?? "Arial", fontStyle);
@@ -94,12 +96,80 @@ public class SkiaPanelRenderer : IPanelRenderer
             IsAntialias = true
         };
         
-        var width = paint.MeasureText(text);
-        var metrics = paint.FontMetrics;
-        var height = metrics.Descent - metrics.Ascent;
+        // If wrapping is disabled or no width constraint, measure as single line
+        if (!allowWrapping || float.IsNaN(maxWidth) || maxWidth <= 0)
+        {
+            var width = paint.MeasureText(text);
+            var metrics = paint.FontMetrics;
+            var height = metrics.Descent - metrics.Ascent;
+            
+            // Add 1 pixel buffer to prevent truncation (matches s&box's CeilToInt + 1 pattern)
+            return new Vector2((float)Math.Ceiling(width) + 1f, (float)Math.Ceiling(height));
+        }
         
-        // Add 1 pixel buffer to prevent truncation (matches s&box's CeilToInt + 1 pattern)
-        return new Vector2((float)Math.Ceiling(width) + 1f, (float)Math.Ceiling(height));
+        // Measure with wrapping - simulate the wrapping algorithm to get accurate height
+        var metrics2 = paint.FontMetrics;
+        var lineHeight = metrics2.Descent - metrics2.Ascent;
+        if (metrics2.Leading > 0)
+            lineHeight += metrics2.Leading;
+        else
+            lineHeight *= 1.2f; // Add 20% spacing if no leading defined
+            
+        // Split by explicit newlines first
+        var paragraphs = text.Split(new[] { "\r\n", "\n", "\r", "\u2029" }, StringSplitOptions.None);
+        
+        float totalHeight = 0;
+        float maxLineWidth = 0;
+        
+        foreach (var paragraph in paragraphs)
+        {
+            if (string.IsNullOrEmpty(paragraph))
+            {
+                // Empty paragraph = blank line
+                totalHeight += lineHeight;
+                continue;
+            }
+            
+            // Split paragraph into words and measure wrapped lines
+            var words = paragraph.Split(' ');
+            var currentLine = "";
+            int lineCount = 0;
+
+            foreach (var word in words)
+            {
+                var testLine = string.IsNullOrEmpty(currentLine) ? word : currentLine + " " + word;
+                var testWidth = paint.MeasureText(testLine);
+
+                if (testWidth > maxWidth && !string.IsNullOrEmpty(currentLine))
+                {
+                    // Line is complete, measure it
+                    var lineWidth = paint.MeasureText(currentLine);
+                    maxLineWidth = Math.Max(maxLineWidth, lineWidth);
+                    lineCount++;
+                    currentLine = word;
+                }
+                else
+                {
+                    currentLine = testLine;
+                }
+            }
+
+            // Don't forget the last line
+            if (!string.IsNullOrEmpty(currentLine))
+            {
+                var lineWidth = paint.MeasureText(currentLine);
+                maxLineWidth = Math.Max(maxLineWidth, lineWidth);
+                lineCount++;
+            }
+            
+            totalHeight += lineCount * lineHeight;
+        }
+        
+        // Return the measured size with buffer
+        return new Vector2(
+            (float)Math.Ceiling(Math.Min(maxLineWidth, maxWidth)) + 1f, 
+            (float)Math.Ceiling(totalHeight)
+        );
     }
 
     private static SKFontStyle ToSKFontStyleStatic(int weight)
