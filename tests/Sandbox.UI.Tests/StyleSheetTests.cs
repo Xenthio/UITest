@@ -359,6 +359,61 @@ public class StyleSheetTests
         Assert.NotNull(sheet.Nodes[0].Styles.BackgroundGradient);
         Assert.True(sheet.Nodes[0].Styles.BackgroundGradient.Value.IsValid);
     }
+
+    [Fact]
+    public void Styles_Set_ParsesTransition()
+    {
+        var styles = new Styles();
+        var result = styles.Set("transition", "all 0.3s ease");
+        
+        Assert.True(result);
+        Assert.NotNull(styles.Transitions);
+        Assert.Single(styles.Transitions.List);
+        Assert.Equal("all", styles.Transitions.List[0].Property);
+        Assert.Equal(300, styles.Transitions.List[0].Duration); // 0.3s = 300ms
+        Assert.Equal("ease", styles.Transitions.List[0].TimingFunction);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesTransitionWithDelay()
+    {
+        var styles = new Styles();
+        var result = styles.Set("transition", "opacity 0.5s 100ms linear");
+        
+        Assert.True(result);
+        Assert.NotNull(styles.Transitions);
+        Assert.Single(styles.Transitions.List);
+        Assert.Equal("opacity", styles.Transitions.List[0].Property);
+        Assert.Equal(500, styles.Transitions.List[0].Duration); // 0.5s = 500ms
+        Assert.Equal(100, styles.Transitions.List[0].Delay); // 100ms
+        Assert.Equal("linear", styles.Transitions.List[0].TimingFunction);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesMultipleTransitions()
+    {
+        var styles = new Styles();
+        var result = styles.Set("transition", "opacity 0.3s ease, transform 0.5s ease-in-out");
+        
+        Assert.True(result);
+        Assert.NotNull(styles.Transitions);
+        Assert.Equal(2, styles.Transitions.List.Count);
+        Assert.Equal("opacity", styles.Transitions.List[0].Property);
+        Assert.Equal("transform", styles.Transitions.List[1].Property);
+    }
+
+    [Fact]
+    public void StyleSheet_FromString_ParsesTransitionRule()
+    {
+        var css = ".button { transition: background-color 0.2s ease; }";
+        var sheet = StyleSheet.FromString(css);
+
+        Assert.NotNull(sheet);
+        Assert.Single(sheet.Nodes);
+        Assert.True(sheet.Nodes[0].Styles.HasTransitions);
+        Assert.Equal("background-color", sheet.Nodes[0].Styles.Transitions!.List[0].Property);
+        Assert.Equal(200, sheet.Nodes[0].Styles.Transitions.List[0].Duration);
+    }
 }
 
 /// <summary>

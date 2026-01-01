@@ -8,6 +8,9 @@ namespace Sandbox.UI;
 /// </summary>
 public partial class Panel
 {
+	internal double TimeNow => PanelRealTime.TimeNow;
+	internal double TimeDelta => PanelRealTime.TimeDelta;
+
 	/// <summary>
 	/// Can be used to store random data without sub-classing the panel.
 	/// </summary>
@@ -101,5 +104,24 @@ public partial class Panel
 			cts.Cancel();
 			cts.Dispose();
 		}
+	}
+}
+
+/// <summary>
+/// Static time tracking for Panel transitions and animations.
+/// Ported from s&box.
+/// </summary>
+public static class PanelRealTime
+{
+	public static double TimeNow;
+	public static double TimeDelta;
+
+	public static void Update(double delta)
+	{
+		// If we're running lower than 30fps, clamp it to avoid weirdness
+		delta = Math.Clamp(delta, 0.000, 1.0 / 30.0);
+
+		TimeDelta = delta;
+		TimeNow += TimeDelta;
 	}
 }
