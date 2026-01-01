@@ -116,7 +116,7 @@ public static class AIHelper
         if (!string.IsNullOrEmpty(targetPanel.Id))
             sb.AppendLine($"  ID: {targetPanel.Id}");
 
-        var classes = targetPanel.Classes.ToArray();
+        var classes = targetPanel.Class.ToArray();
         if (classes.Length > 0)
             sb.AppendLine($"  Classes: {string.Join(", ", classes)}");
 
@@ -237,17 +237,42 @@ public static class AIHelper
     {
         if (button is Label label) return label.Text ?? "";
 
+        // First, look for labels with common button text classes
+        var buttonLabel = FindLabelWithClass(button, "button-text") 
+                       ?? FindLabelWithClass(button, "button-label")
+                       ?? FindLabelWithClass(button, "text");
+        
+        if (buttonLabel != null && !string.IsNullOrEmpty(buttonLabel.Text))
+            return buttonLabel.Text;
+
+        // Fall back to first visible label with non-single-character text
+        // (to avoid icon characters like "a" for checkmarks)
         foreach (var child in button.Children)
         {
-            if (child is Label childLabel && !string.IsNullOrEmpty(childLabel.Text))
+            if (child is Label childLabel && !string.IsNullOrEmpty(childLabel.Text) && childLabel.Text.Length > 1)
                 return childLabel.Text;
 
             var text = GetButtonText(child);
-            if (!string.IsNullOrEmpty(text))
+            if (!string.IsNullOrEmpty(text) && text.Length > 1)
                 return text;
         }
 
         return "";
+    }
+    
+    private static Label? FindLabelWithClass(Panel panel, string className)
+    {
+        if (panel is Label label && panel.HasClass(className))
+            return label;
+            
+        foreach (var child in panel.Children)
+        {
+            var found = FindLabelWithClass(child, className);
+            if (found != null)
+                return found;
+        }
+        
+        return null;
     }
 
     private static void FindByClassRecursive(Panel panel, string className, List<PanelInfo> results)

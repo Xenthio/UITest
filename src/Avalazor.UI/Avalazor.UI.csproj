@@ -25,7 +25,7 @@
 		<PackageReference Include="Silk.NET.DXGI" Version="2.22.0" />
 
 		<!-- Skia -->
-		<PackageReference Include="SkiaSharp" Version="2.88.7" />
+		<PackageReference Include="SkiaSharp" Version="2.88.9" />
 		<PackageReference Include="HarfBuzzSharp" Version="7.3.0.3" />
 
 		<!-- Utilities -->
@@ -40,6 +40,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Sandbox.UI\Sandbox.UI.csproj" />
 		<ProjectReference Include="..\Sandbox.UI.Skia\Sandbox.UI.Skia.csproj" />
+		<ProjectReference Include="..\Sandbox.UI.AI\Sandbox.UI.AI.csproj" />
 		<ProjectReference Include="..\Microsoft.AspNetCore.Components\Microsoft.AspNetCore.Components.csproj" />
 	</ItemGroup>
 
