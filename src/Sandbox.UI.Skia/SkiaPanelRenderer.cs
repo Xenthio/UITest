@@ -21,6 +21,25 @@ public class SkiaPanelRenderer : IPanelRenderer
     // Typefaces are long-lived resources and should not be frequently created/destroyed.
     // Use ConcurrentDictionary for thread safety when multiple windows are rendering simultaneously.
     private static readonly ConcurrentDictionary<(string family, SKFontStyle style), SKTypeface> _typefaceCache = new();
+    
+    // Directories to search for font files
+    private static readonly List<string> _fontDirectories = new();
+    
+    // Cache for font file paths by family name (lowercase)
+    private static readonly ConcurrentDictionary<string, string?> _fontFileCache = new();
+    
+    /// <summary>
+    /// Add a directory to search for font files (.ttf, .otf)
+    /// </summary>
+    public static void AddFontDirectory(string directory)
+    {
+        if (!_fontDirectories.Contains(directory))
+        {
+            _fontDirectories.Add(directory);
+            // Clear cache when directories change
+            _fontFileCache.Clear();
+        }
+    }
 
     /// <summary>
     /// Static constructor to set up text measurement for Labels (backward compatibility)
@@ -105,8 +124,71 @@ public class SkiaPanelRenderer : IPanelRenderer
     {
         return _typefaceCache.GetOrAdd((fontFamily, fontStyle), key =>
         {
+            // First try to load from font file
+            var fontFile = FindFontFile(key.family);
+            if (fontFile != null)
+            {
+                var fileTypeface = SKTypeface.FromFile(fontFile);
+                if (fileTypeface != null)
+                    return fileTypeface;
+            }
+            
+            // Fall back to system font
             var typeface = SKTypeface.FromFamilyName(key.family, key.style);
             return typeface ?? SKTypeface.Default;
+        });
+    }
+    
+    /// <summary>
+    /// Find a font file by family name in registered directories
+    /// </summary>
+    private static string? FindFontFile(string fontFamily)
+    {
+        var lowerFamily = fontFamily.ToLowerInvariant();
+        
+        return _fontFileCache.GetOrAdd(lowerFamily, family =>
+        {
+            // Common font file name patterns
+            var patterns = new[]
+            {
+                $"{family}.ttf",
+                $"{family}.otf",
+                $"{fontFamily}.ttf",
+                $"{fontFamily}.otf",
+            };
+            
+            foreach (var dir in _fontDirectories)
+            {
+                if (!Directory.Exists(dir)) continue;
+                
+                foreach (var pattern in patterns)
+                {
+                    var path = Path.Combine(dir, pattern);
+                    if (File.Exists(path))
+                        return path;
+                }
+                
+                // Also try searching for files containing the font name
+                try
+                {
+                    foreach (var file in Directory.GetFiles(dir, "*.ttf"))
+                    {
+                        if (Path.GetFileNameWithoutExtension(file).ToLowerInvariant().Contains(family))
+                            return file;
+                    }
+                    foreach (var file in Directory.GetFiles(dir, "*.otf"))
+                    {
+                        if (Path.GetFileNameWithoutExtension(file).ToLowerInvariant().Contains(family))
+                            return file;
+                    }
+                }
+                catch
+                {
+                    // Ignore directory access errors
+                }
+            }
+            
+            return null;
         });
     }
 

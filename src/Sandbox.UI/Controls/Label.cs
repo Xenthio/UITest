@@ -64,10 +64,21 @@ public partial class Label : Panel
         var fontFamily = ComputedStyle?.FontFamily;
         var fontWeight = ComputedStyle?.FontWeight ?? 400;
 
+        // Debug: log measurement for checklabel
+        if (HasClass("checklabel"))
+        {
+            Console.WriteLine($"[MEASURE] text='{processedText}' font={fontFamily ?? "NULL"} size={fontSize} weight={fontWeight} ComputedStyle={ComputedStyle != null}");
+        }
+
         // Use renderer-provided measurement if available
         if (TextMeasureFunc != null)
         {
-            return TextMeasureFunc(processedText, fontFamily, fontSize, fontWeight);
+            var result = TextMeasureFunc(processedText, fontFamily, fontSize, fontWeight);
+            if (HasClass("checklabel"))
+            {
+                Console.WriteLine($"[MEASURE] result=({result.x}, {result.y})");
+            }
+            return result;
         }
 
         // Fallback: estimate based on character count
