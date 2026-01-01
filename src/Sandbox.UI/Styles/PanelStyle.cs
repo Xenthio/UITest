@@ -216,11 +216,42 @@ public sealed class PanelStyle : Styles
 
     internal Styles BuildFinal(ref LayoutCascade cascade, out bool changed)
     {
+        var time = panel.TimeNow;
+        var timeDelta = panel.TimeDelta;
+
+        cascade.SkipTransitions = skipTransitions || cascade.SkipTransitions;
         changed = BuildCached(ref cascade);
+
+        if (!cascade.SkipTransitions && !HasTransitions && !HasAnimation)
+        {
+            Final.CopyShadows(Cached);
+        }
+
+        if (cascade.SkipTransitions)
+        {
+            Final.CopyShadows(Cached);
+            panel.Transitions?.Kill();
+            skipTransitions = false;
+        }
+        else if (changed && Final != null)
+        {
+            panel.Transitions?.Kill(Final);
+            panel.Transitions?.Add(Final, Cached, time - timeDelta);
+        }
 
         Final.From(Cached);
         cascade.ApplyCascading(Final);
-        Final.FillDefaults();  // THIS IS THE KEY FIX!
+        Final.FillDefaults();
+
+        if (panel.Transitions?.Run(Final, time) == true)
+        {
+            changed = true;
+        }
+
+        if (Final.ApplyAnimation(panel))
+        {
+            changed = true;
+        }
 
         return Final;
     }

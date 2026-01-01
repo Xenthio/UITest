@@ -103,7 +103,19 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     /// <summary>
     /// The current time relative to the panel. Used for animations and events.
     /// </summary>
-    protected double TimeNow => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+    internal double TimeNow => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+    
+    private double _lastTime;
+    internal double TimeDelta
+    {
+        get
+        {
+            var now = TimeNow;
+            var delta = _lastTime == 0 ? 0.016 : now - _lastTime; // Default to ~60fps for first frame
+            _lastTime = now;
+            return delta;
+        }
+    }
 
     public Panel()
     {
