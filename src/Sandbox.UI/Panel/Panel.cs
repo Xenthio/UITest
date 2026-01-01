@@ -81,38 +81,6 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     public bool HasOutro => (PseudoClass & PseudoClass.Outro) != 0;
 
     /// <summary>
-    /// Direct style property access
-    /// </summary>
-    public PanelStyle Style { get; private set; }
-
-    /// <summary>
-    /// Computed style after CSS processing
-    /// </summary>
-    public Styles? ComputedStyle { get; internal set; }
-
-    /// <summary>
-    /// Try to find @keyframes CSS rule with given name in AllStyleSheets.
-    /// </summary>
-    /// <param name="name">The name to search for.</param>
-    /// <param name="keyframes">The keyframes, if any are found, or null.</param>
-    /// <returns>true if @keyframes with given name were found.</returns>
-    public bool TryFindKeyframe(string name, out KeyFrames? keyframes)
-    {
-        keyframes = null;
-
-        foreach (var sheet in AllStyleSheets)
-        {
-            if (sheet.KeyFrames.TryGetValue(name, out var keyframe))
-            {
-                keyframes = keyframe;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
     /// Yoga layout node
     /// </summary>
     public YogaWrapper? YogaNode { get; private set; }
