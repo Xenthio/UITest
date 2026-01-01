@@ -74,7 +74,8 @@ public class SkiaPanelRenderer : IPanelRenderer
         var metrics = paint.FontMetrics;
         var height = metrics.Descent - metrics.Ascent;
         
-        return new Vector2(width, height);
+        // Add 1 pixel buffer to prevent truncation (matches s&box's CeilToInt + 1 pattern)
+        return new Vector2((float)Math.Ceiling(width) + 1f, (float)Math.Ceiling(height));
     }
 
     private static SKFontStyle ToSKFontStyleStatic(int weight)
