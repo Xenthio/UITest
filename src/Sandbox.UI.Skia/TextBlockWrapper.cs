@@ -17,6 +17,7 @@ internal class TextBlockWrapper
     private string? _fontFamily;
     private float _fontSize;
     private int _fontWeight;
+    private FontSmooth _fontSmooth;
     private int _fontHash;
 
     public Vector2 BlockSize { get; private set; }
@@ -24,9 +25,9 @@ internal class TextBlockWrapper
     /// <summary>
     /// Update the text and font properties. Recreates the block if properties changed.
     /// </summary>
-    public void Update(string text, string? fontFamily, float fontSize, int fontWeight)
+    public void Update(string text, string? fontFamily, float fontSize, int fontWeight, FontSmooth fontSmooth = FontSmooth.Auto)
     {
-        var newHash = HashCode.Combine(text, fontFamily, fontSize, fontWeight);
+        var newHash = HashCode.Combine(text, fontFamily, fontSize, fontWeight, fontSmooth);
         
         if (newHash == _fontHash && _block != null)
             return; // No changes
@@ -36,6 +37,7 @@ internal class TextBlockWrapper
         _fontFamily = fontFamily;
         _fontSize = fontSize;
         _fontWeight = fontWeight;
+        _fontSmooth = fontSmooth;
         
         // Clear cache when text/font changes
         _sizeCache.Clear();
@@ -102,8 +104,15 @@ internal class TextBlockWrapper
             _style.TextColor = color;
         }
         
-        // Paint the text block
-        _block.Paint(canvas, new SKPoint(x, y));
+        // Configure paint options based on font-smooth setting
+        var paintOptions = new TextPaintOptions
+        {
+            IsAntialias = _fontSmooth != FontSmooth.None,
+            LcdRenderText = _fontSmooth == FontSmooth.SubpixelAntialiased
+        };
+        
+        // Paint the text block with configured options
+        _block.Paint(canvas, new SKPoint(x, y), paintOptions);
     }
 
     /// <summary>

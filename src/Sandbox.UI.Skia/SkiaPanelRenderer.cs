@@ -747,13 +747,14 @@ public class SkiaPanelRenderer : IPanelRenderer
         var fontSize = style.FontSize?.GetPixels(16f) ?? 16f;
         var fontFamily = style.FontFamily ?? "Arial";
         var fontWeight = style.FontWeight ?? 400;
+        var fontSmooth = style.FontSmooth ?? FontSmooth.Auto;
         
         // Get text rect
         var rect = label.Box.RectInner;
 
         // Create and configure TextBlock using RichTextKit (matches s&box approach)
         var textBlock = new TextBlockWrapper();
-        textBlock.Update(processedText, fontFamily, fontSize, fontWeight);
+        textBlock.Update(processedText, fontFamily, fontSize, fontWeight, fontSmooth);
         
         // Measure with width constraint if wrapping is enabled
         var shouldWrap = style.WhiteSpace != WhiteSpace.NoWrap;
@@ -790,7 +791,7 @@ public class SkiaPanelRenderer : IPanelRenderer
             y = rect.Bottom - textBlock.MeasuredHeight;
         }
 
-        // Paint the text using RichTextKit
+        // Paint the text using RichTextKit with font-smooth settings
         var skColor = ToSKColor(textColor, opacity);
         textBlock.Paint(canvas, x, y, skColor);
     }
