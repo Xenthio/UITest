@@ -105,13 +105,14 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     /// </summary>
     internal double TimeNow => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
     
+    private const double DefaultFrameDelta = 0.016; // ~60fps
     private double _lastTime;
     internal double TimeDelta
     {
         get
         {
             var now = TimeNow;
-            var delta = _lastTime == 0 ? 0.016 : now - _lastTime; // Default to ~60fps for first frame
+            var delta = _lastTime == 0 ? DefaultFrameDelta : now - _lastTime;
             _lastTime = now;
             return delta;
         }

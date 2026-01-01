@@ -90,7 +90,8 @@ public struct TransitionDesc
 			return list;
 		}
 
-		Console.WriteLine($"Didn't handle transition style: {property}");
+		// Note: This is a fallback - normally all transition properties should be handled
+		// Log.Warning($"Didn't handle transition style: {property}");
 		return null;
 	}
 
@@ -112,7 +113,7 @@ public struct TransitionDesc
 		// Duration is mandatory
 		//
 		if (!p.TryReadTime(out var duration))
-			throw new System.Exception("Expecting time in transition");
+			throw new ArgumentException("Expecting time value in CSS transition property", nameof(value));
 
 		t.Duration = duration;
 
