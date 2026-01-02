@@ -27,7 +27,7 @@ public static class AvalazorApplication
     /// Callback invoked when running in AI mode, allowing custom handling of the root panel.
     /// If not set, default AI output is printed to console.
     /// </summary>
-    public static Action<RootPanel>? AIModeCon { get; set; }
+    public static Action<RootPanel>? AIModeCallback { get; set; }
 
     /// <summary>
     /// Static constructor to ensure text measurement is available before any panels are created
@@ -174,9 +174,9 @@ public static class AvalazorApplication
         rootPanel.Layout();
         
         // If custom handler is set, use it
-        if (AIModeCon != null)
+        if (AIModeCallback != null)
         {
-            AIModeCon(rootPanel);
+            AIModeCallback(rootPanel);
             return;
         }
         
@@ -208,10 +208,15 @@ public static class AvalazorApplication
             Console.WriteLine($"\n[AI] Screenshot saved to: {screenshotPath}");
             Console.WriteLine("[AI] You can view this image to see the visual state of the UI.");
         }
-        catch (Exception)
+        catch (DllNotFoundException ex)
         {
-            // SkiaSharp native library might not be available in headless environments
-            Console.WriteLine("\n[AI] Note: Screenshot not available (SkiaSharp native library not loaded)");
+            // SkiaSharp native library not available in headless environments
+            Console.WriteLine($"\n[AI] Note: Screenshot not available (native library not found: {ex.Message})");
+        }
+        catch (Exception ex)
+        {
+            // Log other errors for debugging
+            Console.WriteLine($"\n[AI] Note: Screenshot failed: {ex.Message}");
         }
         
         // Run interactive prompt if enabled
@@ -401,9 +406,8 @@ public static class AvalazorApplication
                             {
                                 Console.WriteLine($"Hovering over: <{hoverTarget.ElementName}> classes=[{hoverTarget.Classes}]");
                                 
-                                // Add hover class
-                                hoverTarget.SetClass("hover", true);
-                                hoverTarget.SetClass(":hover", true);
+                                // Apply hover pseudo-class state (propagates up ancestor chain)
+                                hoverTarget.Switch(PseudoClass.Hover, true);
                                 
                                 // Run tick and layout
                                 rootPanel.Tick();

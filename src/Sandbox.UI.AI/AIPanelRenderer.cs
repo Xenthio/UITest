@@ -405,6 +405,13 @@ public class AIPanelRenderer : IPanelRenderer
         if (width < 1) width = 800;
         if (height < 1) height = 600;
 
+        // Ensure output directory exists
+        var directory = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
         // Create bitmap and canvas
         _bitmap?.Dispose();
         _bitmap = new SKBitmap(width, height);

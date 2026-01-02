@@ -143,3 +143,48 @@ Every UI component is a `Panel` (in `Sandbox.UI`).
 ### Debugging Tips
 - **Add temporary debug logging**: When hunting layout/rendering bugs, add `Console.WriteLine` with details like rect bounds, opacity, font info, and parent hierarchy. Remove after fixing.
 - **Check the Layout Inspector**: The PanelInspector shows computed styles and layout rects - useful for seeing if CSS properties are being applied correctly.
+
+## 🤖 AI Renderer Mode (Headless Debugging)
+
+When running in headless environments (CI, SSH, no display), the framework automatically switches to AI renderer mode. This is useful for:
+- AI agents debugging UI issues
+- CI/CD pipeline testing
+- Remote debugging without display
+
+### How It Works
+- The framework detects display availability via `DISPLAY`/`WAYLAND_DISPLAY` environment variables (Linux/macOS) or assumes display on Windows
+- Set `AVALAZOR_AI_MODE=1` environment variable to force AI mode
+- Programmatically: `AvalazorApplication.ForceAIMode = true`
+
+### Features
+- **Structured text output**: Panel hierarchy, layout info, styles, and content
+- **High-quality screenshots**: Uses `SkiaPanelRenderer` to generate PNG images identical to normal rendering
+- **Interactive command prompt**: 
+  - `click <x> <y>` - Simulate click at coordinates
+  - `hover <x> <y>` - Apply hover pseudo-class state
+  - `what <x> <y>` - Describe element at coordinates
+  - `find <class>` - Find elements by CSS class
+  - `screenshot [file]` - Take screenshot
+  - `snapshot` - Show full UI state text
+  - `help` - Show all commands
+
+### Using AI Renderer for Debugging
+```csharp
+// Force AI mode even with display
+AvalazorApplication.ForceAIMode = true;
+AvalazorApplication.RunPanel<MyApp>();
+
+// Or use AIHelper directly for inspection
+var snapshot = AIHelper.Snapshot(rootPanel);
+var info = AIHelper.WhatIsAt(rootPanel, x, y);
+var elements = AIHelper.GetInteractiveElements(rootPanel);
+var path = AIHelper.Screenshot(rootPanel);
+```
+
+### Viewing Screenshots
+Screenshots are saved to `/tmp/avalazor-ai-debug/` (or temp directory). Use the `view` tool to see the rendered UI:
+```
+ai> screenshot
+Screenshot saved to: /tmp/avalazor-ai-debug/ui-snapshot-20260102-001234.png
+```
+Then use the view tool to display the image and visually inspect the UI state.
