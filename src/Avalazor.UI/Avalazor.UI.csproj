@@ -25,8 +25,14 @@
 		<PackageReference Include="Silk.NET.DXGI" Version="2.22.0" />
 
 		<!-- Skia -->
-		<PackageReference Include="SkiaSharp" Version="2.88.9" />
-		<PackageReference Include="HarfBuzzSharp" Version="7.3.0.3" />
+		<PackageReference Include="SkiaSharp" Version="3.119.1" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
+		<PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="3.119.1" />
+		<PackageReference Include="HarfBuzzSharp" Version="8.3.1.2" />
+		<PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="8.3.1.2" />
+		<PackageReference Include="HarfBuzzSharp.NativeAssets.Win32" Version="8.3.1.2" />
+		<PackageReference Include="HarfBuzzSharp.NativeAssets.macOS" Version="8.3.1.2" />
 
 		<!-- Utilities -->
 		<PackageReference Include="ExCSS" Version="4.2.3" />

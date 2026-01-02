@@ -418,9 +418,11 @@ public class SkiaPanelRenderer : IPanelRenderer
         using var paint = new SKPaint
         {
             Color = new SKColor(255, 255, 255, (byte)(255 * opacity)),
-            FilterQuality = SKFilterQuality.High,
             IsAntialias = true
         };
+        
+        // Use high-quality sampling for smooth image rendering
+        var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
         
         // Apply clipping if has border radius (per-corner)
         var hasRadius = radiusTL > 0 || radiusTR > 0 || radiusBR > 0 || radiusBL > 0;
@@ -436,7 +438,7 @@ public class SkiaPanelRenderer : IPanelRenderer
         var srcRect = new SKRect(0, 0, image.Width, image.Height);
         var dstRect = CalculateBackgroundImageRect(skRect, image.Width, image.Height, style);
         
-        canvas.DrawImage(image, srcRect, dstRect, paint);
+        canvas.DrawImage(image, srcRect, dstRect, sampling, paint);
         
         if (hasRadius)
         {
@@ -866,9 +868,11 @@ public class SkiaPanelRenderer : IPanelRenderer
             Color = style.BorderImageTint.HasValue 
                 ? ToSKColor(style.BorderImageTint.Value, opacity) 
                 : new SKColor(255, 255, 255, (byte)(255 * opacity)),
-            FilterQuality = SKFilterQuality.High,
             IsAntialias = true
         };
+        
+        // Use high-quality sampling for smooth image rendering
+        var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
         
         // 9-slice rendering: divide image into 9 parts and draw each
         // Source rectangles (in image coordinates)
@@ -895,25 +899,25 @@ public class SkiaPanelRenderer : IPanelRenderer
         canvas.DrawImage(image,
             new SKRect(srcLeft, srcTop, srcCenterLeft, srcCenterTop),
             new SKRect(dstLeft, dstTop, dstCenterLeft, dstCenterTop),
-            paint);
+            sampling, paint);
         
         // 2. Top edge
         canvas.DrawImage(image,
             new SKRect(srcCenterLeft, srcTop, srcCenterRight, srcCenterTop),
             new SKRect(dstCenterLeft, dstTop, dstCenterRight, dstCenterTop),
-            paint);
+            sampling, paint);
         
         // 3. Top-right corner
         canvas.DrawImage(image,
             new SKRect(srcCenterRight, srcTop, srcRight, srcCenterTop),
             new SKRect(dstCenterRight, dstTop, dstRight, dstCenterTop),
-            paint);
+            sampling, paint);
         
         // 4. Left edge
         canvas.DrawImage(image,
             new SKRect(srcLeft, srcCenterTop, srcCenterLeft, srcCenterBottom),
             new SKRect(dstLeft, dstCenterTop, dstCenterLeft, dstCenterBottom),
-            paint);
+            sampling, paint);
         
         // 5. Center (if fill is enabled)
         if (style.BorderImageFill == UI.BorderImageFill.Filled)
@@ -921,32 +925,32 @@ public class SkiaPanelRenderer : IPanelRenderer
             canvas.DrawImage(image,
                 new SKRect(srcCenterLeft, srcCenterTop, srcCenterRight, srcCenterBottom),
                 new SKRect(dstCenterLeft, dstCenterTop, dstCenterRight, dstCenterBottom),
-                paint);
+                sampling, paint);
         }
         
         // 6. Right edge
         canvas.DrawImage(image,
             new SKRect(srcCenterRight, srcCenterTop, srcRight, srcCenterBottom),
             new SKRect(dstCenterRight, dstCenterTop, dstRight, dstCenterBottom),
-            paint);
+            sampling, paint);
         
         // 7. Bottom-left corner
         canvas.DrawImage(image,
             new SKRect(srcLeft, srcCenterBottom, srcCenterLeft, srcBottom),
             new SKRect(dstLeft, dstCenterBottom, dstCenterLeft, dstBottom),
-            paint);
+            sampling, paint);
         
         // 8. Bottom edge
         canvas.DrawImage(image,
             new SKRect(srcCenterLeft, srcCenterBottom, srcCenterRight, srcBottom),
             new SKRect(dstCenterLeft, dstCenterBottom, dstCenterRight, dstBottom),
-            paint);
+            sampling, paint);
         
         // 9. Bottom-right corner
         canvas.DrawImage(image,
             new SKRect(srcCenterRight, srcCenterBottom, srcRight, srcBottom),
             new SKRect(dstCenterRight, dstCenterBottom, dstRight, dstBottom),
-            paint);
+            sampling, paint);
     }
 
     /// <summary>

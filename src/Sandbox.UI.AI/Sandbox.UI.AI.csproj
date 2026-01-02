@@ -10,7 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Sandbox.UI\Sandbox.UI.csproj" />
     <ProjectReference Include="..\Sandbox.UI.Skia\Sandbox.UI.Skia.csproj" />
-    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
   </ItemGroup>
 
 </Project>
