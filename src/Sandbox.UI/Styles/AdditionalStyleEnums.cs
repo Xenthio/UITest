@@ -180,7 +180,7 @@ public enum FontSmooth
 Auto = 0,
 None = 1,
 Antialiased = 2,
-GreyscaleAntialiased = 3
+GrayscaleAntialiased = 3
 }
 
 /// <summary>

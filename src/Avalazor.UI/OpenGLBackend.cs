@@ -63,7 +63,10 @@ public class OpenGLBackend : IGraphicsBackend
         var glInfo = new GRGlFramebufferInfo(0, 0x8058); // Rgba8
         var target = new GRBackendRenderTarget(size.X, size.Y, 0, 8, glInfo);
 
-        // surfproperties
+        // Configure surface properties for RGB subpixel rendering
+        // Note: RgbHorizontal is the most common pixel layout on modern LCD displays.
+        // Some displays may use different layouts (RgbVertical, BgrHorizontal) but there's
+        // no reliable cross-platform way to detect this. RgbHorizontal is a reasonable default.
         var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
         
         _surface = SKSurface.Create(_grContext, target, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888, surfProps);
