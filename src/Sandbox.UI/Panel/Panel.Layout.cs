@@ -344,7 +344,7 @@ public partial class Panel
             }
         }
 
-        if (ComputedStyle?.Overflow.Value == OverflowMode.Scroll)
+        if (ComputedStyle?.Overflow == OverflowMode.Scroll)
         {
             var rect = Box.Rect;
             rect.Position -= ScrollOffset;
