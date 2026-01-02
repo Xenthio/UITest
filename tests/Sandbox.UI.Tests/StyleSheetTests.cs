@@ -359,6 +359,121 @@ public class StyleSheetTests
         Assert.NotNull(sheet.Nodes[0].Styles.BackgroundGradient);
         Assert.True(sheet.Nodes[0].Styles.BackgroundGradient.Value.IsValid);
     }
+
+    [Fact]
+    public void Styles_Set_ParsesTransition()
+    {
+        var styles = new Styles();
+        var result = styles.Set("transition", "all 0.3s ease");
+        
+        Assert.True(result);
+        Assert.NotNull(styles.Transitions);
+        Assert.Single(styles.Transitions.List);
+        Assert.Equal("all", styles.Transitions.List[0].Property);
+        Assert.Equal(300, styles.Transitions.List[0].Duration); // 0.3s = 300ms
+        Assert.Equal("ease", styles.Transitions.List[0].TimingFunction);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesTransitionWithDelay()
+    {
+        var styles = new Styles();
+        var result = styles.Set("transition", "opacity 0.5s 100ms linear");
+        
+        Assert.True(result);
+        Assert.NotNull(styles.Transitions);
+        Assert.Single(styles.Transitions.List);
+        Assert.Equal("opacity", styles.Transitions.List[0].Property);
+        Assert.Equal(500, styles.Transitions.List[0].Duration); // 0.5s = 500ms
+        Assert.Equal(100, styles.Transitions.List[0].Delay); // 100ms
+        Assert.Equal("linear", styles.Transitions.List[0].TimingFunction);
+    }
+
+    [Fact]
+    public void Styles_Set_ParsesMultipleTransitions()
+    {
+        var styles = new Styles();
+        var result = styles.Set("transition", "opacity 0.3s ease, transform 0.5s ease-in-out");
+        
+        Assert.True(result);
+        Assert.NotNull(styles.Transitions);
+        Assert.Equal(2, styles.Transitions.List.Count);
+        Assert.Equal("opacity", styles.Transitions.List[0].Property);
+        Assert.Equal("transform", styles.Transitions.List[1].Property);
+    }
+
+    [Fact]
+    public void StyleSheet_FromString_ParsesTransitionRule()
+    {
+        var css = ".button { transition: background-color 0.2s ease; }";
+        var sheet = StyleSheet.FromString(css);
+
+        Assert.NotNull(sheet);
+        Assert.Single(sheet.Nodes);
+        Assert.True(sheet.Nodes[0].Styles.HasTransitions);
+        Assert.Equal("background-color", sheet.Nodes[0].Styles.Transitions!.List[0].Property);
+        Assert.Equal(200, sheet.Nodes[0].Styles.Transitions.List[0].Duration);
+    }
+
+    [Fact]
+    public void Transitions_LerpsBackgroundColorCorrectly()
+    {
+        // Set up the time
+        PanelRealTime.TimeNow = 1.0;
+        PanelRealTime.TimeDelta = 0.016;
+
+        // Create a panel with transitions
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+        panel.AddClass("button");
+
+        // Create stylesheet with normal and hover states
+        var css = @"
+            .button { 
+                background-color: #FF0000; 
+                transition: all 0.3s linear; 
+            }
+            .button:hover { 
+                background-color: #00FF00; 
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        panel.StyleSheet.Add(sheet);
+
+        // Initial layout - should have red background
+        rootPanel.Layout();
+        
+        var initialColor = panel.ComputedStyle!.BackgroundColor;
+        Assert.NotNull(initialColor);
+        Assert.Equal(1.0f, initialColor.Value.r, 0.01);  // Red
+        Assert.Equal(0.0f, initialColor.Value.g, 0.01);
+        Assert.Equal(0.0f, initialColor.Value.b, 0.01);
+
+        // Capture computed style before hover
+        var beforeHoverColor = panel.ComputedStyle!.BackgroundColor;
+
+        // Trigger hover
+        PanelRealTime.Update(0.016);  // Advance time
+        panel.Switch(PseudoClass.Hover, true);
+        
+        rootPanel.Layout();
+
+        // On first frame after hover, should be interpolating (not black)
+        var hoverColor = panel.ComputedStyle!.BackgroundColor;
+        Assert.NotNull(hoverColor);
+        
+        // On this first frame after hover, the transition started at TimeNow - TimeDelta (1.0) and is evaluated at 1.016,
+        // so the elapsed fraction is about 5% (0.016 / 0.3) and the color should be around (0.95, 0.05, 0)
+        var debugInfo =
+            $"Before hover: {beforeHoverColor?.ToString() ?? "null"}\n" +
+            $"Hover frame 1: R={hoverColor.Value.r}, G={hoverColor.Value.g}, B={hoverColor.Value.b}, A={hoverColor.Value.a}\n" +
+            $"TimeNow={PanelRealTime.TimeNow}, TimeDelta={PanelRealTime.TimeDelta}\n" +
+            $"Transitions entries count: {panel.Transitions?.Entries?.Count ?? 0}";
+        
+        Assert.True(hoverColor.Value.r > 0.5f, $"Expected red > 0.5 but got {hoverColor.Value.r}. Debug: {debugInfo}");
+        Assert.True(hoverColor.Value.a > 0.9f, $"Expected alpha > 0.9 but got {hoverColor.Value.a}");  // Should be mostly opaque
+    }
 }
 
 /// <summary>

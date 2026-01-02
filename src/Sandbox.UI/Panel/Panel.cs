@@ -100,11 +100,6 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
     /// </summary>
     public bool IsDeleted { get; private set; }
 
-    /// <summary>
-    /// The current time relative to the panel. Used for animations and events.
-    /// </summary>
-    protected double TimeNow => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
-
     public Panel()
     {
         YogaNode = new YogaWrapper(this);

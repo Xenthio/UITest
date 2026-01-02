@@ -15,6 +15,14 @@ namespace Sandbox.UI
 			// Handle border shorthand properties and other common CSS properties
 			switch ( property )
 			{
+				case "transition":
+				case "transition-delay":
+				case "transition-duration":
+				case "transition-property":
+				case "transition-timing-function":
+					Transitions = TransitionDesc.ParseProperty( property, value, Transitions );
+					return true;
+
 				case "border":
 					return SetBorder( value, w => BorderWidth = w, c => BorderColor = c );
 

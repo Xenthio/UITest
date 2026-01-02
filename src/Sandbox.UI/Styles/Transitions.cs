@@ -1,3 +1,5 @@
+using Sandbox.UI.Utility;
+
 namespace Sandbox.UI;
 
 /// <summary>
@@ -13,12 +15,12 @@ public sealed class Transitions
         public double StartTime { get; init; }
         public double Length { get; init; }
         public int Target { get; init; }
-        public Func<float, float> EasingFunction { get; init; }
+        public Easing.Function EasingFunction { get; init; }
         public bool IsKilled { get; private set; }
 
         public TransitionFunction Action { get; init; }
 
-        public Entry(string property, double startTime, double length, int target, TransitionFunction action, Func<float, float> easingFunction) : this()
+        public Entry(string property, double startTime, double length, int target, TransitionFunction action, Easing.Function easingFunction) : this()
         {
             Property = property;
             StartTime = startTime;
@@ -105,5 +107,109 @@ public sealed class Transitions
         }
     }
 
-    // TODO: Add more transition methods when needed
+    internal void Add(Styles from, Styles to, double startTime)
+    {
+        if (!to.HasTransitions) return;
+
+        foreach (var desc in to.Transitions!.List)
+        {
+            var fromCopy = (Styles)from.Clone();
+            var toCopy = (Styles)to.Clone();
+
+            TransitionFunction action = (desc.Property == "all")
+                ? (style, delta) => style.FromLerp(fromCopy, toCopy, delta)
+                : (style, delta) => style.LerpProperty(desc.Property!, fromCopy, toCopy, delta);
+
+            Transition(desc, from, to, action, startTime);
+        }
+    }
+
+    void Transition(in TransitionDesc desc, BaseStyles from, BaseStyles to, TransitionFunction action, double startTime)
+    {
+        if (from == to) return;
+
+        var target = HashCode.Combine(to?.GetHashCode(), desc.Property);
+        if (TryRestoreTransition(target)) return;
+
+        Add(desc, target, action, startTime);
+    }
+
+    void Add(in TransitionDesc desc, int target, TransitionFunction action, double startTime)
+    {
+        var length = 1.0f;
+        var property = desc.Property;
+
+        if (desc.Duration.HasValue)
+            length = desc.Duration.Value / 1000.0f;
+
+        if (length <= 0 && !desc.Delay.HasValue)
+            return;
+
+        if (desc.Delay.HasValue)
+        {
+            startTime += desc.Delay.Value / 1000.0f;
+        }
+
+        Entries ??= new List<Entry>();
+        var easingFunction = Easing.GetFunction(desc.TimingFunction);
+
+        var entry = new Entry(property!, startTime, length, target, action, easingFunction);
+        Entries.Add(entry);
+    }
+
+    internal bool Run(Styles style, double now)
+    {
+        if (!HasAny)
+            return false;
+
+        if (Entries!.RemoveAll(x => x.StartTime + x.Length < now) > 0)
+        {
+            panel.SetNeedsPreLayout();
+        }
+
+        foreach (var entry in Entries)
+        {
+            //
+            // Pre-start (delay)
+            //
+            if (now < entry.StartTime)
+            {
+                entry.Invoke(style, entry.Ease(0));
+                continue;
+            }
+
+            var endTime = entry.StartTime + entry.Length;
+            if (now > endTime) continue;
+
+            var t = entry.IsKilled ? 1f : (now - entry.StartTime) / entry.Length;
+
+            entry.Invoke(style, entry.Ease((float)t));
+        }
+
+        if (Entries.RemoveAll(x => x.IsKilled) > 0)
+        {
+            panel.SetNeedsPreLayout();
+        }
+
+        return true;
+    }
+
+    internal bool TryRestoreTransition(int targetValue)
+    {
+        if (Entries == null) return false;
+
+        for (int i = Entries.Count - 1; i >= 0; i--)
+        {
+            if (Entries[i].Target != targetValue)
+                continue;
+
+            var entry = Entries[i];
+            entry.Restore();
+            Entries[i] = entry;
+            return true;
+        }
+
+        return false;
+    }
+
 }
