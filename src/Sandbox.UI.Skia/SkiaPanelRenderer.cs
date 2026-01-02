@@ -499,6 +499,7 @@ public class SkiaPanelRenderer : IPanelRenderer
                 var possiblePaths = new[]
                 {
                     path,
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", path.TrimStart('/')),
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path.TrimStart('/')),
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets", path.TrimStart('/')),
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", path.TrimStart('/'))

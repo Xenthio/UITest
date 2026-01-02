@@ -754,7 +754,6 @@ namespace Sandbox.UI
 			}
 
 			// Skip past the url(...) part - safely
-			var urlEnd = p.ReadUntilOrEnd( ")" );
 			if (!p.IsEnd && p.Current == ')')
 			{
 				p.Pointer++; // Skip the closing paren
@@ -771,24 +770,30 @@ namespace Sandbox.UI
 				p = p.SkipWhitespaceAndNewlines();
 				if (p.IsEnd) break;
 				
+				bool charConsumed = false;
+				
 				if ( p.Is( "stretch", 0, true ) )
 				{
 					p.Pointer += "stretch".Length;
 					BorderImageRepeat = UI.BorderImageRepeat.Stretch;
+					charConsumed = true;
 				}
 				else if ( p.Is( "round", 0, true ) )
 				{
 					p.Pointer += "round".Length;
 					BorderImageRepeat = UI.BorderImageRepeat.Round;
+					charConsumed = true;
 				}
 				else if ( p.Is( "fill", 0, true ) )
 				{
 					p.Pointer += "fill".Length;
 					BorderImageFill = UI.BorderImageFill.Filled;
+					charConsumed = true;
 				}
 				else if ( p.Is( "/", 0, true ) )
 				{
 					p.Pointer++;
+					charConsumed = true;
 
 					// Needs to have at least one element before we do it
 					if ( borderSliceList.Count == 0 )
@@ -814,17 +819,17 @@ namespace Sandbox.UI
 					{
 						borderWidthList.Add( lengthValue );
 					}
+					charConsumed = true;
 				}
 
 				if ( p.IsEnd )
 					break;
 
-				// Only advance if we didn't already consume the character
-				if (!p.IsEnd)
+				// Only advance if no condition consumed characters
+				if (!charConsumed && !p.IsEnd)
 				{
 					p.Pointer++;
 				}
-				p = p.SkipWhitespaceAndNewlines();
 			}
 
 			// Parse our border slice pixel sizes

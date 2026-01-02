@@ -19,12 +19,12 @@
 
   <!-- Project-specific Assets folder (overrides global assets if same path) -->
   <ItemGroup>
-    <!-- Copy assets to output preserving structure, but strip "Assets\" prefix -->
+    <!-- Copy assets to output keeping Assets\ prefix -->
     <Content Include="Assets\**\*" Exclude="Assets\README.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <!-- Strip "Assets\" prefix: Assets\themes\file.scss -> themes\file.scss -->
-      <TargetPath>$([MSBuild]::MakeRelative('Assets\', '%(Identity)'))</TargetPath>
+      <!-- Keep Assets\ prefix: Assets\themes\file.scss -> Assets\themes\file.scss -->
+      <Link>Assets\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
   </ItemGroup>
 

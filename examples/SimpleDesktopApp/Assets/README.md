@@ -37,14 +37,14 @@ This is configured in the `.csproj` file:
 ### StyleSheet Resolution
 
 The `[StyleSheet]` attribute searches for files in the following order:
-1. Assembly location (output directory)
-2. Current working directory
-3. AppContext.BaseDirectory
-4. Entry assembly location
+1. `{BaseDirectory}/Assets/{path}` - Assets subdirectory (new structure)
+2. `{BaseDirectory}/{path}` - Direct path (backward compatibility)
+3. Assembly location
+4. Current working directory
 
 Example usage:
 ```csharp
-// Absolute path from output root
+// Resolves to Assets/themes/XGUI/DefaultStyles/ComputerXP.scss
 [StyleSheet("/themes/XGUI/DefaultStyles/ComputerXP.scss")]
 
 // Relative to component location  
@@ -55,9 +55,10 @@ Example usage:
 
 Images referenced in CSS (via `url()`) or code are searched in:
 1. Exact path if it exists
-2. `{BaseDirectory}/{path}`
-3. `{BaseDirectory}/assets/{path}` (legacy)
-4. `{BaseDirectory}/wwwroot/{path}` (legacy)
+2. `{BaseDirectory}/Assets/{path}` - Assets subdirectory (new structure)
+3. `{BaseDirectory}/{path}` - Direct path
+4. `{BaseDirectory}/assets/{path}` (legacy, lowercase)
+5. `{BaseDirectory}/wwwroot/{path}` (legacy)
 
 Example in SCSS:
 ```scss

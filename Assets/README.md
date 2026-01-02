@@ -56,19 +56,21 @@ This automatically copies all global assets to the project's output directory.
 
 When `Assets.props` is imported:
 1. All files in `/Assets/**/*` are included as Content items
-2. Files are copied to build output directory (bin/Debug, bin/Release)
+2. Files are copied to build output directory (bin/Debug, bin/Release) under `Assets/`
 3. Files are included in publish output and single-file executables
-4. The `Assets/` prefix is stripped, so `Assets/themes/file.scss` becomes `themes/file.scss` in output
+4. The assets remain under `Assets/` subdirectory in output
 
 ## File Resolution Priority
 
 When loading stylesheets or images, the framework searches in this order:
-1. **Project Assets** - `ProjectName/Assets/`
-2. **Global Assets** - `/Assets/` (via Assets.props)
-3. **Assembly location** - Where DLLs are located
-4. **Current directory** - Runtime working directory
+1. **Assets subdirectory** - `{BaseDirectory}/Assets/{path}` (new structure)
+2. **Direct path** - `{BaseDirectory}/{path}` (backward compatibility)
+3. **Legacy paths** - `assets/`, `wwwroot/` subdirectories
 
-This means project-specific assets override global ones if they have the same path.
+This means:
+- `[StyleSheet("/themes/MyTheme.scss")]` resolves to `Assets/themes/MyTheme.scss`
+- Project-specific assets in `ProjectName/Assets/` override global ones
+- Old code referencing direct paths continues to work
 
 ## Adding Global Assets
 

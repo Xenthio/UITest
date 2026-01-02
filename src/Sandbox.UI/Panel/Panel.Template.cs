@@ -112,7 +112,7 @@ public partial class Panel
 
     /// <summary>
     /// Resolves a stylesheet path to an actual file path.
-    /// Searches in: output directory, relative to assembly, relative to executable.
+    /// Searches in: Assets/ subdirectory first, then output directory, relative to assembly, relative to executable.
     /// </summary>
     private string? ResolveStyleSheetPath(string path, Type type)
     {
@@ -133,6 +133,14 @@ public partial class Panel
             if (string.IsNullOrEmpty(basePath))
                 continue;
 
+            // Try Assets/ subdirectory first (new structure)
+            var assetsPath = System.IO.Path.Combine(basePath, "Assets", relativePath);
+            assetsPath = System.IO.Path.GetFullPath(assetsPath);
+            
+            if (System.IO.File.Exists(assetsPath))
+                return assetsPath;
+
+            // Then try direct path (for backward compatibility and non-asset files)
             var fullPath = System.IO.Path.Combine(basePath, relativePath);
             fullPath = System.IO.Path.GetFullPath(fullPath);
             
