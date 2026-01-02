@@ -733,30 +733,38 @@ public class Window : Panel
 
         return null;
     }
-    
+
     /// <summary>
     /// Gets a list of directories to search for theme stylesheets
     /// </summary>
     private IEnumerable<string> GetThemeSearchPaths()
     {
         var type = GetType();
-        
+
         // 1. Assembly location (where DLLs and output files are)
         var assemblyLocation = type.Assembly.Location;
         if (!string.IsNullOrEmpty(assemblyLocation))
         {
             var assemblyDir = System.IO.Path.GetDirectoryName(assemblyLocation);
             if (!string.IsNullOrEmpty(assemblyDir))
+            {
                 yield return assemblyDir;
+                yield return System.IO.Path.Combine(assemblyDir, "Assets");
+            }
         }
 
         // 2. Current working directory
-        yield return System.IO.Directory.GetCurrentDirectory();
-        
+        var currentDir = System.IO.Directory.GetCurrentDirectory();
+        yield return currentDir;
+        yield return System.IO.Path.Combine(currentDir, "Assets");
+
         // 3. Application base directory
         var appBase = System.AppContext.BaseDirectory;
         if (!string.IsNullOrEmpty(appBase))
+        {
             yield return appBase;
+            yield return System.IO.Path.Combine(appBase, "Assets");
+        }
     }
 
     private void ForceStyleUpdateRecursive(Panel panel)
