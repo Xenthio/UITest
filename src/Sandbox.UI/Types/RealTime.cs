@@ -17,7 +17,7 @@ public static class RealTime
     /// <summary>
     /// The time delta (in seconds) between the last frame and the current
     /// </summary>
-    public static float Delta => (float)PanelRealTime.TimeDelta;
+    public static float Delta { get; internal set; }
 
     /// <summary>
     /// Like Delta but smoothed to avoid large disparities between deltas
@@ -26,14 +26,14 @@ public static class RealTime
 
     private static double _lastTick;
 
-    public static void Update(double delta)
+    public static void Update(double now)
     {
         if (_lastTick > 0)
         {
-            var frameDelta = (float)Math.Clamp(delta - _lastTick, 0.0, 2.0);
-            SmoothDelta = MathX.Lerp(SmoothDelta, frameDelta, 0.1f);
+            Delta = (float)Math.Clamp(now - _lastTick, 0.0, 2.0);
+            SmoothDelta = MathX.Lerp(SmoothDelta, Delta, 0.1f);
         }
 
-        _lastTick = delta;
+        _lastTick = now;
     }
 }
