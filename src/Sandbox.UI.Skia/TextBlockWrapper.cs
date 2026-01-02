@@ -111,15 +111,16 @@ internal class TextBlockWrapper
         var edging = _fontSmooth switch
         {
             FontSmooth.None => SKFontEdging.Alias,  // No antialiasing
-            FontSmooth.Antialiased => SKFontEdging.Antialias,  // Standard grayscale antialiasing
-            FontSmooth.SubpixelAntialiased => SKFontEdging.SubpixelAntialias,  // LCD subpixel rendering (explicit)
+            FontSmooth.Antialiased => SKFontEdging.SubpixelAntialias,  // LCD subpixel rendering (explicit)
+            FontSmooth.GreyscaleAntialiased => SKFontEdging.Antialias,  // Standard grayscale antialiasing 
             FontSmooth.Auto => SKFontEdging.SubpixelAntialias,  // Auto defaults to LCD subpixel rendering
             _ => SKFontEdging.SubpixelAntialias  // Fallback to subpixel for unknown values
         };
         
         var paintOptions = new TextPaintOptions
         {
-            Edging = edging
+            Edging = edging,
+            SubpixelPositioning = true, 
         };
         
         // Paint the text block with configured options

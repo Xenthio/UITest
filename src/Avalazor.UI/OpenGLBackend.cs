@@ -62,7 +62,11 @@ public class OpenGLBackend : IGraphicsBackend
         if (_grContext == null) return;
         var glInfo = new GRGlFramebufferInfo(0, 0x8058); // Rgba8
         var target = new GRBackendRenderTarget(size.X, size.Y, 0, 8, glInfo);
-        _surface = SKSurface.Create(_grContext, target, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
+
+        // surfproperties
+        var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
+        
+        _surface = SKSurface.Create(_grContext, target, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888, surfProps);
     }
 
     public void Dispose()

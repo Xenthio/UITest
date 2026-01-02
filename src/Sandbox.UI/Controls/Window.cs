@@ -747,16 +747,24 @@ public class Window : Panel
         {
             var assemblyDir = System.IO.Path.GetDirectoryName(assemblyLocation);
             if (!string.IsNullOrEmpty(assemblyDir))
+            {
                 yield return assemblyDir;
+                yield return System.IO.Path.Combine(assemblyDir, "Assets");
+            }
         }
 
         // 2. Current working directory
-        yield return System.IO.Directory.GetCurrentDirectory();
+        var currentDir = System.IO.Directory.GetCurrentDirectory();
+        yield return currentDir;
+        yield return System.IO.Path.Combine(currentDir, "Assets");
         
         // 3. Application base directory
         var appBase = System.AppContext.BaseDirectory;
         if (!string.IsNullOrEmpty(appBase))
+        {
             yield return appBase;
+            yield return System.IO.Path.Combine(appBase, "Assets");
+        }
     }
 
     private void ForceStyleUpdateRecursive(Panel panel)
