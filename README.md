@@ -38,6 +38,38 @@ cd examples/SimpleDesktopApp
 dotnet run
 ```
 
+### Troubleshooting Submodule Issues
+
+If you encounter errors like `fatal: not a git repository: thirdparty/RichTextKit/../../.git/modules/thirdparty/RichTextKit`, this means your git submodule cache is corrupted. To fix this:
+
+**On Windows (PowerShell or Git Bash):**
+```bash
+# Remove the corrupted git module cache
+rm -rf .git/modules/thirdparty
+# Remove the submodule directory
+rm -rf thirdparty/RichTextKit
+# Re-initialize the submodule
+git submodule update --init --recursive
+```
+
+**On Linux/macOS:**
+```bash
+# Remove the corrupted git module cache
+rm -rf .git/modules/thirdparty
+# Remove the submodule directory
+rm -rf thirdparty/RichTextKit
+# Re-initialize the submodule
+git submodule update --init --recursive
+```
+
+If issues persist, you may need to do a fresh clone:
+```bash
+cd ..
+rm -rf UITest
+git clone --recurse-submodules https://github.com/Xenthio/UITest.git
+cd UITest
+```
+
 ### Your First Fazor App
 
 1. Create a new console project:
