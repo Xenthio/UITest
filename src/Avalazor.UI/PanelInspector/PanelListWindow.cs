@@ -36,7 +36,7 @@ public class PanelListWindow : Window
 		AddClass("panel-list-window");
 		
 		// Load stylesheet - use path relative to application base directory
-		var stylesheetPath = System.IO.Path.Combine(AppContext.BaseDirectory, "themes", "PanelInspector.scss");
+		var stylesheetPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "themes", "PanelInspector.scss");
 		StyleSheet.Load(stylesheetPath, failSilently: false);
 		
 		BuildUI();
