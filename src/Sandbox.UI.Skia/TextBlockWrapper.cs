@@ -106,11 +106,15 @@ internal class TextBlockWrapper
         
         // Configure paint options based on font-smooth setting
         // Using Edging property (IsAntialias and LcdRenderText are obsolete in RichTextKit)
+        // Default (Auto) now uses SubpixelAntialias for RGB subpixel rendering which provides
+        // sharper text on LCD displays by leveraging the RGB subpixel structure
         var edging = _fontSmooth switch
         {
             FontSmooth.None => SKFontEdging.Alias,  // No antialiasing
-            FontSmooth.SubpixelAntialiased => SKFontEdging.SubpixelAntialias,  // LCD subpixel rendering
-            _ => SKFontEdging.Antialias  // Auto, Antialiased - standard antialiasing
+            FontSmooth.Antialiased => SKFontEdging.Antialias,  // Standard grayscale antialiasing
+            FontSmooth.SubpixelAntialiased => SKFontEdging.SubpixelAntialias,  // LCD subpixel rendering (explicit)
+            FontSmooth.Auto => SKFontEdging.SubpixelAntialias,  // Auto defaults to LCD subpixel rendering
+            _ => SKFontEdging.SubpixelAntialias  // Fallback to subpixel for unknown values
         };
         
         var paintOptions = new TextPaintOptions
