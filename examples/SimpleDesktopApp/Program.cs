@@ -31,7 +31,10 @@ class Program
 
 
         //Avalazor.UI.AvalazorApplication.RunPanel<RefOnClickDemo>();
-        Avalazor.UI.AvalazorApplication.RunPanel<About>();
+        //Avalazor.UI.AvalazorApplication.RunPanel<About>();
         //Avalazor.UI.AvalazorApplication.RunPanel<BorderImageTest>();
+        
+        // Run the Scrolling Demo
+        Avalazor.UI.AvalazorApplication.RunPanel<SimpleDesktopApp.home.runner.work.UITest.UITest.examples.SimpleDesktopApp.ScrollingDemo>(title: "Avalazor - Scrolling Demo");
     }
 }

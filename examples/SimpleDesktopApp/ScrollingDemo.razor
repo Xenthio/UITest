@@ -1,0 +1,69 @@
+@using Sandbox.UI
+@using System.Linq
+@inherits Panel
+
+<root class="scrolling-demo">
+    <div class="header">
+        <h1>Scrolling Panel Demo</h1>
+        <p>Use the mouse wheel to scroll. Panels with overflow: scroll automatically support scrolling.</p>
+    </div>
+    
+    <div class="scroll-container">
+        @for (int i = 0; i < 20; i++)
+        {
+            var index = i;
+            <div class="item" onclick="@(() => OnItemClick(index))">
+                <div class="item-number">@i</div>
+                <div class="item-content">
+                    <h3>Item @i</h3>
+                    <p>This is a scrollable item. Click to select. Try scrolling with your mouse wheel!</p>
+                </div>
+            </div>
+        }
+    </div>
+    
+    <div class="footer">
+        <p>Selected Item: @SelectedItem</p>
+        <button onclick="@ScrollToTop">Scroll to Top</button>
+        <button onclick="@ScrollToBottom">Scroll to Bottom</button>
+    </div>
+</root>
+
+@code {
+    public int SelectedItem { get; set; } = -1;
+    
+    Panel? scrollContainer;
+    
+    protected override void OnAfterTreeRender(bool firstTime)
+    {
+        base.OnAfterTreeRender(firstTime);
+        
+        if (firstTime)
+        {
+            // Find the scroll container
+            scrollContainer = this.Descendants.FirstOrDefault(p => p.HasClass("scroll-container"));
+        }
+    }
+    
+    void OnItemClick(int index)
+    {
+        SelectedItem = index;
+        StateHasChanged();
+    }
+    
+    void ScrollToTop()
+    {
+        if (scrollContainer != null)
+        {
+            scrollContainer.ScrollOffset = new Vector2(0, 0);
+        }
+    }
+    
+    void ScrollToBottom()
+    {
+        if (scrollContainer != null)
+        {
+            scrollContainer.TryScrollToBottom();
+        }
+    }
+}
