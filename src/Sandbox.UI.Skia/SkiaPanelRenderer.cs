@@ -642,7 +642,7 @@ public class SkiaPanelRenderer : IPanelRenderer
         var opacity = panel.Opacity * state.RenderOpacity;
 
         // Check if we have a border-image to render
-        if (style.BorderImageSource != null && !string.IsNullOrEmpty(style.BorderImageSource.Path))
+        if (style.BorderImageSource != null && !string.IsNullOrEmpty(style.BorderImageSource.Path) && style.BorderImageSource.Path != "invalid")
         {
             DrawBorderImage(canvas, panel, skRect, opacity);
             return; // Border-image replaces regular borders

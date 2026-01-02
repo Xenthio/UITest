@@ -753,8 +753,12 @@ namespace Sandbox.UI
 				return false;
 			}
 
-			// Skip past the url(...) part
-			p.Pointer += p.ReadUntilOrEnd( ")" ).Length + 1;
+			// Skip past the url(...) part - safely
+			var urlEnd = p.ReadUntilOrEnd( ")" );
+			if (!p.IsEnd && p.Current == ')')
+			{
+				p.Pointer++; // Skip the closing paren
+			}
 
 			var borderSliceList = new System.Collections.Generic.List<Length>();
 			var borderWidthList = new System.Collections.Generic.List<Length>();
@@ -765,6 +769,7 @@ namespace Sandbox.UI
 			while ( !p.IsEnd )
 			{
 				p = p.SkipWhitespaceAndNewlines();
+				if (p.IsEnd) break;
 				
 				if ( p.Is( "stretch", 0, true ) )
 				{
@@ -814,16 +819,20 @@ namespace Sandbox.UI
 				if ( p.IsEnd )
 					break;
 
-				p.Pointer++;
+				// Only advance if we didn't already consume the character
+				if (!p.IsEnd)
+				{
+					p.Pointer++;
+				}
 				p = p.SkipWhitespaceAndNewlines();
 			}
 
 			// Parse our border slice pixel sizes
 			switch ( borderSliceList.Count )
 			{
-				// 33.3% of texture size
+				// 33.3% of texture size - only if texture is valid and has non-zero dimensions
 				case 0:
-					if ( BorderImageSource != null )
+					if ( BorderImageSource != null && BorderImageSource.Width > 0 )
 					{
 						BorderImageWidthLeft = BorderImageWidthRight = BorderImageWidthTop = BorderImageWidthBottom = BorderImageSource.Width / 3.0f;
 					}
