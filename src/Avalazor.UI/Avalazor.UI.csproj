@@ -22,6 +22,7 @@
 		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.Input" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
+		<PackageReference Include="Silk.NET.Vulkan" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.DXGI" Version="2.22.0" />
 
 		<!-- Skia -->
