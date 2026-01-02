@@ -7,6 +7,12 @@ class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // The framework now automatically detects if a display is available
+        // and uses the AI renderer when running in headless environments (CI, SSH, etc.)
+        // 
+        // To force AI mode: set AVALAZOR_AI_MODE=1 environment variable
+        // Or programmatically: Avalazor.UI.AvalazorApplication.ForceAIMode = true;
+        
         // Enable Panel Inspector in separate windows mode
         // Comment this line to use overlay mode instead
         Avalazor.UI.PanelInspectorHelper.EnableSeparateWindows();
