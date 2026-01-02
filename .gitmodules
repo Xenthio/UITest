@@ -1,0 +1,3 @@
+[submodule "thirdparty/RichTextKit"]
+	path = thirdparty/RichTextKit
+	url = https://github.com/Xenthio/RichTextKit
