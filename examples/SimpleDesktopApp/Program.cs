@@ -31,7 +31,7 @@ class Program
 
 
         //Avalazor.UI.AvalazorApplication.RunPanel<RefOnClickDemo>();
-        //Avalazor.UI.AvalazorApplication.RunPanel<About>();
-        Avalazor.UI.AvalazorApplication.RunPanel<BorderImageTest>();
+        Avalazor.UI.AvalazorApplication.RunPanel<About>();
+        //Avalazor.UI.AvalazorApplication.RunPanel<BorderImageTest>();
     }
 }
