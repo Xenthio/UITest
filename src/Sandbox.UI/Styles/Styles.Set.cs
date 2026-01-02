@@ -353,8 +353,8 @@ namespace Sandbox.UI
 					FontSmooth = UI.FontSmooth.Antialiased;
 					return true;
 
-				case "subpixel-antialiased":
-					FontSmooth = UI.FontSmooth.SubpixelAntialiased;
+				case "grayscale-antialiased":
+					FontSmooth = UI.FontSmooth.GrayscaleAntialiased;
 					return true;
 
 				case "auto":
