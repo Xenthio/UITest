@@ -481,7 +481,6 @@ public partial class Panel
 
         ScrollOffset = so;
         isScrolling = true;
-        SetNeedsPreLayout(); // Ensure layout updates when scrolling
     }
 
     internal void SortChildrenOrder()
