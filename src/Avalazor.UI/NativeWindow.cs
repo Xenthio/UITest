@@ -26,6 +26,8 @@ public class NativeWindow : INativeWindow, IDisposable
         options.Title = title;
         options.VSync = true;
         options.IsEventDriven = false;
+        options.UpdatesPerSecond = 60;  // Explicitly set update rate
+        options.FramesPerSecond = 60;   // Explicitly set frame rate
 
         // 1. SELECT BACKEND AT COMPILE TIME
 //#if WINDOWS
