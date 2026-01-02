@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  
+  <!-- Import global shared assets (themes, fonts, images) -->
+  <Import Project="..\..\Assets.props" />
+  
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -11,6 +15,17 @@
     <ProjectReference Include="..\..\src\Sandbox.UI.AI\Sandbox.UI.AI.csproj" />
     <!-- Build-time only reference - ensures Avalazor.Build is compiled before this project -->
     <ProjectReference Include="..\..\src\Avalazor.Build\Avalazor.Build.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- Project-specific Assets folder (overrides global assets if same path) -->
+  <ItemGroup>
+    <!-- Copy assets to output keeping Assets\ prefix -->
+    <Content Include="Assets\**\*" Exclude="Assets\README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <!-- Keep Assets\ prefix: Assets\themes\file.scss -> Assets\themes\file.scss -->
+      <Link>Assets\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
   <!-- Import Avalazor build targets for Razor and SCSS -->

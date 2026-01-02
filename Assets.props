@@ -1,0 +1,23 @@
+<Project>
+  <!-- 
+    Global Assets Configuration
+    Import this in your project to include global themes, fonts, and images
+  -->
+  
+  <PropertyGroup>
+    <!-- Path to global Assets folder relative to solution root -->
+    <GlobalAssetsPath>$(MSBuildThisFileDirectory)</GlobalAssetsPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include global Assets in build output, keeping Assets/ prefix -->
+    <Content Include="$(GlobalAssetsPath)Assets\**\*" Exclude="$(GlobalAssetsPath)Assets\README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <!-- Keep Assets\ prefix in output path -->
+      <Link>Assets\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Visible>false</Visible> <!-- Hide from Solution Explorer to avoid clutter -->
+    </Content>
+  </ItemGroup>
+
+</Project>

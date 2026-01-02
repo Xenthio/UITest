@@ -1,0 +1,62 @@
+.content-panel {
+	padding: 20px;
+	background-color: #ECE9D8;
+	flex-direction: column;
+	height: 100%;
+	overflow: scroll;
+}
+
+h2 {
+	font-size: 16px;
+	font-weight: bold;
+	margin-bottom: 10px;
+	color: #000000;
+}
+
+h3 {
+	font-size: 14px;
+	font-weight: bold;
+	margin-top: 15px;
+	margin-bottom: 8px;
+	color: #000000;
+}
+
+p {
+	margin-bottom: 15px;
+	color: #000000;
+}
+
+.button-row {
+	flex-direction: row;
+	gap: 10px;
+	margin-bottom: 20px;
+}
+
+.info-section {
+	background-color: #F5F5F5;
+	padding: 15px;
+	border: 1px solid #ACA899;
+	border-radius: 3px;
+	margin-bottom: 15px;
+	
+	ul {
+		margin-top: 10px;
+		padding-left: 20px;
+		
+		li {
+			margin-bottom: 5px;
+			color: #000000;
+		}
+	}
+}
+
+// Test buttons with explicit border-image
+.test-button-1,
+.test-button-2,
+.test-button-3 {
+	height: 30px;
+	padding: 5px 15px;
+	font-size: 11px;
+	font-family: "Tahoma";
+	min-width: 80px;
+}
