@@ -344,7 +344,7 @@ public partial class Panel
             }
         }
 
-        if (ComputedStyle?.Overflow == OverflowMode.Scroll)
+        if (ComputedStyle?.Overflow.Value == OverflowMode.Scroll)
         {
             var rect = Box.Rect;
             rect.Position -= ScrollOffset;
@@ -354,19 +354,41 @@ public partial class Panel
                 var child = _children[i];
                 if (child.IsVisible)
                 {
-                    rect.Add(child.Box.RectOuter);
+                    rect.Add(child.GetLayoutRect());
                 }
             }
 
             rect.Height += Box.Padding.Bottom;
             rect.Right += Box.Padding.Right;
 
-            ConstrainScrolling(new Vector2(rect.Width, rect.Height));
+            ConstrainScrolling(rect.Size);
         }
         else
         {
             ScrollOffset = Vector2.Zero;
         }
+    }
+
+    Rect GetLayoutRect()
+    {
+        if (HasChildren && ComputedStyle.Display == DisplayMode.Contents)
+        {
+            Rect rect = default;
+            for (int i = 0; i < _children.Count; i++)
+            {
+                var child = _children[i];
+
+                if (child.IsVisible)
+                {
+                    if (i == 0) rect = child.GetLayoutRect();
+                    else rect.Add(child.GetLayoutRect());
+                }
+            }
+
+            return rect;
+        }
+
+        return Box.RectOuter;
     }
 
     private void UpdateScrollPin()
