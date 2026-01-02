@@ -175,7 +175,7 @@ public partial class Panel
         velocityAdd *= (1 + ScrollVelocity.Length / 100.0f);
         ScrollVelocity += velocityAdd;
 
-        if (velocityAdd.Length < 0.001f)
+        if (velocityAdd.Length.AlmostEqual(0))
             return false;
 
         return true;
