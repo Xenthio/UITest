@@ -1,5 +1,6 @@
 using System.Text;
 using SkiaSharp;
+using Sandbox.UI.Skia;
 
 namespace Sandbox.UI.AI;
 
@@ -391,7 +392,7 @@ public class AIPanelRenderer : IPanelRenderer
     }
 
     /// <summary>
-    /// Render the UI to a bitmap for visual inspection.
+    /// Render the UI to a bitmap for visual inspection using the full Skia renderer.
     /// Returns the path to the saved PNG file.
     /// </summary>
     public string RenderToBitmap(RootPanel panel, string outputPath, int width = 0, int height = 0)
@@ -412,8 +413,9 @@ public class AIPanelRenderer : IPanelRenderer
         // Clear with light gray background
         _canvas.Clear(new SKColor(240, 240, 240));
 
-        // Render all panels
-        RenderPanelToBitmap(panel, _canvas);
+        // Use the full SkiaPanelRenderer for high-quality rendering
+        var skiaRenderer = new SkiaPanelRenderer();
+        skiaRenderer.Render(_canvas, panel);
 
         // Save to file
         using var image = SKImage.FromBitmap(_bitmap);
@@ -422,64 +424,6 @@ public class AIPanelRenderer : IPanelRenderer
         data.SaveTo(stream);
 
         return outputPath;
-    }
-
-    private void RenderPanelToBitmap(Panel panel, SKCanvas canvas)
-    {
-        if (panel.ComputedStyle == null) return;
-        if (!panel.IsVisible) return;
-
-        var rect = panel.Box?.Rect ?? Rect.Zero;
-        var skRect = new SKRect(rect.Left, rect.Top, rect.Right, rect.Bottom);
-
-        // Draw background
-        var style = panel.ComputedStyle;
-        if (style.BackgroundColor.HasValue && style.BackgroundColor.Value.a > 0)
-        {
-            var c = style.BackgroundColor.Value;
-            using var paint = new SKPaint
-            {
-                Color = new SKColor((byte)(c.r * 255), (byte)(c.g * 255), (byte)(c.b * 255), (byte)(c.a * 255)),
-                Style = SKPaintStyle.Fill
-            };
-            canvas.DrawRect(skRect, paint);
-        }
-
-        // Draw border (simplified - just outline)
-        if (style.BorderLeftWidth?.Value > 0 || style.BorderTopWidth?.Value > 0)
-        {
-            var borderColor = style.BorderLeftColor ?? new Color(0, 0, 0, 1);
-            using var paint = new SKPaint
-            {
-                Color = new SKColor((byte)(borderColor.r * 255), (byte)(borderColor.g * 255), (byte)(borderColor.b * 255), (byte)(borderColor.a * 255)),
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = style.BorderLeftWidth?.Value ?? 1
-            };
-            canvas.DrawRect(skRect, paint);
-        }
-
-        // Draw text for labels
-        if (panel is Label label && !string.IsNullOrEmpty(label.Text))
-        {
-            var textColor = style.FontColor ?? new Color(0, 0, 0, 1);
-            var fontSize = style.FontSize?.GetPixels(16) ?? 16;
-            using var paint = new SKPaint
-            {
-                Color = new SKColor((byte)(textColor.r * 255), (byte)(textColor.g * 255), (byte)(textColor.b * 255), (byte)(textColor.a * 255)),
-                TextSize = fontSize,
-                IsAntialias = true
-            };
-            canvas.DrawText(label.Text, rect.Left + 2, rect.Top + fontSize, paint);
-        }
-
-        // Render children
-        if (panel.HasChildren)
-        {
-            foreach (var child in panel.Children)
-            {
-                RenderPanelToBitmap(child, canvas);
-            }
-        }
     }
 
     /// <summary>
