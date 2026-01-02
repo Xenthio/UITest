@@ -102,6 +102,8 @@ public partial class Panel
     public Vector2 ScrollSize { get; private set; }
 
     bool IsDragScrolling;
+    bool isScrolling;
+    Vector2 scrollVelocityVelocity;
 
     internal bool needsPreLayout = true;
     internal bool needsFinalLayout = true;
@@ -306,8 +308,22 @@ public partial class Panel
         // Only skip layout for opacity 0 after first layout - ensures Box values are set at least once
         if (LayoutCount > 0 && Opacity <= 0.0f) return;
 
-        offset = new Vector2(Box.Rect.Left, Box.Rect.Top) - ScrollOffset;
+        // The initial state should be true for these panels
+        // So there is no need to manually scroll to the bottom for scroll to be pinned there by default
+        if (LayoutCount == 0 && PreferScrollToBottom)
+        {
+            IsScrollAtBottom = true;
+        }
+
+        bool wasScrollatBottom = IsScrollAtBottom;
+
+        offset = new Vector2(Box.Rect.Left, Box.Rect.Top) - ScrollOffset.SnapToGrid(1.0f);
         FinalLayoutChildren(offset);
+
+        if (wasScrollatBottom)
+        {
+            UpdateScrollPin();
+        }
         
         LayoutCount++;
     }
@@ -353,20 +369,96 @@ public partial class Panel
         }
     }
 
+    private void UpdateScrollPin()
+    {
+        if (!PreferScrollToBottom)
+            return;
+
+        if (IsScrollAtBottom)
+            return;
+
+        if (!ScrollVelocity.y.AlmostEqual(0, 0.1f))
+            return;
+
+        ScrollOffset = new Vector2(ScrollOffset.x, ScrollSize.y);
+        IsScrollAtBottom = true;
+        ScrollVelocity.y = 0;
+    }
+
+    protected virtual void AddScrollVelocity()
+    {
+        if (ScrollVelocity.IsNearZeroLength)
+        {
+            ScrollVelocity = Vector2.Zero;
+            return;
+        }
+
+        ScrollVelocity = Vector2.SmoothDamp(ScrollVelocity, Vector2.Zero, ref scrollVelocityVelocity, 0.5f, RealTime.SmoothDelta);
+
+        // Bring it to a stop
+        if (ScrollVelocity.y.AlmostEqual(0, 0.01f)) ScrollVelocity.y = 0;
+        if (ScrollVelocity.x.AlmostEqual(0, 0.01f)) ScrollVelocity.x = 0;
+    }
+
     protected virtual void ConstrainScrolling(Vector2 size)
     {
-        size -= new Vector2(Box.Rect.Width, Box.Rect.Height);
+        if (IsDragScrolling)
+            return;
+
+        isScrolling = false;
+
+        size -= Box.Rect.Size;
+
+        var heightChange = size.y - ScrollSize.y;
+
         ScrollSize = size;
+        ScrollSize = ScrollSize.SnapToGrid(1.0f);
+
+        var overflow = ComputedStyle.Overflow;
+
+        if (overflow == OverflowMode.Visible || overflow == OverflowMode.Hidden)
+        {
+            ScrollOffset = Vector2.Zero;
+            return;
+        }
 
         var so = ScrollOffset;
 
-        // Constrain
-        if (so.y < 0) so.y = 0;
-        if (so.x < 0) so.x = 0;
-        if (so.y > ScrollSize.y) so.y = ScrollSize.y;
-        if (so.x > ScrollSize.x) so.x = ScrollSize.x;
+        // add velocity
+        so += ScrollVelocity * RealTime.SmoothDelta * 60.0f;
+
+        // Reverse the axis if flex-direction: *-reverse or justify-content: flex-end;
+        var axisReversed = ComputedStyle.JustifyContent == Justify.FlexEnd || ComputedStyle.FlexDirection == FlexDirection.RowReverse || ComputedStyle.FlexDirection == FlexDirection.ColumnReverse;
+
+        IsScrollAtBottom = so.y + ScrollVelocity.y >= size.y;
+        if (ScrollVelocity.y > 0 && IsScrollAtBottom) so.y += heightChange;
+
+        //
+        // TODO - a style to let them turn springy mode off ?
+        //
+
+        var constrainSpeed = RealTime.SmoothDelta * 100.0f;
+
+        if (axisReversed)
+        {
+            if (so.y > 0) so.y = so.y.LerpTo(0, constrainSpeed);
+            if (so.x > 0) so.x = so.x.LerpTo(0, constrainSpeed);
+            if (so.y < -ScrollSize.y) so.y = so.y.LerpTo(-ScrollSize.y, constrainSpeed);
+            if (so.x < -ScrollSize.x) so.x = so.x.LerpTo(-ScrollSize.x, constrainSpeed);
+        }
+        else
+        {
+            if (so.y < 0) so.y = so.y.LerpTo(0, constrainSpeed);
+            if (so.x < 0) so.x = so.x.LerpTo(0, constrainSpeed);
+            if (so.y > ScrollSize.y) so.y = so.y.LerpTo(ScrollSize.y, constrainSpeed);
+            if (so.x > ScrollSize.x) so.x = so.x.LerpTo(ScrollSize.x, constrainSpeed);
+        }
+
+        if (ScrollOffset == so)
+            return;
 
         ScrollOffset = so;
+        isScrolling = true;
     }
 
     internal void SortChildrenOrder()

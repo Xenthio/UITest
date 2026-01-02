@@ -110,6 +110,7 @@ public class NativeWindow : INativeWindow, IDisposable
 
         // Update panel time for transitions and animations
         PanelRealTime.Update(delta);
+        RealTime.Update(delta);
 
         var size = _window.FramebufferSize;
         RootPanel.PanelBounds = new Rect(0, 0, size.X, size.Y);

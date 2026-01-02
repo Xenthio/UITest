@@ -264,6 +264,8 @@ public partial class Panel : IDisposable, IStyleTarget, IComponent
             RunPendingEvents();
             Tick();
             RunPendingEvents();
+
+            AddScrollVelocity();
             RunClassBinds();
         }
         catch (Exception e)
