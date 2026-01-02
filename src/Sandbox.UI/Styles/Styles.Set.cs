@@ -129,6 +129,13 @@ namespace Sandbox.UI
 
 				case "object-fit":
 					return SetObjectFit( value );
+
+				// Image properties
+				case "background-image":
+					return SetImage( value, SetBackgroundImageFromTexture );
+
+				case "border-image":
+					return SetBorderImage( value );
 			}
 
 			return base.Set( property, value );
@@ -654,6 +661,265 @@ namespace Sandbox.UI
 			}
 
 			return false;
+		}
+
+		/// <summary>
+		/// Parse image properties (background-image, mask-image, border-image source)
+		/// Based on s&box's SetImage implementation
+		/// </summary>
+		private bool SetImage( string value, System.Func<System.Lazy<Texture>, bool> setImage )
+		{
+			var p = new Parse( value );
+			p = p.SkipWhitespaceAndNewlines();
+
+			if ( p.Is( "none", 0, true ) )
+			{
+				setImage( new System.Lazy<Texture>( Texture.Invalid ) );
+				return true;
+			}
+
+			if ( GetTokenValueUnderParenthesis( p, "url", out string url ) )
+			{
+				url = url.Trim( ' ', '"', '\'' );
+				setImage( new System.Lazy<Texture>( () =>
+				{
+					return Texture.Load( url ) ?? Texture.Invalid;
+				} ) );
+				return true;
+			}
+
+			// Linear gradients, radial gradients etc. would go here
+			// For now we only support url() and none
+
+			return false;
+		}
+
+		/// <summary>
+		/// Helper to extract value inside parentheses for functions like url(), linear-gradient(), etc.
+		/// Based on s&box's GetTokenValueUnderParenthesis implementation
+		/// </summary>
+		private bool GetTokenValueUnderParenthesis( Parse p, string tokenName, out string result )
+		{
+			if ( p.Is( tokenName, 0, true ) )
+			{
+				p.Pointer += tokenName.Length;
+				p = p.SkipWhitespaceAndNewlines();
+
+				if ( p.Current != '(' )
+				{
+					result = "";
+					return false;
+				}
+
+				p.Pointer++;
+
+				int stack = 1;
+				var wordStart = p;
+
+				while ( !p.IsEnd && stack > 0 )
+				{
+					p.Pointer++;
+					if ( p.Current == '(' ) stack++;
+					if ( p.Current == ')' ) stack--;
+				}
+
+				if ( p.IsEnd )
+				{
+					result = "";
+					return false;
+				}
+
+				result = wordStart.Read( p.Pointer - wordStart.Pointer );
+				return true;
+			}
+			result = "";
+			return false;
+		}
+
+		/// <summary>
+		/// Parse border-image shorthand property
+		/// Based on s&box's SetBorderImage implementation
+		/// Syntax: border-image: source slice / width repeat fill
+		/// </summary>
+		private bool SetBorderImage( string value )
+		{
+			var p = new Parse( value );
+
+			p = p.SkipWhitespaceAndNewlines();
+
+			// Parse the image source
+			if ( !SetImage( p.Text, SetBorderTexture ) )
+			{
+				return false;
+			}
+
+			// Skip past the url(...) part
+			p.Pointer += p.ReadUntilOrEnd( ")" ).Length + 1;
+
+			var borderSliceList = new System.Collections.Generic.List<Length>();
+			var borderWidthList = new System.Collections.Generic.List<Length>();
+
+			// 0 = parsing slice, 1 = parsing width
+			int parseType = 0;
+
+			while ( !p.IsEnd )
+			{
+				p = p.SkipWhitespaceAndNewlines();
+				
+				if ( p.Is( "stretch", 0, true ) )
+				{
+					p.Pointer += "stretch".Length;
+					BorderImageRepeat = UI.BorderImageRepeat.Stretch;
+				}
+				else if ( p.Is( "round", 0, true ) )
+				{
+					p.Pointer += "round".Length;
+					BorderImageRepeat = UI.BorderImageRepeat.Round;
+				}
+				else if ( p.Is( "fill", 0, true ) )
+				{
+					p.Pointer += "fill".Length;
+					BorderImageFill = UI.BorderImageFill.Filled;
+				}
+				else if ( p.Is( "/", 0, true ) )
+				{
+					p.Pointer++;
+
+					// Needs to have at least one element before we do it
+					if ( borderSliceList.Count == 0 )
+					{
+						return false;
+					}
+
+					// We don't support anything else
+					if ( parseType == 1 )
+					{
+						return false;
+					}
+
+					parseType = 1;
+				}
+				else if ( p.TryReadLength( out Length lengthValue ) )
+				{
+					if ( parseType == 0 )
+					{
+						borderSliceList.Add( lengthValue );
+					}
+					else
+					{
+						borderWidthList.Add( lengthValue );
+					}
+				}
+
+				if ( p.IsEnd )
+					break;
+
+				p.Pointer++;
+				p = p.SkipWhitespaceAndNewlines();
+			}
+
+			// Parse our border slice pixel sizes
+			switch ( borderSliceList.Count )
+			{
+				// 33.3% of texture size
+				case 0:
+					if ( BorderImageSource != null )
+					{
+						BorderImageWidthLeft = BorderImageWidthRight = BorderImageWidthTop = BorderImageWidthBottom = BorderImageSource.Width / 3.0f;
+					}
+					break;
+
+				// Uniform
+				case 1:
+					BorderImageWidthLeft = BorderImageWidthRight = BorderImageWidthTop = BorderImageWidthBottom = borderSliceList[0];
+					break;
+
+				// Top-Bottom and Left-Right
+				case 2:
+					BorderImageWidthTop = BorderImageWidthBottom = borderSliceList[0];
+					BorderImageWidthLeft = BorderImageWidthRight = borderSliceList[1];
+					break;
+
+				// Top, Left-Right and Bottom
+				case 3:
+					BorderImageWidthTop = borderSliceList[0];
+					BorderImageWidthLeft = BorderImageWidthRight = borderSliceList[1];
+					BorderImageWidthBottom = borderSliceList[2];
+					break;
+
+				// Top, Right, Bottom, Left
+				case 4:
+					BorderImageWidthTop = borderSliceList[0];
+					BorderImageWidthRight = borderSliceList[1];
+					BorderImageWidthBottom = borderSliceList[2];
+					BorderImageWidthLeft = borderSliceList[3];
+					break;
+			}
+
+			// Parse our border width pixel sizes, we re use BorderWidth so we don't need to pass another uniform to the shader
+			switch ( borderWidthList.Count )
+			{
+				// Just copy whatever is on slice if nothing is set
+				case 0:
+					BorderLeftWidth = BorderImageWidthLeft;
+					BorderRightWidth = BorderImageWidthRight;
+					BorderTopWidth = BorderImageWidthTop;
+					BorderBottomWidth = BorderImageWidthBottom;
+					break;
+
+				// Uniform
+				case 1:
+					BorderLeftWidth = BorderRightWidth = BorderTopWidth = BorderBottomWidth = borderWidthList[0];
+					break;
+
+				// Top-Bottom and Left-Right
+				case 2:
+					BorderTopWidth = BorderBottomWidth = borderWidthList[0];
+					BorderLeftWidth = BorderRightWidth = borderWidthList[1];
+					break;
+
+				// Top, Left-Right and Bottom
+				case 3:
+					BorderTopWidth = borderWidthList[0];
+					BorderLeftWidth = BorderRightWidth = borderWidthList[1];
+					BorderBottomWidth = borderWidthList[2];
+					break;
+
+				// Top, Right, Bottom, Left
+				case 4:
+					BorderTopWidth = borderWidthList[0];
+					BorderRightWidth = borderWidthList[1];
+					BorderBottomWidth = borderWidthList[2];
+					BorderLeftWidth = borderWidthList[3];
+					break;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Set border texture from parsed image
+		/// Based on s&box's SetBorderTexture implementation
+		/// </summary>
+		private bool SetBorderTexture( System.Lazy<Texture> t )
+		{
+			_borderImageSource = t;
+			return true;
+		}
+
+		/// <summary>
+		/// Set background image from parsed texture
+		/// Based on s&box's SetBackgroundImageFromTexture implementation
+		/// </summary>
+		private bool SetBackgroundImageFromTexture( System.Lazy<Texture> texture )
+		{
+			if ( texture == null )
+				return true;
+
+			_backgroundImage = texture;
+			Dirty();
+
+			return true;
 		}
 	}
 }

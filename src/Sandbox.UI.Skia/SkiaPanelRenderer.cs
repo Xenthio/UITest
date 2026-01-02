@@ -641,6 +641,13 @@ public class SkiaPanelRenderer : IPanelRenderer
         var skRect = ToSKRect(rect);
         var opacity = panel.Opacity * state.RenderOpacity;
 
+        // Check if we have a border-image to render
+        if (style.BorderImageSource != null && !string.IsNullOrEmpty(style.BorderImageSource.Path))
+        {
+            DrawBorderImage(canvas, panel, skRect, opacity);
+            return; // Border-image replaces regular borders
+        }
+
         // Get border widths with 1px clamp for non-zero values (matches s&box)
         var leftWidth = style.BorderLeftWidth?.GetPixels(1f) ?? 0;
         if (leftWidth > 0 && leftWidth < 1) leftWidth = 1;
@@ -806,6 +813,139 @@ public class SkiaPanelRenderer : IPanelRenderer
             };
             canvas.DrawRect(rect.Left, rect.Bottom - bottomWidth, rect.Width, bottomWidth, paint);
         }
+    }
+
+    /// <summary>
+    /// Draw border using border-image (9-slice rendering)
+    /// Based on s&box's border-image implementation
+    /// </summary>
+    private void DrawBorderImage(SKCanvas canvas, Panel panel, SKRect skRect, float opacity)
+    {
+        var style = panel.ComputedStyle;
+        if (style == null || style.BorderImageSource == null) return;
+        
+        var texture = style.BorderImageSource;
+        
+        // Load texture if not already loaded
+        if (texture.NativeHandle == null)
+        {
+            texture.LoadData();
+        }
+        
+        // Try to get SKImage from native handle
+        SKImage? image = texture.NativeHandle as SKImage;
+        if (image == null)
+        {
+            // Try to load from path using file system
+            image = LoadTextureFromPath(texture.Path);
+            if (image != null)
+            {
+                texture.NativeHandle = image;
+                texture.Width = image.Width;
+                texture.Height = image.Height;
+            }
+        }
+        
+        if (image == null) return;
+        
+        // Get border image widths (slice sizes in the source image)
+        var leftSlice = style.BorderImageWidthLeft?.GetPixels(1f) ?? (image.Width / 3f);
+        var topSlice = style.BorderImageWidthTop?.GetPixels(1f) ?? (image.Height / 3f);
+        var rightSlice = style.BorderImageWidthRight?.GetPixels(1f) ?? (image.Width / 3f);
+        var bottomSlice = style.BorderImageWidthBottom?.GetPixels(1f) ?? (image.Height / 3f);
+        
+        // Get border widths (how wide to draw the borders in the destination)
+        var leftWidth = style.BorderLeftWidth?.GetPixels(1f) ?? leftSlice;
+        var topWidth = style.BorderTopWidth?.GetPixels(1f) ?? topSlice;
+        var rightWidth = style.BorderRightWidth?.GetPixels(1f) ?? rightSlice;
+        var bottomWidth = style.BorderBottomWidth?.GetPixels(1f) ?? bottomSlice;
+        
+        using var paint = new SKPaint
+        {
+            Color = style.BorderImageTint.HasValue 
+                ? ToSKColor(style.BorderImageTint.Value, opacity) 
+                : new SKColor(255, 255, 255, (byte)(255 * opacity)),
+            FilterQuality = SKFilterQuality.High,
+            IsAntialias = true
+        };
+        
+        // 9-slice rendering: divide image into 9 parts and draw each
+        // Source rectangles (in image coordinates)
+        var srcLeft = 0f;
+        var srcTop = 0f;
+        var srcRight = image.Width;
+        var srcBottom = image.Height;
+        var srcCenterLeft = leftSlice;
+        var srcCenterTop = topSlice;
+        var srcCenterRight = image.Width - rightSlice;
+        var srcCenterBottom = image.Height - bottomSlice;
+        
+        // Destination rectangles (on canvas)
+        var dstLeft = skRect.Left;
+        var dstTop = skRect.Top;
+        var dstRight = skRect.Right;
+        var dstBottom = skRect.Bottom;
+        var dstCenterLeft = skRect.Left + leftWidth;
+        var dstCenterTop = skRect.Top + topWidth;
+        var dstCenterRight = skRect.Right - rightWidth;
+        var dstCenterBottom = skRect.Bottom - bottomWidth;
+        
+        // 1. Top-left corner
+        canvas.DrawImage(image,
+            new SKRect(srcLeft, srcTop, srcCenterLeft, srcCenterTop),
+            new SKRect(dstLeft, dstTop, dstCenterLeft, dstCenterTop),
+            paint);
+        
+        // 2. Top edge
+        canvas.DrawImage(image,
+            new SKRect(srcCenterLeft, srcTop, srcCenterRight, srcCenterTop),
+            new SKRect(dstCenterLeft, dstTop, dstCenterRight, dstCenterTop),
+            paint);
+        
+        // 3. Top-right corner
+        canvas.DrawImage(image,
+            new SKRect(srcCenterRight, srcTop, srcRight, srcCenterTop),
+            new SKRect(dstCenterRight, dstTop, dstRight, dstCenterTop),
+            paint);
+        
+        // 4. Left edge
+        canvas.DrawImage(image,
+            new SKRect(srcLeft, srcCenterTop, srcCenterLeft, srcCenterBottom),
+            new SKRect(dstLeft, dstCenterTop, dstCenterLeft, dstCenterBottom),
+            paint);
+        
+        // 5. Center (if fill is enabled)
+        if (style.BorderImageFill == UI.BorderImageFill.Filled)
+        {
+            canvas.DrawImage(image,
+                new SKRect(srcCenterLeft, srcCenterTop, srcCenterRight, srcCenterBottom),
+                new SKRect(dstCenterLeft, dstCenterTop, dstCenterRight, dstCenterBottom),
+                paint);
+        }
+        
+        // 6. Right edge
+        canvas.DrawImage(image,
+            new SKRect(srcCenterRight, srcCenterTop, srcRight, srcCenterBottom),
+            new SKRect(dstCenterRight, dstCenterTop, dstRight, dstCenterBottom),
+            paint);
+        
+        // 7. Bottom-left corner
+        canvas.DrawImage(image,
+            new SKRect(srcLeft, srcCenterBottom, srcCenterLeft, srcBottom),
+            new SKRect(dstLeft, dstCenterBottom, dstCenterLeft, dstBottom),
+            paint);
+        
+        // 8. Bottom edge
+        canvas.DrawImage(image,
+            new SKRect(srcCenterLeft, srcCenterBottom, srcCenterRight, srcBottom),
+            new SKRect(dstCenterLeft, dstCenterBottom, dstCenterRight, dstBottom),
+            paint);
+        
+        // 9. Bottom-right corner
+        canvas.DrawImage(image,
+            new SKRect(srcCenterRight, srcCenterBottom, srcRight, srcBottom),
+            new SKRect(dstCenterRight, dstCenterBottom, dstRight, dstBottom),
+            paint);
     }
 
     /// <summary>
