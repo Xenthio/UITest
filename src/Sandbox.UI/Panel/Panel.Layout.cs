@@ -315,12 +315,12 @@ public partial class Panel
             IsScrollAtBottom = true;
         }
 
-        bool wasScrollatBottom = IsScrollAtBottom;
+        bool wasScrollAtBottom = IsScrollAtBottom;
 
         offset = new Vector2(Box.Rect.Left, Box.Rect.Top) - ScrollOffset.SnapToGrid(1.0f);
         FinalLayoutChildren(offset);
 
-        if (wasScrollatBottom)
+        if (wasScrollAtBottom)
         {
             UpdateScrollPin();
         }
