@@ -463,16 +463,15 @@ public class StyleSheetTests
         var hoverColor = panel.ComputedStyle!.BackgroundColor;
         Assert.NotNull(hoverColor);
         
-        // Debug output
-        var output = new System.IO.StringWriter();
-        output.WriteLine($"Before hover: {beforeHoverColor?.ToString() ?? "null"}");
-        output.WriteLine($"Hover frame 1: R={hoverColor.Value.r}, G={hoverColor.Value.g}, B={hoverColor.Value.b}, A={hoverColor.Value.a}");
-        output.WriteLine($"TimeNow={PanelRealTime.TimeNow}, TimeDelta={PanelRealTime.TimeDelta}");
-        output.WriteLine($"Transitions entries count: {panel.Transitions?.Entries?.Count ?? 0}");
+        // On this first frame after hover, the transition started at TimeNow - TimeDelta (1.0) and is evaluated at 1.016,
+        // so the elapsed fraction is about 5% (0.016 / 0.3) and the color should be around (0.95, 0.05, 0)
+        var debugInfo =
+            $"Before hover: {beforeHoverColor?.ToString() ?? "null"}\n" +
+            $"Hover frame 1: R={hoverColor.Value.r}, G={hoverColor.Value.g}, B={hoverColor.Value.b}, A={hoverColor.Value.a}\n" +
+            $"TimeNow={PanelRealTime.TimeNow}, TimeDelta={PanelRealTime.TimeDelta}\n" +
+            $"Transitions entries count: {panel.Transitions?.Entries?.Count ?? 0}";
         
-        // Should be between red (1,0,0) and green (0,1,0), not black (0,0,0)
-        // With 5% interpolation (0.016/0.3), should be about (0.95, 0.05, 0)
-        Assert.True(hoverColor.Value.r > 0.5f, $"Expected red > 0.5 but got {hoverColor.Value.r}. Debug: {output}");
+        Assert.True(hoverColor.Value.r > 0.5f, $"Expected red > 0.5 but got {hoverColor.Value.r}. Debug: {debugInfo}");
         Assert.True(hoverColor.Value.a > 0.9f, $"Expected alpha > 0.9 but got {hoverColor.Value.a}");  // Should be mostly opaque
     }
 }
