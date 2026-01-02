@@ -22,12 +22,17 @@ git clone https://github.com/Xenthio/UITest.git
 cd UITest
 ```
 
-2. Build the solution:
+2. Initialize submodules:
+```bash
+git submodule update --init --recursive
+```
+
+3. Build the solution:
 ```bash
 dotnet build Fazor.sln
 ```
 
-3. Run the example:
+4. Run the example:
 ```bash
 cd examples/SimpleDesktopApp
 dotnet run
