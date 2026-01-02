@@ -16,6 +16,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <!-- SkiaSharp native assets for tests -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="3.119.1" />
   </ItemGroup>
 
   <ItemGroup>
