@@ -18,6 +18,12 @@ public static class AvalazorApplication
     public static bool ForceAIMode { get; set; } = false;
     
     /// <summary>
+    /// Whether to run AI mode in interactive mode with a command prompt.
+    /// Default is true. Set to false for non-interactive batch output.
+    /// </summary>
+    public static bool AIInteractiveMode { get; set; } = true;
+    
+    /// <summary>
     /// Callback invoked when running in AI mode, allowing custom handling of the root panel.
     /// If not set, default AI output is printed to console.
     /// </summary>
@@ -109,6 +115,25 @@ public static class AvalazorApplication
             if (!HasDisplayEnvironment())
             {
                 Console.WriteLine($"[Avalazor] No display environment detected - using AI renderer");
+                
+                // Mark any top-level Window as a root window so it fills the viewport
+                // instead of using its Position/Size as embedded window coordinates
+                if (panel is Sandbox.UI.Window win)
+                {
+                    win.IsRootWindow = true;
+                    
+                    // Reset the Window styles to fill the viewport (undo any position/size that was applied)
+                    win.Style.Position = PositionMode.Absolute;
+                    win.Style.Left = 0;
+                    win.Style.Top = 0;
+                    win.Style.Width = Length.Percent(100);
+                    win.Style.Height = Length.Percent(100);
+                }
+                
+                // Re-layout with updated bounds and root window flag
+                rootPanel.PanelBounds = new Rect(0, 0, width, height);
+                rootPanel.Layout();
+                
                 RunWithAIRenderer(rootPanel, width, height, title);
                 return;
             }
@@ -124,9 +149,9 @@ public static class AvalazorApplication
             var nativeWindow = new NativeWindow(width, height, title);
             
             // If panel is a Window, give it a reference to the native window
-            if (panel is Sandbox.UI.Window win)
+            if (panel is Sandbox.UI.Window winPanel)
             {
-                win.SetNativeWindow(nativeWindow);
+                winPanel.SetNativeWindow(nativeWindow);
             }
             
             nativeWindow.RootPanel = rootPanel;
@@ -189,13 +214,234 @@ public static class AvalazorApplication
             Console.WriteLine("\n[AI] Note: Screenshot not available (SkiaSharp native library not loaded)");
         }
         
+        // Run interactive prompt if enabled
+        if (AIInteractiveMode)
+        {
+            RunInteractivePrompt(rootPanel, width, height, title);
+        }
+        else
+        {
+            Console.WriteLine("\n" + new string('═', 60));
+            Console.WriteLine("AI MODE TIPS:");
+            Console.WriteLine("- Use AIHelper.Snapshot(rootPanel) to get current UI state");
+            Console.WriteLine("- Use AIHelper.WhatIsAt(rootPanel, x, y) to inspect coordinates");
+            Console.WriteLine("- Use AIHelper.FindByClass(rootPanel, \"classname\") to find elements");
+            Console.WriteLine("- Set AVALAZOR_AI_MODE=0 or provide a DISPLAY to use GUI mode");
+            Console.WriteLine(new string('═', 60));
+        }
+    }
+    
+    /// <summary>
+    /// Run the interactive AI command prompt
+    /// </summary>
+    private static void RunInteractivePrompt(RootPanel rootPanel, int width, int height, string title)
+    {
         Console.WriteLine("\n" + new string('═', 60));
-        Console.WriteLine("AI MODE TIPS:");
-        Console.WriteLine("- Use AIHelper.Snapshot(rootPanel) to get current UI state");
-        Console.WriteLine("- Use AIHelper.WhatIsAt(rootPanel, x, y) to inspect coordinates");
-        Console.WriteLine("- Use AIHelper.FindByClass(rootPanel, \"classname\") to find elements");
-        Console.WriteLine("- Set AVALAZOR_AI_MODE=0 or provide a DISPLAY to use GUI mode");
+        Console.WriteLine("INTERACTIVE AI MODE");
         Console.WriteLine(new string('═', 60));
+        Console.WriteLine("Commands:");
+        Console.WriteLine("  snapshot          - Show full UI state");
+        Console.WriteLine("  interactive       - List interactive elements");
+        Console.WriteLine("  summary           - Show quick summary");
+        Console.WriteLine("  screenshot [file] - Save screenshot to file");
+        Console.WriteLine("  click <x> <y>     - Simulate click at coordinates");
+        Console.WriteLine("  what <x> <y>      - Describe element at coordinates");
+        Console.WriteLine("  find <class>      - Find elements by class name");
+        Console.WriteLine("  findid <id>       - Find element by ID");
+        Console.WriteLine("  hover <x> <y>     - Simulate hover at coordinates");
+        Console.WriteLine("  help              - Show this help");
+        Console.WriteLine("  quit / exit       - Exit the application");
+        Console.WriteLine(new string('═', 60) + "\n");
+        
+        while (true)
+        {
+            Console.Write("ai> ");
+            var input = Console.ReadLine()?.Trim();
+            
+            if (string.IsNullOrEmpty(input))
+                continue;
+                
+            var parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var command = parts[0].ToLower();
+            
+            try
+            {
+                switch (command)
+                {
+                    case "quit":
+                    case "exit":
+                    case "q":
+                        Console.WriteLine("Exiting AI mode.");
+                        return;
+                        
+                    case "help":
+                    case "?":
+                        Console.WriteLine("Commands:");
+                        Console.WriteLine("  snapshot          - Show full UI state");
+                        Console.WriteLine("  interactive       - List interactive elements");
+                        Console.WriteLine("  summary           - Show quick summary");
+                        Console.WriteLine("  screenshot [file] - Save screenshot to file");
+                        Console.WriteLine("  click <x> <y>     - Simulate click at coordinates");
+                        Console.WriteLine("  what <x> <y>      - Describe element at coordinates");
+                        Console.WriteLine("  find <class>      - Find elements by class name");
+                        Console.WriteLine("  findid <id>       - Find element by ID");
+                        Console.WriteLine("  hover <x> <y>     - Simulate hover at coordinates");
+                        Console.WriteLine("  tick              - Run a tick cycle");
+                        Console.WriteLine("  layout            - Re-run layout");
+                        Console.WriteLine("  quit / exit       - Exit the application");
+                        break;
+                        
+                    case "snapshot":
+                    case "snap":
+                        Console.WriteLine(AIHelper.Snapshot(rootPanel));
+                        break;
+                        
+                    case "interactive":
+                    case "elements":
+                    case "int":
+                        Console.WriteLine(AIHelper.GetInteractiveElements(rootPanel));
+                        break;
+                        
+                    case "summary":
+                    case "sum":
+                        Console.WriteLine(AIHelper.QuickSummary(rootPanel));
+                        break;
+                        
+                    case "screenshot":
+                    case "ss":
+                        string? filename = parts.Length > 1 ? parts[1] : null;
+                        var path = AIHelper.Screenshot(rootPanel, filename);
+                        Console.WriteLine($"Screenshot saved to: {path}");
+                        break;
+                        
+                    case "click":
+                        if (parts.Length >= 3 && float.TryParse(parts[1], out float clickX) && float.TryParse(parts[2], out float clickY))
+                        {
+                            var clickTarget = AIHelper.Renderer.HitTest(rootPanel, clickX, clickY);
+                            if (clickTarget != null)
+                            {
+                                Console.WriteLine($"Clicking on: <{clickTarget.ElementName}> {(clickTarget.Id != null ? $"id=\"{clickTarget.Id}\"" : "")} classes=[{clickTarget.Classes}]");
+                                
+                                // Simulate click event
+                                var clickEvent = new MousePanelEvent("onclick", clickTarget, "click");
+                                clickEvent.LocalPosition = new Vector2(clickX - (clickTarget.Box?.Rect.Left ?? 0), clickY - (clickTarget.Box?.Rect.Top ?? 0));
+                                clickTarget.CreateEvent(clickEvent);
+                                
+                                // Run tick and layout to process any state changes
+                                rootPanel.Tick();
+                                rootPanel.Layout();
+                                
+                                Console.WriteLine("Click processed. Use 'snapshot' or 'screenshot' to see updated state.");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"No panel found at ({clickX}, {clickY})");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Usage: click <x> <y>");
+                        }
+                        break;
+                        
+                    case "what":
+                    case "at":
+                        if (parts.Length >= 3 && float.TryParse(parts[1], out float whatX) && float.TryParse(parts[2], out float whatY))
+                        {
+                            Console.WriteLine(AIHelper.WhatIsAt(rootPanel, whatX, whatY));
+                        }
+                        else
+                        {
+                            Console.WriteLine("Usage: what <x> <y>");
+                        }
+                        break;
+                        
+                    case "find":
+                        if (parts.Length >= 2)
+                        {
+                            var className = parts[1];
+                            var found = AIHelper.FindByClass(rootPanel, className);
+                            Console.WriteLine($"Found {found.Count} element(s) with class '{className}':");
+                            foreach (var info in found)
+                            {
+                                Console.WriteLine($"  {info}");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Usage: find <classname>");
+                        }
+                        break;
+                        
+                    case "findid":
+                        if (parts.Length >= 2)
+                        {
+                            var id = parts[1];
+                            var found = AIHelper.FindById(rootPanel, id);
+                            if (found != null)
+                            {
+                                Console.WriteLine($"Found: {found}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"No element found with id '{id}'");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Usage: findid <id>");
+                        }
+                        break;
+                        
+                    case "hover":
+                        if (parts.Length >= 3 && float.TryParse(parts[1], out float hoverX) && float.TryParse(parts[2], out float hoverY))
+                        {
+                            var hoverTarget = AIHelper.Renderer.HitTest(rootPanel, hoverX, hoverY);
+                            if (hoverTarget != null)
+                            {
+                                Console.WriteLine($"Hovering over: <{hoverTarget.ElementName}> classes=[{hoverTarget.Classes}]");
+                                
+                                // Add hover class
+                                hoverTarget.SetClass("hover", true);
+                                hoverTarget.SetClass(":hover", true);
+                                
+                                // Run tick and layout
+                                rootPanel.Tick();
+                                rootPanel.Layout();
+                                
+                                Console.WriteLine("Hover applied. Use 'screenshot' to see visual state.");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"No panel found at ({hoverX}, {hoverY})");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Usage: hover <x> <y>");
+                        }
+                        break;
+                        
+                    case "tick":
+                        rootPanel.Tick();
+                        Console.WriteLine("Tick cycle completed.");
+                        break;
+                        
+                    case "layout":
+                        rootPanel.Layout();
+                        Console.WriteLine("Layout recalculated.");
+                        break;
+                        
+                    default:
+                        Console.WriteLine($"Unknown command: {command}. Type 'help' for available commands.");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>

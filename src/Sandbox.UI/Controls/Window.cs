@@ -107,6 +107,13 @@ public class Window : Panel
     public bool AutoFocus { get; set; } = true;
 
     /// <summary>
+    /// When true, this window is treated as a root window that fills its parent,
+    /// ignoring Position/Size settings. Used in AI/headless mode where there's no
+    /// native window but the Window should still fill the viewport.
+    /// </summary>
+    public bool IsRootWindow { get; set; } = false;
+
+    /// <summary>
     /// The close button control
     /// </summary>
     public Button? ControlsClose { get; set; }
@@ -622,7 +629,8 @@ public class Window : Panel
         // Only apply position/size override if explicitly set (non-zero)
         // Apply position and size to style for floating window behavior
         // BUT only if there's no native window (for window-in-window scenarios)
-        if (_nativeWindow == null && (Position != Vector2.Zero || Size != Vector2.Zero))
+        // AND this is not marked as a root window (AI/headless mode)
+        if (_nativeWindow == null && !IsRootWindow && (Position != Vector2.Zero || Size != Vector2.Zero))
         {
             Style.Position = PositionMode.Absolute;
             
