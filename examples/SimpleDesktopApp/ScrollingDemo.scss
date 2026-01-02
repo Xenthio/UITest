@@ -1,6 +1,7 @@
 .scrolling-demo {
     width: 100%;
     height: 100%;
+    display: flex;
     flex-direction: column;
     background-color: #1e1e1e;
     color: #fff;
@@ -26,9 +27,11 @@
     
     .scroll-container {
         flex-grow: 1;
+        display: flex;
         flex-direction: column;
         overflow-y: scroll; // Enable vertical scrolling
         padding: 10px;
+        min-height: 0; // Important for flex children with scroll
         
         .item {
             display: flex;
