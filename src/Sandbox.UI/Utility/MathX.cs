@@ -81,4 +81,12 @@ public static class MathX
 			
 		return t;
 	}
+
+	/// <summary>
+	/// Check if two floats are almost equal within a given epsilon
+	/// </summary>
+	public static bool AlmostEqual(this float a, float b, float epsilon = 0.001f)
+	{
+		return Math.Abs(a - b) < epsilon;
+	}
 }

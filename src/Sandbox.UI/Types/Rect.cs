@@ -118,6 +118,26 @@ public struct Rect
         Height = newBottom - newTop;
     }
 
+    /// <summary>
+    /// Check if a rect is inside this rect
+    /// </summary>
+    /// <param name="rect">The passed rect to test.</param>
+    /// <param name="fullyInside">true to test if the given rect is completely inside this rect. false to test for an intersection.</param>
+    public bool IsInside(Rect rect, bool fullyInside = false)
+    {
+        if (fullyInside)
+        {
+            return Left < rect.Left && Right > rect.Right && Top < rect.Top && Bottom > rect.Bottom;
+        }
+
+        if (rect.Right < Left) return false;
+        if (rect.Left > Right) return false;
+        if (rect.Top > Bottom) return false;
+        if (rect.Bottom < Top) return false;
+        
+        return true;
+    }
+
     public static Rect Empty => new(0, 0, 0, 0);
 
     public override string ToString() => $"Rect({Left}, {Top}, {Width}, {Height})";

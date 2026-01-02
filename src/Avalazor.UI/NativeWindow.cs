@@ -26,6 +26,8 @@ public class NativeWindow : INativeWindow, IDisposable
         options.Title = title;
         options.VSync = true;
         options.IsEventDriven = false;
+        options.UpdatesPerSecond = 60;  // Explicitly set update rate
+        options.FramesPerSecond = 60;   // Explicitly set frame rate
 
         // 1. SELECT BACKEND AT COMPILE TIME
 //#if WINDOWS
@@ -110,6 +112,7 @@ public class NativeWindow : INativeWindow, IDisposable
 
         // Update panel time for transitions and animations
         PanelRealTime.Update(delta);
+        RealTime.Update(delta);
 
         var size = _window.FramebufferSize;
         RootPanel.PanelBounds = new Rect(0, 0, size.X, size.Y);
@@ -164,7 +167,7 @@ public class NativeWindow : INativeWindow, IDisposable
     // --- Input Helpers ---
     private void OnMouseDown(IMouse mouse, MouseButton button) => RootPanel?.ProcessButtonEvent(MouseButtonToString(button), true, GetKeyboardModifiers());
     private void OnMouseUp(IMouse mouse, MouseButton button) => RootPanel?.ProcessButtonEvent(MouseButtonToString(button), false, GetKeyboardModifiers());
-    private void OnMouseScroll(IMouse mouse, ScrollWheel scroll) => RootPanel?.ProcessMouseWheel(new UIVector2(scroll.X, scroll.Y), GetKeyboardModifiers());
+    private void OnMouseScroll(IMouse mouse, ScrollWheel scroll) => RootPanel?.ProcessMouseWheel(new UIVector2(scroll.X, -scroll.Y), GetKeyboardModifiers());
     private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) => RootPanel?.ProcessButtonEvent(key.ToString().ToLower(), true, GetKeyboardModifiers());
     private void OnKeyUp(IKeyboard keyboard, Key key, int scancode) => RootPanel?.ProcessButtonEvent(key.ToString().ToLower(), false, GetKeyboardModifiers());
     private void OnKeyChar(IKeyboard keyboard, char character) => RootPanel?.ProcessCharTyped(character);

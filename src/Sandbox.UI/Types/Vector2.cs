@@ -35,6 +35,38 @@ public struct Vector2
     public bool IsNearZeroLength => Math.Abs(x) < 0.0001f && Math.Abs(y) < 0.0001f;
 
     public float Length => MathF.Sqrt(x * x + y * y);
+    
+    public Vector2 SnapToGrid(float gridSize)
+    {
+        return new Vector2(
+            MathF.Round(x / gridSize) * gridSize,
+            MathF.Round(y / gridSize) * gridSize
+        );
+    }
+
+    /// <summary>
+    /// Smoothly damp a vector towards a target.
+    /// </summary>
+    public static Vector2 SmoothDamp(Vector2 current, Vector2 target, ref Vector2 currentVelocity, float smoothTime, float deltaTime)
+    {
+        float omega = 2f / smoothTime;
+        float x = omega * deltaTime;
+        float exp = 1f / (1f + x + 0.48f * x * x + 0.235f * x * x * x);
+        
+        float change_x = current.x - target.x;
+        float change_y = current.y - target.y;
+        
+        float temp_x = (currentVelocity.x + omega * change_x) * deltaTime;
+        float temp_y = (currentVelocity.y + omega * change_y) * deltaTime;
+        
+        currentVelocity.x = (currentVelocity.x - omega * temp_x) * exp;
+        currentVelocity.y = (currentVelocity.y - omega * temp_y) * exp;
+        
+        float output_x = target.x + (change_x + temp_x) * exp;
+        float output_y = target.y + (change_y + temp_y) * exp;
+
+        return new Vector2(output_x, output_y);
+    }
 
     public override bool Equals(object? obj) => obj is Vector2 v && this == v;
     public override int GetHashCode() => HashCode.Combine(x, y);
