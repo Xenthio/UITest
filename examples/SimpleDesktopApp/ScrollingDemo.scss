@@ -7,6 +7,7 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     
     .header {
+        flex-shrink: 0;
         padding: 20px;
         background-color: #252525;
         border-bottom: 2px solid #3a3a3a;
@@ -25,6 +26,7 @@
     
     .scroll-container {
         flex-grow: 1;
+        flex-direction: column;
         overflow-y: scroll; // Enable vertical scrolling
         padding: 10px;
         
@@ -38,6 +40,7 @@
             margin-bottom: 10px;
             cursor: pointer;
             transition: background-color 0.2s;
+            flex-shrink: 0;
             
             &:hover {
                 background-color: #353535;
@@ -81,6 +84,7 @@
         display: flex;
         flex-direction: row;
         align-items: center;
+        flex-shrink: 0;
         
         p {
             margin: 0;
