@@ -143,6 +143,7 @@ public class TextEntry : Panel
         Label = AddChild(new Label("", "content-label"));
         Label.Tokenize = false;
         Label.Multiline = false; // Single line by default
+        Label.Style.WhiteSpace = WhiteSpace.Pre; // Preserve whitespace (matches S&box)
     }
 
     public override void SetProperty(string name, string value)
