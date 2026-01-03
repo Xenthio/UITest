@@ -287,13 +287,19 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (style.Transform?.IsEmpty() ?? true) return false;
         if (panel.TransformMatrix == System.Numerics.Matrix4x4.Identity) return false;
         
-        // Calculate transform origin (default is center of the panel)
-        // This matches S&box's approach in PanelRenderer.Matrix.cs
-        float originX = panel.Box.Rect.Left + (style.TransformOriginX?.GetPixels(panel.Box.Rect.Width) ?? panel.Box.Rect.Width * 0.5f);
-        float originY = panel.Box.Rect.Top + (style.TransformOriginY?.GetPixels(panel.Box.Rect.Height) ?? panel.Box.Rect.Height * 0.5f);
+        // Calculate transform origin relative to panel position
+        // CSS spec default is 50% 50%, but S&box appears to use 0 0 (top-left) as default
+        // When TransformOriginX/Y are not set, default to top-left corner of the panel
+        var originOffset = new Vector2(
+            style.TransformOriginX?.GetPixels(panel.Box.Rect.Width) ?? 0f,
+            style.TransformOriginY?.GetPixels(panel.Box.Rect.Height) ?? 0f
+        );
         
-        // Apply transform with origin: translate(-origin) * transform * translate(origin)
-        // This is the standard transform-origin pattern used by CSS and S&box
+        float originX = panel.Box.Rect.Left + originOffset.x;
+        float originY = panel.Box.Rect.Top + originOffset.y;
+        
+        // Apply transform with origin: translate(origin) * transform * translate(-origin)
+        // SkiaSharp applies transforms in order, so we translate TO origin, apply transform, then translate back
         canvas.Translate(originX, originY);
         
         // Convert Matrix4x4 to SKMatrix (use 2D portion)
