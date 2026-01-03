@@ -93,7 +93,7 @@ internal class TextBlockWrapper
     /// <summary>
     /// Paint the text block to the canvas at the specified position.
     /// </summary>
-    public void Paint(SKCanvas canvas, float x, float y, SKColor color)
+    public void Paint(SKCanvas canvas, float x, float y, SKColor color, int selectionStart = 0, int selectionEnd = 0, Color? selectionColor = null)
     {
         if (_block == null)
             return;
@@ -121,8 +121,20 @@ internal class TextBlockWrapper
         {
             Edging = edging,
             // Disable subpixel positioning when aliased rendering is requested for consistency
-            SubpixelPositioning = edging != SKFontEdging.Alias, 
+            SubpixelPositioning = edging != SKFontEdging.Alias,
         };
+        
+        // Add selection if provided (matches S&box implementation)
+        if (selectionStart > 0 || selectionEnd > 0)
+        {
+            paintOptions.Selection = new TextRange(selectionStart, selectionEnd);
+            paintOptions.SelectionColor = selectionColor.HasValue 
+                ? new SKColor((byte)(selectionColor.Value.r * 255), 
+                             (byte)(selectionColor.Value.g * 255), 
+                             (byte)(selectionColor.Value.b * 255), 
+                             (byte)(selectionColor.Value.a * 255))
+                : new SKColor(0, 255, 255, 100); // Default cyan with alpha
+        }
         
         // Paint the text block with configured options
         _block.Paint(canvas, new SKPoint(x, y), paintOptions);

@@ -1219,34 +1219,17 @@ public class SkiaPanelRenderer : IPanelRenderer
             y = rect.Bottom - textBlock.MeasuredHeight;
         }
 
-        // Draw selection highlight if active
+        // Paint the text using RichTextKit with selection if enabled
+        // RichTextKit handles selection rendering automatically like S&box
+        var skColor = ToSKColor(textColor, opacity);
         if (label.ShouldDrawSelection && label.SelectionStart != label.SelectionEnd)
         {
-            var selectionRects = textBlock.GetSelectionRects(label.SelectionStart, label.SelectionEnd);
-            var selectionColor = ToSKColor(label.SelectionColor, opacity);
-            
-            using var selectionPaint = new SKPaint
-            {
-                Color = selectionColor,
-                Style = SKPaintStyle.Fill,
-                IsAntialias = true
-            };
-
-            foreach (var selRect in selectionRects)
-            {
-                var skRect = new SKRect(
-                    x + selRect.Left,
-                    y + selRect.Top,
-                    x + selRect.Right,
-                    y + selRect.Bottom
-                );
-                canvas.DrawRect(skRect, selectionPaint);
-            }
+            textBlock.Paint(canvas, x, y, skColor, label.SelectionStart, label.SelectionEnd, label.SelectionColor);
         }
-
-        // Paint the text using RichTextKit with font-smooth settings
-        var skColor = ToSKColor(textColor, opacity);
-        textBlock.Paint(canvas, x, y, skColor);
+        else
+        {
+            textBlock.Paint(canvas, x, y, skColor);
+        }
     }
 
     private static SKTypeface GetCachedTypeface(string fontFamily, SKFontStyle fontStyle)
