@@ -282,10 +282,25 @@ public class D3D11Backend : IGraphicsBackend
         _surface?.Dispose();
         _surface = null;
         
+        // IMPORTANT: Before resizing the swap chain, we must unbind all resources
+        // that reference the back buffer. DXGI_ERROR_INVALID_CALL (0x887A0001) occurs
+        // if there are outstanding references to the back buffer.
+        
+        // Unbind the render target from the device context
+        ID3D11RenderTargetView* nullRTV = null;
+        ID3D11DepthStencilView* nullDSV = null;
+        _context.Handle->OMSetRenderTargets(1, &nullRTV, nullDSV);
+        
+        // Flush any pending commands
+        _context.Handle->Flush();
+        
         // Release old render target view and back buffer
         _renderTargetView.Dispose();
+        _renderTargetView = default;
         _backBuffer.Dispose();
+        _backBuffer = default;
         _stagingTexture.Dispose();
+        _stagingTexture = default;
         
         // Resize swap chain buffers
         var hr = _swapChain.ResizeBuffers(2, (uint)_width, (uint)_height, 
