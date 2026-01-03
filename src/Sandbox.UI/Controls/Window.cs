@@ -280,9 +280,15 @@ public class Window : Panel
         int calculatedWidth = hasExplicitWidth ? WindowWidth : (int)Math.Ceiling(Box.Rect.Width);
         int calculatedHeight = hasExplicitHeight ? WindowHeight : (int)Math.Ceiling(Box.Rect.Height);
 
-        // Apply minimum size constraints
+        // Apply minimum size constraints (default MinSize is 100x50)
         calculatedWidth = Math.Max(calculatedWidth, (int)MinSize.x);
         calculatedHeight = Math.Max(calculatedHeight, (int)MinSize.y);
+        
+        // Absolute minimum to prevent invalid window sizes (in case MinSize is set to 0)
+        const int ABSOLUTE_MIN_WIDTH = 100;
+        const int ABSOLUTE_MIN_HEIGHT = 50;
+        calculatedWidth = Math.Max(calculatedWidth, ABSOLUTE_MIN_WIDTH);
+        calculatedHeight = Math.Max(calculatedHeight, ABSOLUTE_MIN_HEIGHT);
 
         return (calculatedWidth, calculatedHeight, false);
     }

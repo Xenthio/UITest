@@ -154,6 +154,23 @@ public static class AvalazorApplication
                 rootPanel.Layout(); // Re-layout with correct bounds
             }
             
+            // Ensure we never try to create a window with invalid dimensions
+            // This can happen if a window has no content and MinSize is set to 0
+            const int MIN_WINDOW_WIDTH = 100;
+            const int MIN_WINDOW_HEIGHT = 50;
+            
+            if (width <= 0)
+            {
+                Console.WriteLine($"Warning: Calculated window width is {width}, using minimum {MIN_WINDOW_WIDTH}");
+                width = MIN_WINDOW_WIDTH;
+            }
+            
+            if (height <= 0)
+            {
+                Console.WriteLine($"Warning: Calculated window height is {height}, using minimum {MIN_WINDOW_HEIGHT}");
+                height = MIN_WINDOW_HEIGHT;
+            }
+            
             // Check if we have a display environment
             if (!HasDisplayEnvironment())
             {

@@ -90,4 +90,24 @@ public class WindowSizingTests
         Assert.True(width >= 200, $"Calculated width {width} should be at least MinSize.x (200)");
         Assert.True(height >= 100, $"Calculated height {height} should be at least MinSize.y (100)");
     }
+    
+    [Fact]
+    public void Window_WithNoContentAndZeroMinSize_ShouldUseAbsoluteMinimum()
+    {
+        // Arrange
+        var window = new Window();
+        window.MinSize = new Vector2(0, 0); // Set MinSize to 0
+        var rootPanel = new RootPanel();
+        rootPanel.PanelBounds = new Rect(0, 0, 10000, 10000);
+        rootPanel.AddChild(window);
+        
+        // Act
+        rootPanel.Layout();
+        var (width, height, hasExplicitSize) = window.GetCalculatedWindowSize();
+        
+        // Assert
+        Assert.False(hasExplicitSize, "Window without explicit size should not have hasExplicitSize flag");
+        Assert.True(width >= 100, $"Width {width} should be at least absolute minimum (100) even with MinSize=0");
+        Assert.True(height >= 50, $"Height {height} should be at least absolute minimum (50) even with MinSize=0");
+    }
 }

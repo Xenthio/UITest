@@ -31,11 +31,11 @@ class Program
 
 
         //Avalazor.UI.AvalazorApplication.RunPanel<RefOnClickDemo>();
-        //Avalazor.UI.AvalazorApplication.RunPanel<About>();
+        Avalazor.UI.AvalazorApplication.RunPanel<About>();
         //Avalazor.UI.AvalazorApplication.RunPanel<BorderImageTest>();
         
         // Test explicit-sized window (has windowwidth/windowheight attributes)
-        Avalazor.UI.AvalazorApplication.RunPanel<ExplicitSizeWindow>();
+        //Avalazor.UI.AvalazorApplication.RunPanel<ExplicitSizeWindow>();
         
         // Run the Scrolling Demo
         //Avalazor.UI.AvalazorApplication.RunPanel<ScrollingDemo>(title: "Avalazor - Scrolling Demo");
