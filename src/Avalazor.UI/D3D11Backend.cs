@@ -347,7 +347,7 @@ public class D3D11Backend : IGraphicsBackend
         // Create new surface with correct dimensions
         CreateSurface(new Vector2D<int>(_width, _height));
         
-        Console.WriteLine($"[D3D11Backend] Resize complete: {_width}x{_height}");
+        //Console.WriteLine($"[D3D11Backend] Resize complete: {_width}x{_height}");
     }
 
     public unsafe void Render(RootPanel panel)

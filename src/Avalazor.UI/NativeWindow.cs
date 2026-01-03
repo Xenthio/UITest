@@ -134,7 +134,7 @@ public class NativeWindow : INativeWindow, IDisposable
     {
         if (size.X <= 0 || size.Y <= 0) return;
 
-        Console.WriteLine($"[NativeWindow] OnFramebufferResize: {size.X}x{size.Y}");
+        //Console.WriteLine($"[NativeWindow] OnFramebufferResize: {size.X}x{size.Y}");
 
         // Use framebuffer size directly - this is the actual render buffer size
         _backend.Resize(size);
