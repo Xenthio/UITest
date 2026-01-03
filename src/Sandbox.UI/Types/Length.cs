@@ -171,7 +171,7 @@ public struct Length
         }
 
         var numberPart = value.Substring(0, unitStart);
-        var unitPart = value.Substring(unitStart).Trim();
+        var unitPart = value.Substring(unitStart).Trim().TrimEnd(',', ' ', '\t');
 
         if (!float.TryParse(numberPart, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var number))
             return null;
