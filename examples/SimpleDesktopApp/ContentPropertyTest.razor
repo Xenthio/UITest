@@ -1,0 +1,28 @@
+@namespace SimpleDesktopApp
+@using Sandbox.UI
+@attribute [StyleSheet("ContentPropertyTest.scss")]
+@inherits Panel
+
+<root class="content-test-container">
+    <div class="test-section">
+        <Label class="title-label">CSS Content Property Test</Label>
+        
+        <div class="example-row">
+            <Label class="label-with-text">THIS SHOULD BE REPLACED</Label>
+            <Label class="label-no-text"></Label>
+        </div>
+        
+        <div class="example-row">
+            <Label class="label-quoted">ORIGINAL TEXT 1</Label>
+            <Label class="label-single-quoted">ORIGINAL TEXT 2</Label>
+        </div>
+        
+        <div class="example-row">
+            <Label class="label-unquoted">ORIGINAL TEXT 3</Label>
+        </div>
+    </div>
+</root>
+
+@code {
+    
+}

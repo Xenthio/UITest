@@ -31,8 +31,9 @@ class Program
 
 
         //Avalazor.UI.AvalazorApplication.RunPanel<RefOnClickDemo>();
-        Avalazor.UI.AvalazorApplication.RunPanel<About>();
+        //Avalazor.UI.AvalazorApplication.RunPanel<About>();
         //Avalazor.UI.AvalazorApplication.RunPanel<BorderImageTest>();
+        Avalazor.UI.AvalazorApplication.RunPanel<SimpleDesktopApp.ContentPropertyTest>(title: "Avalazor - CSS Content Property Test");
         
         // Run the Scrolling Demo
         //Avalazor.UI.AvalazorApplication.RunPanel<ScrollingDemo>(title: "Avalazor - Scrolling Demo");

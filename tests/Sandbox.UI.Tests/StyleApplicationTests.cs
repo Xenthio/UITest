@@ -504,4 +504,115 @@ public class StyleApplicationTests
         // We should have successfully iterated without errors
         Assert.NotNull(remainingBlocks);
     }
+
+    [Fact]
+    public void Label_ContentProperty_AppliesCorrectly()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var label = new Label();
+        label.AddClass("test-label");
+        rootPanel.AddChild(label);
+
+        // Test content property with plain text
+        var css = @"
+            .test-label {
+                content: ""Hello from CSS"";
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act - Run layout to apply styles
+        rootPanel.Layout();
+
+        // Assert - Content property should be set and label should use it
+        Assert.NotNull(label.ComputedStyle);
+        Assert.NotNull(label.ComputedStyle.Content);
+        Assert.Equal("Hello from CSS", label.ComputedStyle.Content);
+    }
+
+    [Fact]
+    public void Label_ContentProperty_TrimsQuotes()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var label = new Label();
+        label.AddClass("quoted-label");
+        rootPanel.AddChild(label);
+
+        // Test content property with single quotes
+        var css = @"
+            .quoted-label {
+                content: 'Single quoted text';
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert - Quotes should be trimmed
+        Assert.NotNull(label.ComputedStyle);
+        Assert.NotNull(label.ComputedStyle.Content);
+        Assert.Equal("Single quoted text", label.ComputedStyle.Content);
+        Assert.DoesNotContain("'", label.ComputedStyle.Content);
+    }
+
+    [Fact]
+    public void Label_ContentProperty_OverridesTextProperty()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var label = new Label();
+        label.Text = "Original text";
+        label.AddClass("override-label");
+        rootPanel.AddChild(label);
+
+        // CSS content should override the Text property
+        var css = @"
+            .override-label {
+                content: ""CSS overrides text"";
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert - Content from CSS should be used (verified in PreLayout)
+        Assert.NotNull(label.ComputedStyle);
+        Assert.NotNull(label.ComputedStyle.Content);
+        Assert.Equal("CSS overrides text", label.ComputedStyle.Content);
+        // The Text property should still have the original value
+        Assert.Equal("Original text", label.Text);
+    }
+
+    [Fact]
+    public void Panel_ContentProperty_ParsesWithoutQuotes()
+    {
+        // Arrange
+        var rootPanel = new RootPanel();
+        var panel = new Panel();
+        rootPanel.AddChild(panel);
+
+        // Test content property without quotes (should still work)
+        var css = @"
+            * {
+                content: none;
+            }
+        ";
+        var sheet = StyleSheet.FromString(css);
+        rootPanel.StyleSheet.Add(sheet);
+
+        // Act
+        rootPanel.Layout();
+
+        // Assert
+        Assert.NotNull(panel.ComputedStyle);
+        Assert.NotNull(panel.ComputedStyle.Content);
+        Assert.Equal("none", panel.ComputedStyle.Content);
+    }
 }
