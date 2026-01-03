@@ -26,7 +26,7 @@ public class NativeWindow : INativeWindow, IDisposable
 
     public RootPanel? RootPanel { get; set; }
 
-    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor App", GraphicsBackendType backendType = GraphicsBackendType.OpenGL)
+    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor App", GraphicsBackendType backendType = GraphicsBackendType.Vulkan)
     {
         var options = WindowOptions.Default;
         options.Size = new Vector2D<int>(width, height);
@@ -49,7 +49,8 @@ public class NativeWindow : INativeWindow, IDisposable
                 
             case GraphicsBackendType.Vulkan:
                 Console.WriteLine("Starting Vulkan backend...");
-                options.API = GraphicsAPI.None; // Vulkan handles its own context
+                options.API = GraphicsAPI.DefaultVulkan; // Request Vulkan API
+                options.ShouldSwapAutomatically = false; // We handle swapchain ourselves
                 _backend = new VulkanBackend();
                 break;
                 
