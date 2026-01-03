@@ -1,0 +1,35 @@
+@namespace SimpleDesktopApp
+@using System
+@using Sandbox.UI
+@attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
+@inherits Window
+
+<root title="Auto-Sized Window" hasclose="true">
+    <div class="auto-size-content" style="padding: 20px; background: rgba(0,0,0,0.1);">
+        <h2>Auto-Sized Window</h2>
+        <p>This window has no explicit windowwidth or windowheight attributes.</p>
+        <p>It should automatically size to fit this content.</p>
+        
+        <div style="margin-top: 15px;">
+            <button @onclick="@AddContent">Add More Content</button>
+        </div>
+        
+        @if (showExtraContent)
+        {
+            <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2);">
+                <p>Extra content added dynamically!</p>
+                <p>The window should have sized to fit the initial content.</p>
+            </div>
+        }
+    </div>
+</root>
+
+@code {
+    private bool showExtraContent = false;
+    
+    private void AddContent()
+    {
+        showExtraContent = true;
+        StateHasChanged();
+    }
+}
