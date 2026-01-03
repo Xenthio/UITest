@@ -1130,9 +1130,9 @@ public class SkiaPanelRenderer : IPanelRenderer
 
             var caret = textEntry.Label.GetCaretRect(textEntry.CaretPosition);
             
-            // GetCaretRect returns coordinates relative to the Label's _textRect,
-            // but we need to account for the Label's position within the TextEntry.
-            // The Label is positioned at Label.Box.Rect.Position relative to TextEntry.
+            // GetCaretRect returns coordinates relative to the Label's origin.
+            // We're drawing in TextEntry's coordinate space (canvas has TextEntry's transform applied),
+            // so we need to add the Label's position within the TextEntry to get the correct screen position.
             caret.Left += textEntry.Label.Box.Rect.Left;
             caret.Top += textEntry.Label.Box.Rect.Top;
             
