@@ -26,7 +26,7 @@ public class NativeWindow : INativeWindow, IDisposable
 
     public RootPanel? RootPanel { get; set; }
 
-    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor App", GraphicsBackendType backendType = GraphicsBackendType.OpenGL)
+    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor App", GraphicsBackendType? backendType = null)
     {
         var options = WindowOptions.Default;
         options.Size = new Vector2D<int>(width, height);
@@ -34,9 +34,20 @@ public class NativeWindow : INativeWindow, IDisposable
         options.VSync = true;
         options.IsEventDriven = false;
 
-        // why do we set these?
-        //options.UpdatesPerSecond = 60;  // Explicitly set update rate
-        //options.FramesPerSecond = 60;   // Explicitly set frame rate
+        // Auto-select best backend for platform if not specified
+        if (backendType == null)
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                backendType = GraphicsBackendType.DirectX11; // Best for Windows
+                Console.WriteLine("Auto-selected DirectX11 backend for Windows");
+            }
+            else
+            {
+                backendType = GraphicsBackendType.OpenGL; // Works well on Linux/macOS
+                Console.WriteLine("Auto-selected OpenGL backend");
+            }
+        }
 
         // Select backend and configure window options
         switch (backendType)
@@ -46,13 +57,14 @@ public class NativeWindow : INativeWindow, IDisposable
                 options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(3, 3));
                 _backend = new OpenGLBackend();
                 break;
-                
+
             case GraphicsBackendType.Vulkan:
                 Console.WriteLine("Starting Vulkan backend...");
-                options.API = GraphicsAPI.None; // Vulkan handles its own context
+                options.API = GraphicsAPI.DefaultVulkan; // Request Vulkan API
+                options.ShouldSwapAutomatically = false; // We handle swapchain ourselves
                 _backend = new VulkanBackend();
                 break;
-                
+
             case GraphicsBackendType.DirectX11:
                 Console.WriteLine("Starting DirectX11 backend...");
                 if (!OperatingSystem.IsWindows())
@@ -62,7 +74,7 @@ public class NativeWindow : INativeWindow, IDisposable
                 options.API = GraphicsAPI.None; // D3D11 handles its own context
                 _backend = new D3D11Backend();
                 break;
-                
+
             default:
                 throw new ArgumentException($"Unsupported backend type: {backendType}");
         }
@@ -72,7 +84,7 @@ public class NativeWindow : INativeWindow, IDisposable
         _window.Load += OnLoad;
         _window.Render += OnRender;
         _window.Closing += OnClosing;
-        _window.Resize += OnResize;
+        _window.FramebufferResize += OnFramebufferResize;
     }
 
     public void Run() => _window.Run();
@@ -96,32 +108,35 @@ public class NativeWindow : INativeWindow, IDisposable
             _keyboard.KeyUp += OnKeyUp;
             _keyboard.KeyChar += OnKeyChar;
         }
-        
+
         // Set system DPI scale for UI rendering
         UpdateDpiScale();
     }
-    
+
     private void UpdateDpiScale()
     {
         // Try to get DPI from the window's monitor
         // Silk.NET uses FramebufferSize / Size to calculate content scale
         var size = _window.Size;
         var fbSize = _window.FramebufferSize;
-        
+
         if (size.X > 0 && fbSize.X > 0)
         {
             var dpiScaleX = (float)fbSize.X / size.X;
             var dpiScaleY = (float)fbSize.Y / size.Y;
-            
+
             // Use the larger scale (usually they're the same)
             RootPanel.SystemDpiScale = Math.Max(dpiScaleX, dpiScaleY);
         }
     }
 
-    private void OnResize(Vector2D<int> size)
+    private void OnFramebufferResize(Vector2D<int> size)
     {
         if (size.X <= 0 || size.Y <= 0) return;
 
+        Console.WriteLine($"[NativeWindow] OnFramebufferResize: {size.X}x{size.Y}");
+
+        // Use framebuffer size directly - this is the actual render buffer size
         _backend.Resize(size);
 
         if (RootPanel != null)
@@ -130,7 +145,6 @@ public class NativeWindow : INativeWindow, IDisposable
             RootPanel.InvalidateLayout();
             RootPanel.Layout();
         }
-        OnRender(0);
     }
 
     private void OnRender(double delta)
@@ -166,7 +180,7 @@ public class NativeWindow : INativeWindow, IDisposable
     }
 
     // --- Public API for Window control ---
-    
+
     /// <summary>
     /// Set the native window title
     /// </summary>

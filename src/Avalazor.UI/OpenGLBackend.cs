@@ -7,6 +7,14 @@ using Sandbox.UI.Skia;
 
 namespace Avalazor.UI;
 
+/// <summary>
+/// OpenGL graphics backend for Avalazor.
+/// Provides hardware-accelerated rendering using OpenGL and SkiaSharp.
+/// </summary>
+/// <remarks>
+/// This backend works well on Linux and macOS. On Windows, DirectX11 backend is
+/// recommended for better resize behavior due to platform-specific limitations.
+/// </remarks>
 public class OpenGLBackend : IGraphicsBackend
 {
     private GL? _gl;

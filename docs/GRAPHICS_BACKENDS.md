@@ -12,29 +12,36 @@ Avalazor supports multiple graphics backends for rendering the UI:
 
 The OpenGL backend uses OpenGL 3.3 Core Profile and integrates with SkiaSharp's OpenGL backend. This is the most mature and well-tested backend.
 
-### Vulkan (Experimental)
-- **Status**: ⚠️ Skeleton implementation, not functional
-- **Platform Support**: Linux, Windows (when implemented)
+### Vulkan (Functional)
+- **Status**: ✅ Implemented with SkiaSharp GPU support
+- **Platform Support**: Linux, Windows (with Vulkan drivers)
 - **Use Case**: Modern low-level graphics API with better multi-threading support
-- **Stability**: Not yet functional - requires complete GRVkBackendContext setup
+- **Stability**: Functional - requires Vulkan-capable hardware and drivers
 
-The Vulkan backend has a basic structure but requires significant additional work:
-- Proper Vulkan function pointer setup for Skia
-- Memory allocator integration
-- Swap chain management
-- Synchronization primitives
+The Vulkan backend provides:
+- Full Vulkan instance and device creation
+- Window surface and swapchain management
+- Integration with SkiaSharp's Vulkan backend via `GRContext.CreateVulkan`
+- Proper synchronization with semaphores and fences
+- Automatic swapchain recreation on window resize
 
-### DirectX 11 (Experimental)
-- **Status**: ⚠️ Skeleton implementation, not functional
-- **Platform Support**: Windows only (when implemented)
+**Requirements**:
+- Vulkan-capable GPU with appropriate drivers
+- Vulkan SDK installed (for development)
+
+### DirectX 11 (Functional, Windows Only)
+- **Status**: ✅ Implemented with software rendering + D3D11 blit
+- **Platform Support**: Windows only
 - **Use Case**: Native Windows DirectX rendering
-- **Stability**: Not yet functional - requires D3D11 device and swap chain setup
+- **Stability**: Functional - uses CPU rendering with D3D11 presentation
 
-The DirectX 11 backend is Windows-specific and requires:
-- D3D11 device and context creation
-- DXGI swap chain setup
-- Proper render target management
-- Integration with SkiaSharp's D3D11 backend
+The DirectX 11 backend provides:
+- D3D11 device and swap chain creation
+- Hardware or WARP (software) driver support
+- Software-rendered SkiaSharp surface blitted to D3D11 back buffer
+- Proper resize and present operations
+
+**Note**: Full GPU-accelerated SkiaSharp rendering via D3D11 requires custom SkiaSharp builds with `SK_Direct3D` enabled. The current implementation uses CPU rendering with efficient D3D11 presentation.
 
 ## Selecting a Backend
 
@@ -58,7 +65,7 @@ var windowGL = new NativeWindow(
     backendType: GraphicsBackendType.OpenGL
 );
 
-// Vulkan (not yet functional)
+// Vulkan (requires Vulkan-capable hardware)
 var windowVk = new NativeWindow(
     width: 1280, 
     height: 720, 
@@ -66,7 +73,7 @@ var windowVk = new NativeWindow(
     backendType: GraphicsBackendType.Vulkan
 );
 
-// DirectX 11 (not yet functional, Windows only)
+// DirectX 11 (Windows only)
 var windowD3D = new NativeWindow(
     width: 1280, 
     height: 720, 
@@ -79,29 +86,44 @@ var windowD3D = new NativeWindow(
 
 The DirectX11 backend can only be used on Windows. Attempting to use it on other platforms will throw a `PlatformNotSupportedException`.
 
+The Vulkan backend requires Vulkan-capable hardware and drivers. On systems without Vulkan support, the backend will throw an exception during initialization.
+
 ## Implementation Status
 
 | Backend | Device Init | Context Creation | Surface Creation | Rendering | Status |
 |---------|-------------|------------------|------------------|-----------|--------|
 | OpenGL | ✅ | ✅ | ✅ | ✅ | Production |
-| Vulkan | ✅ | ❌ | ❌ | ❌ | Skeleton Only |
-| DirectX 11 | ❌ | ❌ | ❌ | ❌ | Skeleton Only |
+| Vulkan | ✅ | ✅ | ✅ | ✅ | Functional |
+| DirectX 11 | ✅ | ✅ | ✅ | ✅ | Functional |
 
-## Contributing
+## Performance Characteristics
 
-Contributions to complete the Vulkan and DirectX 11 backends are welcome! Key areas that need work:
+### OpenGL
+- Best overall performance and compatibility
+- GPU-accelerated rendering via SkiaSharp OpenGL backend
+- Recommended for most use cases
 
-### Vulkan Backend
-1. Complete `GRVkBackendContext` initialization with proper function pointers
-2. Implement Vulkan surface creation and swap chain management
-3. Set up command buffers and synchronization
-4. Memory management and resource cleanup
+### Vulkan
+- Modern API with potential for better multi-threading
+- GPU-accelerated rendering via SkiaSharp Vulkan backend
+- May offer better performance for complex UIs
 
-### DirectX 11 Backend
-1. Complete D3D11 device and swap chain creation
-2. Implement `GRContext.CreateD3D()` integration
-3. Set up render target views and back buffer management
-4. Handle resize and present operations
+### DirectX 11
+- Currently uses CPU rendering with D3D11 presentation
+- Suitable for Windows-specific applications
+- Full GPU acceleration requires custom SkiaSharp build
+
+## Troubleshooting
+
+### Vulkan Backend Issues
+1. **"No Vulkan-capable devices found"**: Ensure your GPU has Vulkan drivers installed
+2. **"Failed to create Vulkan instance"**: Check that required extensions are available
+3. **Black screen**: Verify swapchain format is supported by your hardware
+
+### DirectX 11 Backend Issues
+1. **"DirectX11 backend is only available on Windows"**: This backend is Windows-only
+2. **Hardware device creation failed**: Will automatically fallback to WARP (software) driver
+3. **Performance issues**: Consider using OpenGL for better GPU acceleration
 
 ## References
 
