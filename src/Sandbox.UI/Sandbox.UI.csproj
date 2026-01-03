@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Sandbox.UI.Skia" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Razor/Blazor support for RenderTreeBuilder extensions -->
     <PackageReference Include="AngleSharp" Version="1.1.2" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" />

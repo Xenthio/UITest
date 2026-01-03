@@ -1104,6 +1104,48 @@ public class SkiaPanelRenderer : IPanelRenderer
             // Allow custom content drawing
             panel.DrawContent(ref state);
         }
+
+        // Draw caret for TextEntry if focused
+        if (panel is TextEntry textEntry && textEntry.HasFocus && textEntry.Label != null)
+        {
+            DrawTextEntryCaret(canvas, textEntry, ref state);
+        }
+    }
+
+    private void DrawTextEntryCaret(SKCanvas canvas, TextEntry textEntry, ref RenderState state)
+    {
+        // Don't draw caret if there's a selection
+        if (textEntry.Label.HasSelection())
+            return;
+
+        var blinkRate = 0.8f;
+        var timeSinceFocus = textEntry.GetType().GetField("TimeSinceNotInFocus", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.GetValue(textEntry);
+
+        if (timeSinceFocus is float time)
+        {
+            var blink = (time * blinkRate) % blinkRate < (blinkRate * 0.5f);
+            if (!blink) return; // Caret is in off phase
+
+            var caret = textEntry.Label.GetCaretRect(textEntry.CaretPosition);
+            caret.Left = MathF.Floor(caret.Left); // avoid subpixel positions
+            caret.Width = 1;
+
+            var opacity = textEntry.Opacity * state.RenderOpacity;
+            var style = textEntry.ComputedStyle;
+            var caretColor = style?.CaretColor ?? style?.FontColor ?? Color.Black;
+
+            using var paint = new SKPaint
+            {
+                Color = ToSKColor(caretColor, opacity),
+                Style = SKPaintStyle.Fill,
+                IsAntialias = false // Crisp 1px line
+            };
+
+            var skRect = new SKRect(caret.Left, caret.Top, caret.Left + caret.Width, caret.Bottom);
+            canvas.DrawRect(skRect, paint);
+        }
     }
 
     private void DrawLabel(SKCanvas canvas, Label label, ref RenderState state)
@@ -1127,8 +1169,19 @@ public class SkiaPanelRenderer : IPanelRenderer
         // Get text rect
         var rect = label.Box.RectInner;
 
-        // Create and configure TextBlock using RichTextKit (matches s&box approach)
-        var textBlock = new TextBlockWrapper();
+        // Get or create cached TextBlockWrapper
+        TextBlockWrapper textBlock;
+        if (label._textBlockWrapper is TextBlockWrapper cached)
+        {
+            textBlock = cached;
+        }
+        else
+        {
+            textBlock = new TextBlockWrapper();
+            label._textBlockWrapper = textBlock;
+        }
+        
+        // Update the text block
         textBlock.Update(processedText, fontFamily, fontSize, fontWeight, fontSmooth);
         
         // Measure with width constraint if wrapping is enabled
@@ -1164,6 +1217,31 @@ public class SkiaPanelRenderer : IPanelRenderer
         else if (style.AlignItems == Align.FlexEnd)
         {
             y = rect.Bottom - textBlock.MeasuredHeight;
+        }
+
+        // Draw selection highlight if active
+        if (label.ShouldDrawSelection && label.SelectionStart != label.SelectionEnd)
+        {
+            var selectionRects = textBlock.GetSelectionRects(label.SelectionStart, label.SelectionEnd);
+            var selectionColor = ToSKColor(label.SelectionColor, opacity);
+            
+            using var selectionPaint = new SKPaint
+            {
+                Color = selectionColor,
+                Style = SKPaintStyle.Fill,
+                IsAntialias = true
+            };
+
+            foreach (var selRect in selectionRects)
+            {
+                var skRect = new SKRect(
+                    x + selRect.Left,
+                    y + selRect.Top,
+                    x + selRect.Right,
+                    y + selRect.Bottom
+                );
+                canvas.DrawRect(skRect, selectionPaint);
+            }
         }
 
         // Paint the text using RichTextKit with font-smooth settings

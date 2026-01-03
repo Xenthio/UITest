@@ -386,11 +386,31 @@ public partial class Label
     /// <summary>
     /// Get the rectangle for the caret at given position.
     /// This is used for rendering the caret and for line navigation.
-    /// For now, returns a simple estimate. TODO: Implement proper caret rect calculation.
     /// </summary>
     public Rect GetCaretRect(int position)
     {
-        // Simplified implementation - should be improved with actual text layout info
+        // Use the cached TextBlockWrapper if available (via dynamic to avoid assembly reference)
+        if (_textBlockWrapper != null)
+        {
+            try
+            {
+                dynamic textBlock = _textBlockWrapper;
+                dynamic caretRect = textBlock.GetCaretRect(position);
+                // Offset by text rect position
+                return new Rect(
+                    caretRect.Left + _textRect.Left,
+                    caretRect.Top + _textRect.Top,
+                    caretRect.Width,
+                    caretRect.Height
+                );
+            }
+            catch
+            {
+                // Fall through to fallback
+            }
+        }
+        
+        // Fallback: Simplified implementation - should be improved with actual text layout info
         var fontSize = ComputedStyle?.FontSize?.GetPixels(16f) ?? 16f;
         
         // Estimate caret position based on character count
@@ -407,25 +427,46 @@ public partial class Label
     /// <summary>
     /// Get the character index at a screen position.
     /// Returns the closest character index or -1 if no text.
-    /// For now, returns a simple estimate. TODO: Implement proper hit testing.
     /// </summary>
     public int GetLetterAtScreenPosition(Vector2 screenPos)
     {
         if (string.IsNullOrEmpty(Text))
             return -1;
 
-        // Transform screen position to local text rect coordinates
-        var localPos = screenPos;
-        if (GlobalMatrix.HasValue)
+        // Use the cached TextBlockWrapper if available (via dynamic to avoid assembly reference)
+        if (_textBlockWrapper != null)
         {
-            // TODO: Apply inverse transform
+            try
+            {
+                // Transform screen position to local text rect coordinates
+                var localPos = screenPos;
+                
+                // Apply inverse transform if we have a global matrix
+                if (GlobalMatrix.HasValue)
+                {
+                    // TODO: Apply proper inverse transform
+                    // For now, just use as-is
+                }
+
+                // Convert to text block local coordinates
+                var textLocalX = localPos.x - _textRect.Left;
+                var textLocalY = localPos.y - _textRect.Top;
+                
+                dynamic textBlock = _textBlockWrapper;
+                int index = textBlock.HitTest(textLocalX, textLocalY);
+                return index >= 0 ? index : 0;
+            }
+            catch
+            {
+                // Fall through to fallback
+            }
         }
 
-        // Simple character-based hit testing
+        // Fallback: Simple character-based hit testing
         var fontSize = ComputedStyle?.FontSize?.GetPixels(16f) ?? 16f;
         var charWidth = fontSize * 0.5f; // Rough estimate
         
-        var relativeX = localPos.x - _textRect.Left;
+        var relativeX = screenPos.x - _textRect.Left;
         var charIndex = (int)Math.Round(relativeX / charWidth);
         
         return Math.Clamp(charIndex, 0, TextLength);

@@ -24,6 +24,12 @@ public partial class Label : Panel
     internal string? _textToken;
     internal string _text = "";
     internal Rect _textRect;
+    
+    /// <summary>
+    /// Text block wrapper for rendering and caret/selection support.
+    /// Internal for renderer access.
+    /// </summary>
+    internal object? _textBlockWrapper;
 
     public override bool HasContent => true;
 

@@ -10,7 +10,7 @@ public class TextEntry : Panel
     /// <summary>
     /// The label that contains the text
     /// </summary>
-    protected Label Label { get; set; }
+    public Label Label { get; set; }
 
     private bool _disabled = false;
     private bool _numeric = false;
@@ -579,22 +579,9 @@ public class TextEntry : Panel
     {
         Label.ShouldDrawSelection = HasFocus;
 
-        var blinkRate = 0.8f;
-
-        if (HasFocus && !Label.HasSelection())
-        {
-            var blink = (TimeSinceNotInFocus * blinkRate) % blinkRate < (blinkRate * 0.5f);
-            var caret = Label.GetCaretRect(CaretPosition);
-            caret.Left = MathF.Floor(caret.Left); // avoid subpixel positions (blurry)
-            caret.Width = 1;
-
-            var color = ComputedStyle?.CaretColor ?? ComputedStyle?.FontColor ?? Color.Black;
-            color.a *= blink ? 1.0f : 0f;
-
-            // Caret rendering will be handled by the renderer
-            // Store caret info for renderer to use
-            // TODO: Add proper caret rendering support
-        }
+        // Caret rendering will be done by creating a temporary caret panel
+        // For now, we'll rely on selection rendering only
+        // TODO: Implement proper caret rendering via renderer or custom draw method
     }
 
     /// <summary>
