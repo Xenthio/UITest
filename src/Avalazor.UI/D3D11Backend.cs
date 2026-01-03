@@ -282,27 +282,38 @@ public class D3D11Backend : IGraphicsBackend
         _surface?.Dispose();
         _surface = null;
         
-        // IMPORTANT: Before resizing the swap chain, we must unbind all resources
-        // that reference the back buffer. DXGI_ERROR_INVALID_CALL (0x887A0001) occurs
-        // if there are outstanding references to the back buffer.
+        // IMPORTANT: Before resizing the swap chain, we must release ALL references
+        // to the back buffer. DXGI_ERROR_INVALID_CALL (0x887A0001) occurs
+        // if there are ANY outstanding references to the back buffer.
         
-        // Unbind the render target from the device context
-        ID3D11RenderTargetView* nullRTV = null;
-        ID3D11DepthStencilView* nullDSV = null;
-        _context.Handle->OMSetRenderTargets(1, &nullRTV, nullDSV);
+        // Step 1: Clear all device context state - this unbinds all views, shaders, etc.
+        _context.Handle->ClearState();
         
-        // Flush any pending commands
+        // Step 2: Flush any pending commands to ensure GPU has finished with resources
         _context.Handle->Flush();
         
-        // Release old render target view and back buffer
-        _renderTargetView.Dispose();
-        _renderTargetView = default;
-        _backBuffer.Dispose();
-        _backBuffer = default;
-        _stagingTexture.Dispose();
-        _stagingTexture = default;
+        // Step 3: Release the render target view (holds reference to back buffer)
+        if (_renderTargetView.Handle != null)
+        {
+            _renderTargetView.Handle->Release();
+            _renderTargetView = default;
+        }
         
-        // Resize swap chain buffers
+        // Step 4: Release the back buffer texture
+        if (_backBuffer.Handle != null)
+        {
+            _backBuffer.Handle->Release();
+            _backBuffer = default;
+        }
+        
+        // Step 5: Release the staging texture
+        if (_stagingTexture.Handle != null)
+        {
+            _stagingTexture.Handle->Release();
+            _stagingTexture = default;
+        }
+        
+        // Step 6: Now resize the swap chain buffers
         var hr = _swapChain.ResizeBuffers(2, (uint)_width, (uint)_height, 
             Silk.NET.DXGI.Format.FormatB8G8R8A8Unorm, 0);
         if (hr < 0)
@@ -310,7 +321,7 @@ public class D3D11Backend : IGraphicsBackend
             throw new Exception($"Failed to resize swap chain: HRESULT 0x{hr:X8}");
         }
         
-        // Recreate render target view
+        // Recreate render target view and staging texture
         CreateRenderTargetView();
         CreateStagingTexture();
         
@@ -408,12 +419,37 @@ public class D3D11Backend : IGraphicsBackend
         _surface?.Dispose();
         _grContext?.Dispose();
         
-        _stagingTexture.Dispose();
-        _renderTargetView.Dispose();
-        _backBuffer.Dispose();
-        _swapChain.Dispose();
-        _context.Dispose();
-        _device.Dispose();
+        // Use explicit Release calls to ensure COM references are properly decremented
+        if (_stagingTexture.Handle != null)
+        {
+            _stagingTexture.Handle->Release();
+            _stagingTexture = default;
+        }
+        if (_renderTargetView.Handle != null)
+        {
+            _renderTargetView.Handle->Release();
+            _renderTargetView = default;
+        }
+        if (_backBuffer.Handle != null)
+        {
+            _backBuffer.Handle->Release();
+            _backBuffer = default;
+        }
+        if (_swapChain.Handle != null)
+        {
+            _swapChain.Handle->Release();
+            _swapChain = default;
+        }
+        if (_context.Handle != null)
+        {
+            _context.Handle->Release();
+            _context = default;
+        }
+        if (_device.Handle != null)
+        {
+            _device.Handle->Release();
+            _device = default;
+        }
         _dxgi?.Dispose();
         _d3d11?.Dispose();
     }
