@@ -33,23 +33,28 @@ public class NativeWindow : INativeWindow, IDisposable
         options.Title = title;
         options.VSync = true;
         options.IsEventDriven = false;
-        options.UpdatesPerSecond = 60;  // Explicitly set update rate
-        options.FramesPerSecond = 60;   // Explicitly set frame rate
+
+        // why do we set these?
+        //options.UpdatesPerSecond = 60;  // Explicitly set update rate
+        //options.FramesPerSecond = 60;   // Explicitly set frame rate
 
         // Select backend and configure window options
         switch (backendType)
         {
             case GraphicsBackendType.OpenGL:
+                Console.WriteLine("Starting OpenGL backend...");
                 options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(3, 3));
                 _backend = new OpenGLBackend();
                 break;
                 
             case GraphicsBackendType.Vulkan:
+                Console.WriteLine("Starting Vulkan backend...");
                 options.API = GraphicsAPI.None; // Vulkan handles its own context
                 _backend = new VulkanBackend();
                 break;
                 
             case GraphicsBackendType.DirectX11:
+                Console.WriteLine("Starting DirectX11 backend...");
                 if (!OperatingSystem.IsWindows())
                 {
                     throw new PlatformNotSupportedException("DirectX11 backend is only available on Windows");
