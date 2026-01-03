@@ -164,7 +164,7 @@ public class D3D11Backend : IGraphicsBackend
             SampleDesc = new SampleDesc { Count = 1, Quality = 0 },
             BufferUsage = DXGI.UsageRenderTargetOutput,
             BufferCount = 2,
-            Scaling = Scaling.Stretch,
+            Scaling = Scaling.None, // Don't stretch - maintain 1:1 pixel mapping
             SwapEffect = SwapEffect.FlipDiscard,
             AlphaMode = AlphaMode.Unspecified,
             Flags = 0
@@ -280,9 +280,19 @@ public class D3D11Backend : IGraphicsBackend
     {
         if (_device.Handle == null || size.X <= 0 || size.Y <= 0) return;
 
+        Console.WriteLine($"[D3D11Backend] Resize called: {size.X}x{size.Y}, current: {_width}x{_height}");
+
+        // Don't resize if dimensions haven't changed
+        if (size.X == _width && size.Y == _height)
+        {
+            Console.WriteLine($"[D3D11Backend] Skipping resize - dimensions unchanged");
+            return;
+        }
+
         _width = size.X;
         _height = size.Y;
         
+        // Dispose old surface first - this must happen before we resize the swap chain
         _surface?.Dispose();
         _surface = null;
         
@@ -329,14 +339,26 @@ public class D3D11Backend : IGraphicsBackend
         CreateRenderTargetView();
         CreateStagingTexture();
         
-        CreateSurface(size);
+        // Create new surface with correct dimensions
+        CreateSurface(new Vector2D<int>(_width, _height));
         
-        Console.WriteLine($"[D3D11Backend] Resized to {size.X}x{size.Y}");
+        Console.WriteLine($"[D3D11Backend] Resize complete: {_width}x{_height}");
     }
 
     public unsafe void Render(RootPanel panel)
     {
         if (_surface == null || _renderer == null || _renderTargetView == null) return;
+
+        // Verify surface dimensions match backend dimensions
+        var surfaceWidth = _surface.Canvas.DeviceClipBounds.Width;
+        var surfaceHeight = _surface.Canvas.DeviceClipBounds.Height;
+        
+        if (surfaceWidth != _width || surfaceHeight != _height)
+        {
+            Console.WriteLine($"[D3D11Backend] Dimension mismatch! Surface: {surfaceWidth}x{surfaceHeight}, Backend: {_width}x{_height}");
+            // Don't render with mismatched dimensions - this causes stretching
+            return;
+        }
 
         // Clear the back buffer
         float* clearColor = stackalloc float[] { 0.9375f, 0.9375f, 0.9375f, 1.0f }; // Light gray (240/256)

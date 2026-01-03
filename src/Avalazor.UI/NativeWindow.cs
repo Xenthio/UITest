@@ -26,7 +26,7 @@ public class NativeWindow : INativeWindow, IDisposable
 
     public RootPanel? RootPanel { get; set; }
 
-    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor App", GraphicsBackendType backendType = GraphicsBackendType.Vulkan)
+    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor App", GraphicsBackendType backendType = GraphicsBackendType.OpenGL)
     {
         var options = WindowOptions.Default;
         options.Size = new Vector2D<int>(width, height);
@@ -73,7 +73,7 @@ public class NativeWindow : INativeWindow, IDisposable
         _window.Load += OnLoad;
         _window.Render += OnRender;
         _window.Closing += OnClosing;
-        _window.Resize += OnResize;
+        _window.FramebufferResize += OnFramebufferResize;
     }
 
     public void Run() => _window.Run();
@@ -119,10 +119,13 @@ public class NativeWindow : INativeWindow, IDisposable
         }
     }
 
-    private void OnResize(Vector2D<int> size)
+    private void OnFramebufferResize(Vector2D<int> size)
     {
         if (size.X <= 0 || size.Y <= 0) return;
 
+        Console.WriteLine($"[NativeWindow] OnFramebufferResize: {size.X}x{size.Y}");
+        
+        // Use framebuffer size directly - this is the actual render buffer size
         _backend.Resize(size);
 
         if (RootPanel != null)
@@ -131,7 +134,6 @@ public class NativeWindow : INativeWindow, IDisposable
             RootPanel.InvalidateLayout();
             RootPanel.Layout();
         }
-        OnRender(0);
     }
 
     private void OnRender(double delta)
