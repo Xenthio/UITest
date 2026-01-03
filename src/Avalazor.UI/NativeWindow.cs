@@ -7,6 +7,13 @@ using UIVector2 = Sandbox.UI.Vector2;
 
 namespace Avalazor.UI;
 
+public enum GraphicsBackendType
+{
+    OpenGL,
+    Vulkan,
+    DirectX11
+}
+
 public class NativeWindow : INativeWindow, IDisposable
 {
     private readonly IWindow _window;
@@ -19,26 +26,46 @@ public class NativeWindow : INativeWindow, IDisposable
 
     public RootPanel? RootPanel { get; set; }
 
-    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor App")
+    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor App", GraphicsBackendType backendType = GraphicsBackendType.OpenGL)
     {
         var options = WindowOptions.Default;
         options.Size = new Vector2D<int>(width, height);
         options.Title = title;
         options.VSync = true;
         options.IsEventDriven = false;
-        options.UpdatesPerSecond = 60;  // Explicitly set update rate
-        options.FramesPerSecond = 60;   // Explicitly set frame rate
 
-        // 1. SELECT BACKEND AT COMPILE TIME
-//#if WINDOWS
-        // On Windows, use D3D11 to fix resizing bugs
-        //options.API = GraphicsAPI.None;
-        //_backend = new D3D11Backend();
-//#else
-        // On Linux/Mac, use OpenGL
-        options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(3, 3));
-        _backend = new OpenGLBackend();
-//#endif
+        // why do we set these?
+        //options.UpdatesPerSecond = 60;  // Explicitly set update rate
+        //options.FramesPerSecond = 60;   // Explicitly set frame rate
+
+        // Select backend and configure window options
+        switch (backendType)
+        {
+            case GraphicsBackendType.OpenGL:
+                Console.WriteLine("Starting OpenGL backend...");
+                options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(3, 3));
+                _backend = new OpenGLBackend();
+                break;
+                
+            case GraphicsBackendType.Vulkan:
+                Console.WriteLine("Starting Vulkan backend...");
+                options.API = GraphicsAPI.None; // Vulkan handles its own context
+                _backend = new VulkanBackend();
+                break;
+                
+            case GraphicsBackendType.DirectX11:
+                Console.WriteLine("Starting DirectX11 backend...");
+                if (!OperatingSystem.IsWindows())
+                {
+                    throw new PlatformNotSupportedException("DirectX11 backend is only available on Windows");
+                }
+                options.API = GraphicsAPI.None; // D3D11 handles its own context
+                _backend = new D3D11Backend();
+                break;
+                
+            default:
+                throw new ArgumentException($"Unsupported backend type: {backendType}");
+        }
 
         _window = Silk.NET.Windowing.Window.Create(options);
 

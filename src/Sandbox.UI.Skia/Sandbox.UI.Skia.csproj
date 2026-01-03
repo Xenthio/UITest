@@ -11,8 +11,8 @@
 
   <ItemGroup>
     <!-- SkiaSharp for rendering -->
-    <PackageReference Include="SkiaSharp" Version="2.88.9" />
-    <PackageReference Include="HarfBuzzSharp" Version="7.3.0.3" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
+    <PackageReference Include="HarfBuzzSharp" Version="8.3.1.2" />
     <!-- RichTextKit for professional text layout (matches s&box) -->
     <!-- Now using custom fork from thirdparty/RichTextKit -->
   </ItemGroup>
