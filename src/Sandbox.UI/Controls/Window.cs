@@ -31,15 +31,38 @@ public class Window : Panel
     /// </summary>
     public TitleBar? TitleBar { get; set; }
 
+    private int _windowWidth = 0;
+    private int _windowHeight = 0;
+    private bool _windowWidthExplicitlySet = false;
+    private bool _windowHeightExplicitlySet = false;
+
     /// <summary>
     /// Initial width of the native window (used when creating the window)
+    /// When set to 0 or not specified, the window will size to fit its content
     /// </summary>
-    public int WindowWidth { get; set; } = 1280;
+    public int WindowWidth
+    {
+        get => _windowWidth;
+        set
+        {
+            _windowWidth = value;
+            _windowWidthExplicitlySet = true;
+        }
+    }
 
     /// <summary>
     /// Initial height of the native window (used when creating the window)
+    /// When set to 0 or not specified, the window will size to fit its content
     /// </summary>
-    public int WindowHeight { get; set; } = 720;
+    public int WindowHeight
+    {
+        get => _windowHeight;
+        set
+        {
+            _windowHeight = value;
+            _windowHeightExplicitlySet = true;
+        }
+    }
 
     /// <summary>
     /// Position of the in-window panel (for floating window UI elements)
@@ -158,13 +181,13 @@ public class Window : Panel
         AddClass("window");
         ElementName = "window";
 
-        // Fill the entire root panel by default
+        // Set position mode but DON'T set size to 100% yet
+        // This allows content-based sizing to work
+        // Once a native window is set, we'll switch to fill mode
         Style.Position = PositionMode.Absolute;
         Style.FlexDirection = FlexDirection.Column;
         Style.Left = 0;
         Style.Top = 0;
-        Style.Width = Length.Percent(100);
-        Style.Height = Length.Percent(100);
 
         // Don't create TitleBar here - let CreateTitleBar handle it
         // This allows for truly optional custom title bar
@@ -194,17 +217,13 @@ public class Window : Panel
     {
         _nativeWindow = nativeWindow;
         
-        // When native window is set, clear any panel positioning that was applied during initial layout
-        // (since position/size should control native window, not panel styles)
-        if (Position != Vector2.Zero)
-        {
-            // Reset panel position styles - fill the entire root panel instead
-            Style.Position = PositionMode.Absolute;
-            Style.Left = 0;
-            Style.Top = 0;
-            Style.Width = Length.Percent(100);
-            Style.Height = Length.Percent(100);
-        }
+        // Once native window is set, make the Window fill it completely
+        // Reset panel position styles to fill the entire root panel
+        Style.Position = PositionMode.Absolute;
+        Style.Left = 0;
+        Style.Top = 0;
+        Style.Width = Length.Percent(100);
+        Style.Height = Length.Percent(100);
         
         UpdateNativeWindowTitle();
         UpdateNativeWindowPosition();
@@ -237,6 +256,41 @@ public class Window : Panel
     private void UpdateNativeWindowSize()
     {
         _nativeWindow?.SetSize(WindowWidth, WindowHeight);
+    }
+
+    /// <summary>
+    /// Gets the calculated window size based on content.
+    /// If WindowWidth or WindowHeight were not explicitly set, this calculates the minimum size to fit content.
+    /// Returns a tuple of (width, height, hasExplicitSize).
+    /// </summary>
+    public (int width, int height, bool hasExplicitSize) GetCalculatedWindowSize()
+    {
+        bool hasExplicitWidth = _windowWidthExplicitlySet && WindowWidth > 0;
+        bool hasExplicitHeight = _windowHeightExplicitlySet && WindowHeight > 0;
+        bool hasExplicitSize = hasExplicitWidth && hasExplicitHeight;
+
+        // If both dimensions are explicitly set, use them
+        if (hasExplicitSize)
+        {
+            return (WindowWidth, WindowHeight, true);
+        }
+
+        // Calculate size based on content
+        // Use the panel's computed box rect which represents the actual content size
+        int calculatedWidth = hasExplicitWidth ? WindowWidth : (int)Math.Ceiling(Box.Rect.Width);
+        int calculatedHeight = hasExplicitHeight ? WindowHeight : (int)Math.Ceiling(Box.Rect.Height);
+
+        // Apply minimum size constraints (default MinSize is 100x50)
+        calculatedWidth = Math.Max(calculatedWidth, (int)MinSize.x);
+        calculatedHeight = Math.Max(calculatedHeight, (int)MinSize.y);
+        
+        // Absolute minimum to prevent invalid window sizes (in case MinSize is set to 0)
+        const int ABSOLUTE_MIN_WIDTH = 100;
+        const int ABSOLUTE_MIN_HEIGHT = 50;
+        calculatedWidth = Math.Max(calculatedWidth, ABSOLUTE_MIN_WIDTH);
+        calculatedHeight = Math.Max(calculatedHeight, ABSOLUTE_MIN_HEIGHT);
+
+        return (calculatedWidth, calculatedHeight, false);
     }
 
     /// <summary>

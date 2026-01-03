@@ -97,18 +97,78 @@ public static class AvalazorApplication
             
             // Wrap in RootPanel
             var rootPanel = new RootPanel();
-            rootPanel.PanelBounds = new Rect(0, 0, width, height);
+            
+            // For Windows without explicit size, we need to let them size naturally first
+            // Use a very large initial bounds to allow unrestricted sizing
+            bool needsContentSizing = false;
+            if (panel is Sandbox.UI.Window windowPanel)
+            {
+                title = !string.IsNullOrEmpty(windowPanel.Title) ? windowPanel.Title : title;
+                
+                // Check if size will be calculated from content
+                var (_, __, hasExplicitSize) = windowPanel.GetCalculatedWindowSize();
+                needsContentSizing = !hasExplicitSize;
+                
+                if (needsContentSizing)
+                {
+                    // Use very large bounds for initial layout to allow natural sizing
+                    rootPanel.PanelBounds = new Rect(0, 0, 10000, 10000);
+                }
+                else
+                {
+                    // Use explicit or default size
+                    var (calcWidth, calcHeight, _) = windowPanel.GetCalculatedWindowSize();
+                    width = calcWidth > 0 ? calcWidth : width;
+                    height = calcHeight > 0 ? calcHeight : height;
+                    rootPanel.PanelBounds = new Rect(0, 0, width, height);
+                }
+            }
+            else
+            {
+                rootPanel.PanelBounds = new Rect(0, 0, width, height);
+            }
+            
             rootPanel.AddChild(panel);
             
             // Perform initial layout which will trigger Razor tree processing
             rootPanel.Layout();
 
-            // Re-read window properties AFTER layout (Razor attributes are now processed)
-            if (panel is Sandbox.UI.Window windowPanel)
+            // Now re-read window size after layout
+            if (panel is Sandbox.UI.Window windowPanel2)
             {
-                width = windowPanel.WindowWidth > 0 ? windowPanel.WindowWidth : width;
-                height = windowPanel.WindowHeight > 0 ? windowPanel.WindowHeight : height;
-                title = !string.IsNullOrEmpty(windowPanel.Title) ? windowPanel.Title : title;
+                // Get calculated window size (content-based if not explicitly set)
+                var (calcWidth, calcHeight, hasExplicitSize) = windowPanel2.GetCalculatedWindowSize();
+                
+                // Use calculated size, but fall back to defaults if size is still 0
+                // (e.g., when the window has no content yet)
+                width = calcWidth > 0 ? calcWidth : width;
+                height = calcHeight > 0 ? calcHeight : height;
+                
+                if (!hasExplicitSize)
+                {
+                    Console.WriteLine($"Window size not explicitly set - calculated from content: {width}x{height}");
+                }
+                
+                // Update RootPanel bounds to match the calculated size
+                rootPanel.PanelBounds = new Rect(0, 0, width, height);
+                rootPanel.Layout(); // Re-layout with correct bounds
+            }
+            
+            // Ensure we never try to create a window with invalid dimensions
+            // This can happen if a window has no content and MinSize is set to 0
+            const int MIN_WINDOW_WIDTH = 100;
+            const int MIN_WINDOW_HEIGHT = 50;
+            
+            if (width <= 0)
+            {
+                Console.WriteLine($"Warning: Calculated window width is {width}, using minimum {MIN_WINDOW_WIDTH}");
+                width = MIN_WINDOW_WIDTH;
+            }
+            
+            if (height <= 0)
+            {
+                Console.WriteLine($"Warning: Calculated window height is {height}, using minimum {MIN_WINDOW_HEIGHT}");
+                height = MIN_WINDOW_HEIGHT;
             }
             
             // Check if we have a display environment
