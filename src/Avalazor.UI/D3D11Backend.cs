@@ -28,9 +28,13 @@ public class D3D11Backend : IGraphicsBackend
     private ComPtr<ID3D11Device> _device;
     private ComPtr<ID3D11DeviceContext> _context;
     private ComPtr<IDXGISwapChain1> _swapChain;
-    private ComPtr<ID3D11RenderTargetView> _renderTargetView;
-    private ComPtr<ID3D11Texture2D> _backBuffer;
-    private ComPtr<ID3D11Texture2D> _stagingTexture;
+    
+    // Use raw pointers for resources that need to be released during resize
+    // ComPtr doesn't reliably release references which causes DXGI_ERROR_INVALID_CALL
+    private unsafe ID3D11RenderTargetView* _renderTargetView;
+    private unsafe ID3D11Texture2D* _backBuffer;
+    private unsafe ID3D11Texture2D* _stagingTexture;
+    
     private GRContext? _grContext;
     private SKSurface? _surface;
     private SkiaPanelRenderer? _renderer;
@@ -197,22 +201,22 @@ public class D3D11Backend : IGraphicsBackend
 
     private unsafe void CreateRenderTargetView()
     {
-        // Get back buffer
+        // Get back buffer - this adds a reference to the back buffer
         ID3D11Texture2D* backBufferPtr;
         _swapChain.GetBuffer(0, SilkMarshal.GuidPtrOf<ID3D11Texture2D>(), (void**)&backBufferPtr);
-        _backBuffer = new ComPtr<ID3D11Texture2D>(backBufferPtr);
+        _backBuffer = backBufferPtr;
         
         // Create render target view
         // Using null for render target view description to use defaults based on back buffer format.
         // This is the standard approach when the back buffer is already in the desired format (BGRA8).
         ID3D11RenderTargetView* rtvPtr;
         RenderTargetViewDesc* rtvDescPtr = null;
-        var hr = _device.Handle->CreateRenderTargetView((ID3D11Resource*)_backBuffer.Handle, rtvDescPtr, &rtvPtr);
+        var hr = _device.Handle->CreateRenderTargetView((ID3D11Resource*)_backBuffer, rtvDescPtr, &rtvPtr);
         if (hr < 0)
         {
             throw new Exception($"Failed to create render target view: HRESULT 0x{hr:X8}");
         }
-        _renderTargetView = new ComPtr<ID3D11RenderTargetView>(rtvPtr);
+        _renderTargetView = rtvPtr;
         
         // Set render target
         ID3D11DepthStencilView* dsv = null;
@@ -255,7 +259,7 @@ public class D3D11Backend : IGraphicsBackend
         {
             throw new Exception($"Failed to create staging texture: HRESULT 0x{hr:X8}");
         }
-        _stagingTexture = new ComPtr<ID3D11Texture2D>(stagingPtr);
+        _stagingTexture = stagingPtr;
     }
 
     private void CreateGRContext()
@@ -293,24 +297,24 @@ public class D3D11Backend : IGraphicsBackend
         _context.Handle->Flush();
         
         // Step 3: Release the render target view (holds reference to back buffer)
-        if (_renderTargetView.Handle != null)
+        if (_renderTargetView != null)
         {
-            _renderTargetView.Handle->Release();
-            _renderTargetView = default;
+            _renderTargetView->Release();
+            _renderTargetView = null;
         }
         
         // Step 4: Release the back buffer texture
-        if (_backBuffer.Handle != null)
+        if (_backBuffer != null)
         {
-            _backBuffer.Handle->Release();
-            _backBuffer = default;
+            _backBuffer->Release();
+            _backBuffer = null;
         }
         
         // Step 5: Release the staging texture
-        if (_stagingTexture.Handle != null)
+        if (_stagingTexture != null)
         {
-            _stagingTexture.Handle->Release();
-            _stagingTexture = default;
+            _stagingTexture->Release();
+            _stagingTexture = null;
         }
         
         // Step 6: Now resize the swap chain buffers
@@ -332,11 +336,11 @@ public class D3D11Backend : IGraphicsBackend
 
     public unsafe void Render(RootPanel panel)
     {
-        if (_surface == null || _renderer == null) return;
+        if (_surface == null || _renderer == null || _renderTargetView == null) return;
 
         // Clear the back buffer
         float* clearColor = stackalloc float[] { 0.9375f, 0.9375f, 0.9375f, 1.0f }; // Light gray (240/256)
-        _context.ClearRenderTargetView(_renderTargetView.Handle, clearColor);
+        _context.ClearRenderTargetView(_renderTargetView, clearColor);
 
         // Render UI to Skia surface
         _surface.Canvas.Clear(new SKColor(240, 240, 240));
@@ -356,7 +360,7 @@ public class D3D11Backend : IGraphicsBackend
 
     private unsafe void CopyToBackBuffer()
     {
-        if (_surface == null) return;
+        if (_surface == null || _stagingTexture == null || _backBuffer == null) return;
         
         // Reuse pixel buffer to avoid allocations per frame
         int requiredSize = _width * _height * 4;
@@ -383,7 +387,7 @@ public class D3D11Backend : IGraphicsBackend
             };
             
             _context.UpdateSubresource(
-                (ID3D11Resource*)_stagingTexture.Handle,
+                (ID3D11Resource*)_stagingTexture,
                 0,
                 &box,
                 pixelsPtr,
@@ -394,8 +398,8 @@ public class D3D11Backend : IGraphicsBackend
         
         // Copy staging texture to back buffer
         _context.CopyResource(
-            (ID3D11Resource*)_backBuffer.Handle,
-            (ID3D11Resource*)_stagingTexture.Handle
+            (ID3D11Resource*)_backBuffer,
+            (ID3D11Resource*)_stagingTexture
         );
     }
 
@@ -420,20 +424,20 @@ public class D3D11Backend : IGraphicsBackend
         _grContext?.Dispose();
         
         // Use explicit Release calls to ensure COM references are properly decremented
-        if (_stagingTexture.Handle != null)
+        if (_stagingTexture != null)
         {
-            _stagingTexture.Handle->Release();
-            _stagingTexture = default;
+            _stagingTexture->Release();
+            _stagingTexture = null;
         }
-        if (_renderTargetView.Handle != null)
+        if (_renderTargetView != null)
         {
-            _renderTargetView.Handle->Release();
-            _renderTargetView = default;
+            _renderTargetView->Release();
+            _renderTargetView = null;
         }
-        if (_backBuffer.Handle != null)
+        if (_backBuffer != null)
         {
-            _backBuffer.Handle->Release();
-            _backBuffer = default;
+            _backBuffer->Release();
+            _backBuffer = null;
         }
         if (_swapChain.Handle != null)
         {
