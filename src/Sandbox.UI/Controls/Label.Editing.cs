@@ -30,10 +30,16 @@ public partial class Label
     /// </summary>
     public Color SelectionColor { get; set; } = Color.Cyan.WithAlpha(0.39f);
 
+    private bool _shouldDrawSelection;
+    
     /// <summary>
     /// Whether to draw selection highlight
     /// </summary>
-    public bool ShouldDrawSelection { get; set; }
+    public bool ShouldDrawSelection
+    {
+        get => _shouldDrawSelection && Selectable;
+        set => _shouldDrawSelection = value;
+    }
 
     /// <summary>
     /// Replace the currently selected text with given text.

@@ -1219,6 +1219,10 @@ public class SkiaPanelRenderer : IPanelRenderer
             y = rect.Bottom - textBlock.MeasuredHeight;
         }
 
+        // Update label's _textRect to match the actual rendered position
+        // This is needed for accurate hit testing in GetLetterAtScreenPosition
+        label._textRect = new Rect(x, y, textBlock.MeasuredWidth, textBlock.MeasuredHeight);
+
         // Paint the text using RichTextKit with selection if enabled
         // RichTextKit handles selection rendering automatically like S&box
         var skColor = ToSKColor(textColor, opacity);

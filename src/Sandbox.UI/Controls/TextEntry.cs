@@ -594,7 +594,13 @@ public class TextEntry : Panel
         SetClass("is-multiline", Multiline);
 
         if (Label != null)
+        {
             Label.Multiline = Multiline;
+            
+            // Set Selectable based on placeholder state (matches S&box)
+            bool isPlaceholder = string.IsNullOrEmpty(Text) && !string.IsNullOrEmpty(Placeholder);
+            Label.Selectable = !isPlaceholder;
+        }
 
         // Update time for caret blinking
         if (HasFocus)
