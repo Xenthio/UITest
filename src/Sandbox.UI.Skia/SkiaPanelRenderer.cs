@@ -1129,6 +1129,13 @@ public class SkiaPanelRenderer : IPanelRenderer
             if (!blink) return; // Caret is in off phase
 
             var caret = textEntry.Label.GetCaretRect(textEntry.CaretPosition);
+            
+            // GetCaretRect returns coordinates relative to the Label's _textRect,
+            // but we need to account for the Label's position within the TextEntry.
+            // The Label is positioned at Label.Box.Rect.Position relative to TextEntry.
+            caret.Left += textEntry.Label.Box.Rect.Left;
+            caret.Top += textEntry.Label.Box.Rect.Top;
+            
             caret.Left = MathF.Floor(caret.Left); // avoid subpixel positions
             caret.Width = 1;
 
