@@ -7,95 +7,374 @@ using SkiaSharp;
 using Sandbox.UI;
 using Sandbox.UI.Skia;
 using System.Runtime.InteropServices;
+using D3D11Box = Silk.NET.Direct3D11.Box;
 
 namespace Avalazor.UI;
 
+/// <summary>
+/// DirectX 11 graphics backend for Avalazor.
+/// Provides hardware-accelerated rendering using Direct3D 11 and SkiaSharp.
+/// Note: This backend is Windows-only and requires proper D3D11 setup.
+/// </summary>
+/// <remarks>
+/// Direct3D support in SkiaSharp is limited. This implementation provides a working
+/// D3D11 swapchain with a software-rendered SkiaSharp surface that is then blitted
+/// to the D3D11 back buffer. For full hardware acceleration, use the OpenGL or Vulkan backends.
+/// </remarks>
 public class D3D11Backend : IGraphicsBackend
 {
     private D3D11? _d3d11;
+    private DXGI? _dxgi;
     private ComPtr<ID3D11Device> _device;
     private ComPtr<ID3D11DeviceContext> _context;
-    private ComPtr<IDXGISwapChain> _swapChain;
+    private ComPtr<IDXGISwapChain1> _swapChain;
     private ComPtr<ID3D11RenderTargetView> _renderTargetView;
     private ComPtr<ID3D11Texture2D> _backBuffer;
+    private ComPtr<ID3D11Texture2D> _stagingTexture;
     private GRContext? _grContext;
     private SKSurface? _surface;
     private SkiaPanelRenderer? _renderer;
     private IWindow? _window;
+    private int _width;
+    private int _height;
 
     public unsafe void Initialize(IWindow window)
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            throw new PlatformNotSupportedException("DirectX11 backend is only available on Windows");
+        }
+        
         _window = window;
-        _d3d11 = D3D11.GetApi(window);
-
+        _width = window.FramebufferSize.X;
+        _height = window.FramebufferSize.Y;
+        
+        Console.WriteLine("[D3D11Backend] Initializing DirectX 11 backend...");
+        
         // Create D3D11 device and context
         CreateDeviceAndSwapChain(window);
+        Console.WriteLine("[D3D11Backend] Device and swap chain created");
 
-        // Create Skia GRContext with D3D11 backend
+        // Create Skia GRContext - use CPU rendering and blit to D3D11
+        // Note: Full D3D11 GPU support requires custom SkiaSharp builds
         CreateGRContext();
+        Console.WriteLine("[D3D11Backend] SkiaSharp context created (CPU with D3D11 blit)");
 
         _renderer = new SkiaPanelRenderer();
 
         CreateSurface(window.FramebufferSize);
+        Console.WriteLine("[D3D11Backend] DirectX 11 backend initialized successfully!");
     }
 
     private unsafe void CreateDeviceAndSwapChain(IWindow window)
     {
-        // This is a placeholder implementation
-        // Full implementation requires proper D3D11 device creation and swap chain setup
-        // which is Windows-specific and complex
+        _d3d11 = D3D11.GetApi(window);
+        _dxgi = DXGI.GetApi(window);
         
-        throw new NotImplementedException(
-            "DirectX11 backend is not fully implemented yet. " +
-            "Full implementation requires Windows-specific D3D11 initialization.");
+        // Create D3D11 device with appropriate feature level
+        D3DFeatureLevel[] featureLevels = new[]
+        {
+            D3DFeatureLevel.Level111,
+            D3DFeatureLevel.Level110,
+            D3DFeatureLevel.Level101,
+            D3DFeatureLevel.Level100
+        };
         
-        // TODO: Implement D3D11 device creation:
-        // - Create D3D11 device and context
-        // - Create DXGI swap chain
-        // - Get back buffer and create render target view
+        D3DFeatureLevel actualFeatureLevel;
+        ID3D11Device* devicePtr;
+        ID3D11DeviceContext* contextPtr;
+        
+        fixed (D3DFeatureLevel* featureLevelsPtr = featureLevels)
+        {
+            var result = _d3d11.CreateDevice(
+                null, // Use default adapter
+                D3DDriverType.Hardware,
+                default,
+                (uint)CreateDeviceFlag.BgraSupport, // Required for D2D interop
+                featureLevelsPtr,
+                (uint)featureLevels.Length,
+                D3D11.SdkVersion,
+                &devicePtr,
+                &actualFeatureLevel,
+                &contextPtr
+            );
+            
+            if (result < 0) // FAILED
+            {
+                // Try WARP (software) driver
+                Console.WriteLine("[D3D11Backend] Hardware device creation failed, trying WARP...");
+                result = _d3d11.CreateDevice(
+                    null,
+                    D3DDriverType.Warp,
+                    default,
+                    (uint)CreateDeviceFlag.BgraSupport,
+                    featureLevelsPtr,
+                    (uint)featureLevels.Length,
+                    D3D11.SdkVersion,
+                    &devicePtr,
+                    &actualFeatureLevel,
+                    &contextPtr
+                );
+                
+                if (result < 0)
+                {
+                    throw new Exception($"Failed to create D3D11 device: HRESULT 0x{result:X8}");
+                }
+            }
+        }
+        
+        _device = new ComPtr<ID3D11Device>(devicePtr);
+        _context = new ComPtr<ID3D11DeviceContext>(contextPtr);
+        
+        Console.WriteLine($"[D3D11Backend] Using feature level: {actualFeatureLevel}");
+        
+        // Get DXGI factory from device
+        IDXGIDevice* dxgiDevice;
+        var dxgiDeviceGuid = typeof(IDXGIDevice).GUID;
+        _device.Handle->QueryInterface(&dxgiDeviceGuid, (void**)&dxgiDevice);
+        
+        IDXGIAdapter* adapter;
+        dxgiDevice->GetAdapter(&adapter);
+        
+        IDXGIFactory2* factory;
+        adapter->GetParent(SilkMarshal.GuidPtrOf<IDXGIFactory2>(), (void**)&factory);
+        
+        // Get native window handle
+        var nativeWindow = window.Native!.Win32;
+        if (!nativeWindow.HasValue)
+        {
+            throw new Exception("Could not get Win32 window handle");
+        }
+        var hwnd = (nint)nativeWindow.Value.Hwnd;
+        
+        // Create swap chain
+        var swapChainDesc = new SwapChainDesc1
+        {
+            Width = (uint)_width,
+            Height = (uint)_height,
+            Format = Silk.NET.DXGI.Format.FormatB8G8R8A8Unorm,
+            Stereo = false,
+            SampleDesc = new SampleDesc { Count = 1, Quality = 0 },
+            BufferUsage = DXGI.UsageRenderTargetOutput,
+            BufferCount = 2,
+            Scaling = Scaling.Stretch,
+            SwapEffect = SwapEffect.FlipDiscard,
+            AlphaMode = AlphaMode.Unspecified,
+            Flags = 0
+        };
+        
+        IDXGISwapChain1* swapChainPtr;
+        var hr = factory->CreateSwapChainForHwnd(
+            (IUnknown*)_device.Handle,
+            hwnd,
+            &swapChainDesc,
+            null,
+            null,
+            &swapChainPtr
+        );
+        
+        if (hr < 0)
+        {
+            throw new Exception($"Failed to create swap chain: HRESULT 0x{hr:X8}");
+        }
+        
+        _swapChain = new ComPtr<IDXGISwapChain1>(swapChainPtr);
+        
+        // Clean up DXGI objects
+        factory->Release();
+        adapter->Release();
+        dxgiDevice->Release();
+        
+        // Create render target view
+        CreateRenderTargetView();
+        
+        // Create staging texture for CPU-GPU transfer
+        CreateStagingTexture();
+    }
+
+    private unsafe void CreateRenderTargetView()
+    {
+        // Get back buffer
+        ID3D11Texture2D* backBufferPtr;
+        _swapChain.GetBuffer(0, SilkMarshal.GuidPtrOf<ID3D11Texture2D>(), (void**)&backBufferPtr);
+        _backBuffer = new ComPtr<ID3D11Texture2D>(backBufferPtr);
+        
+        // Create render target view
+        ID3D11RenderTargetView* rtvPtr;
+        RenderTargetViewDesc* rtvDescPtr = null; // Use null for default description
+        var hr = _device.Handle->CreateRenderTargetView((ID3D11Resource*)_backBuffer.Handle, rtvDescPtr, &rtvPtr);
+        if (hr < 0)
+        {
+            throw new Exception($"Failed to create render target view: HRESULT 0x{hr:X8}");
+        }
+        _renderTargetView = new ComPtr<ID3D11RenderTargetView>(rtvPtr);
+        
+        // Set render target
+        ID3D11DepthStencilView* dsv = null;
+        _context.Handle->OMSetRenderTargets(1, &rtvPtr, dsv);
+        
+        // Set viewport
+        var viewport = new Viewport
+        {
+            TopLeftX = 0,
+            TopLeftY = 0,
+            Width = _width,
+            Height = _height,
+            MinDepth = 0,
+            MaxDepth = 1
+        };
+        _context.RSSetViewports(1, &viewport);
+    }
+
+    private unsafe void CreateStagingTexture()
+    {
+        var textureDesc = new Texture2DDesc
+        {
+            Width = (uint)_width,
+            Height = (uint)_height,
+            MipLevels = 1,
+            ArraySize = 1,
+            Format = Silk.NET.DXGI.Format.FormatB8G8R8A8Unorm,
+            SampleDesc = new SampleDesc { Count = 1, Quality = 0 },
+            Usage = Usage.Default,
+            BindFlags = (uint)BindFlag.ShaderResource,
+            CPUAccessFlags = 0,
+            MiscFlags = 0
+        };
+        
+        ID3D11Texture2D* stagingPtr;
+        SubresourceData* subresData = null; // Use null for no initial data
+        var hr = _device.Handle->CreateTexture2D(&textureDesc, subresData, &stagingPtr);
+        if (hr < 0)
+        {
+            throw new Exception($"Failed to create staging texture: HRESULT 0x{hr:X8}");
+        }
+        _stagingTexture = new ComPtr<ID3D11Texture2D>(stagingPtr);
     }
 
     private void CreateGRContext()
     {
-        // TODO: Create GRContext with D3D11 backend
-        // _grContext = GRContext.CreateD3D(...);
+        // Note: SkiaSharp's Direct3D support is limited in standard builds.
+        // We use a software GRContext and blit to D3D11 for display.
+        // For full hardware acceleration, use OpenGL or Vulkan backends.
         
-        throw new NotImplementedException("D3D11 GRContext creation not yet implemented");
+        // For now, we'll use raster rendering and blit to D3D11
+        // In the future, if SkiaSharp adds full D3D11 support, we can use:
+        // _grContext = GRContext.CreateDirect3D(new GRD3DBackendContext { ... });
+        
+        // Using null GRContext means we'll use software rendering
+        _grContext = null;
     }
 
     public unsafe void Resize(Vector2D<int> size)
     {
-        if (_device.Handle == null) return;
+        if (_device.Handle == null || size.X <= 0 || size.Y <= 0) return;
 
+        _width = size.X;
+        _height = size.Y;
+        
         _surface?.Dispose();
         _surface = null;
         
-        // TODO: Resize swap chain buffers
+        // Release old render target view and back buffer
+        _renderTargetView.Dispose();
+        _backBuffer.Dispose();
+        _stagingTexture.Dispose();
+        
+        // Resize swap chain buffers
+        var hr = _swapChain.ResizeBuffers(2, (uint)_width, (uint)_height, 
+            Silk.NET.DXGI.Format.FormatB8G8R8A8Unorm, 0);
+        if (hr < 0)
+        {
+            throw new Exception($"Failed to resize swap chain: HRESULT 0x{hr:X8}");
+        }
+        
+        // Recreate render target view
+        CreateRenderTargetView();
+        CreateStagingTexture();
         
         CreateSurface(size);
+        
+        Console.WriteLine($"[D3D11Backend] Resized to {size.X}x{size.Y}");
     }
 
-    public void Render(RootPanel panel)
+    public unsafe void Render(RootPanel panel)
     {
-        if (_grContext == null || _surface == null || _renderer == null) return;
+        if (_surface == null || _renderer == null) return;
 
-        _grContext.ResetContext();
+        // Clear the back buffer
+        float* clearColor = stackalloc float[] { 0.9375f, 0.9375f, 0.9375f, 1.0f }; // Light gray (240/256)
+        _context.ClearRenderTargetView(_renderTargetView.Handle, clearColor);
 
+        // Render UI to Skia surface
         _surface.Canvas.Clear(new SKColor(240, 240, 240));
-
         _renderer.Render(_surface.Canvas, panel);
+        _surface.Canvas.Flush();
 
-        _grContext.Flush();
+        // Copy Skia bitmap data to D3D11 texture
+        CopyToBackBuffer();
 
-        // TODO: Present swap chain
+        // Present
+        var hr = _swapChain.Present(1, 0); // VSync enabled
+        if (hr < 0)
+        {
+            Console.WriteLine($"[D3D11Backend] Present failed: HRESULT 0x{hr:X8}");
+        }
+    }
+
+    private unsafe void CopyToBackBuffer()
+    {
+        if (_surface == null) return;
+        
+        // Get pixels from Skia surface
+        var info = new SKImageInfo(_width, _height, SKColorType.Bgra8888, SKAlphaType.Premul);
+        var pixelData = new byte[_width * _height * 4];
+        
+        fixed (byte* pixelsPtr = pixelData)
+        {
+            _surface.ReadPixels(info, (IntPtr)pixelsPtr, _width * 4, 0, 0);
+            
+            // Update the staging texture
+            var box = new D3D11Box
+            {
+                Left = 0,
+                Top = 0,
+                Front = 0,
+                Right = (uint)_width,
+                Bottom = (uint)_height,
+                Back = 1
+            };
+            
+            _context.UpdateSubresource(
+                (ID3D11Resource*)_stagingTexture.Handle,
+                0,
+                &box,
+                pixelsPtr,
+                (uint)(_width * 4),
+                (uint)(_width * _height * 4)
+            );
+        }
+        
+        // Copy staging texture to back buffer
+        _context.CopyResource(
+            (ID3D11Resource*)_backBuffer.Handle,
+            (ID3D11Resource*)_stagingTexture.Handle
+        );
     }
 
     private void CreateSurface(Vector2D<int> size)
     {
-        if (_grContext == null) return;
-
-        // TODO: Create SKSurface from D3D11 render target
-        throw new NotImplementedException("D3D11 surface creation not yet implemented");
+        if (size.X <= 0 || size.Y <= 0) return;
+        
+        // Create a raster surface for software rendering
+        // This will be blitted to D3D11 for display
+        var imageInfo = new SKImageInfo(size.X, size.Y, SKColorType.Bgra8888, SKAlphaType.Premul);
+        _surface = SKSurface.Create(imageInfo);
+        
+        if (_surface == null)
+        {
+            throw new Exception("Failed to create Skia raster surface");
+        }
     }
 
     public unsafe void Dispose()
@@ -103,11 +382,13 @@ public class D3D11Backend : IGraphicsBackend
         _surface?.Dispose();
         _grContext?.Dispose();
         
+        _stagingTexture.Dispose();
         _renderTargetView.Dispose();
         _backBuffer.Dispose();
         _swapChain.Dispose();
         _context.Dispose();
         _device.Dispose();
+        _dxgi?.Dispose();
         _d3d11?.Dispose();
     }
 }
