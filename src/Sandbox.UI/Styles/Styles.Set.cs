@@ -127,6 +127,12 @@ namespace Sandbox.UI
 				case "white-space":
 					return SetWhiteSpace( value );
 
+				case "transform":
+					return SetTransform( value );
+
+				case "transform-origin":
+					return SetTransformOrigin( value );
+
 				case "object-fit":
 					return SetObjectFit( value );
 
@@ -933,6 +939,49 @@ namespace Sandbox.UI
 			_backgroundImage = texture;
 			Dirty();
 
+			return true;
+		}
+
+		/// <summary>
+		/// Parse transform property value
+		/// Based on s&box's SetTransform implementation
+		/// </summary>
+		private bool SetTransform( string value )
+		{
+			if ( string.IsNullOrEmpty( value ) || value == "none" )
+			{
+				Transform = null;
+				return true;
+			}
+
+			var t = new PanelTransform();
+			t.Parse( value );
+
+			Transform = t;
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse transform-origin shorthand property
+		/// Based on s&box's SetTransformOrigin implementation
+		/// </summary>
+		private bool SetTransformOrigin( string value )
+		{
+			var p = new Parse( value );
+
+			if ( !p.TryReadLength( out var x ) )
+				return false;
+
+			TransformOriginX = x;
+
+			if ( !p.TryReadLength( out var y ) )
+			{
+				TransformOriginY = x;
+				return true;
+			}
+
+			TransformOriginY = y;
 			return true;
 		}
 	}

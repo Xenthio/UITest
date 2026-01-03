@@ -272,6 +272,9 @@ public class SkiaPanelRenderer : IPanelRenderer
 
     /// <summary>
     /// Apply the panel's transform matrix to the canvas.
+    /// Matches S&box's approach: applies transform-origin by wrapping the transform matrix
+    /// with translations to/from the origin point.
+    /// Based on PanelRenderer.Matrix.cs from S&box engine (lines 39-49).
     /// </summary>
     /// <param name="canvas">The canvas to transform</param>
     /// <param name="panel">The panel whose transform to apply</param>
@@ -285,20 +288,27 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (style.Transform?.IsEmpty() ?? true) return false;
         if (panel.TransformMatrix == System.Numerics.Matrix4x4.Identity) return false;
         
+        // Calculate transform origin point (default is 0,0 - top-left of panel)
+        // S&box: origin.x += style.TransformOriginX.Value.GetPixels( panel.Box.Rect.Width, 0.0f );
+        float originX = panel.Box.Rect.Left + (style.TransformOriginX?.GetPixels(panel.Box.Rect.Width) ?? 0f);
+        float originY = panel.Box.Rect.Top + (style.TransformOriginY?.GetPixels(panel.Box.Rect.Height) ?? 0f);
+        
+        // Apply transform with origin: translate(origin) * transform * translate(-origin)
+        // This matches S&box's Matrix.CreateTranslation approach
+        canvas.Translate(originX, originY);
+        
         // Convert Matrix4x4 to SKMatrix (use 2D portion)
-        // The TransformMatrix already contains all the transform operations (translate, rotate, scale)
-        // built from PanelTransform.BuildTransform() which handles transform-origin for perspective
         var m = panel.TransformMatrix;
         var skMatrix = new SKMatrix(
             m.M11, m.M21, m.M41,  // First row (scaleX, skewY, translateX)
             m.M12, m.M22, m.M42,  // Second row (skewX, scaleY, translateY)
             m.M14, m.M24, m.M44   // Perspective row
         );
-        
         canvas.Concat(ref skMatrix);
         
+        canvas.Translate(-originX, -originY);
+        
         // Update GlobalMatrix for child panels
-        // Note: We don't have full matrix chain support yet, but this provides the local transform
         panel.LocalMatrix = panel.TransformMatrix;
         panel.GlobalMatrix = panel.TransformMatrix;
         
