@@ -287,22 +287,12 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (style.Transform?.IsEmpty() ?? true) return false;
         if (panel.TransformMatrix == System.Numerics.Matrix4x4.Identity) return false;
         
-        // Calculate transform origin relative to panel position
-        // CSS spec default is 50% 50%, but S&box appears to use 0 0 (top-left) as default
-        // When TransformOriginX/Y are not set, default to top-left corner of the panel
-        var originOffset = new Vector2(
-            style.TransformOriginX?.GetPixels(panel.Box.Rect.Width) ?? 0f,
-            style.TransformOriginY?.GetPixels(panel.Box.Rect.Height) ?? 0f
-        );
-        
-        float originX = panel.Box.Rect.Left + originOffset.x;
-        float originY = panel.Box.Rect.Top + originOffset.y;
-        
-        // Apply transform with origin: translate(origin) * transform * translate(-origin)
-        // SkiaSharp applies transforms in order, so we translate TO origin, apply transform, then translate back
-        canvas.Translate(originX, originY);
+        // Debug: Log transform info
+        Console.WriteLine($"[Transform] Panel: {panel.ElementName} at ({panel.Box.Rect.Left},{panel.Box.Rect.Top}) Transform: {panel.TransformMatrix}");
         
         // Convert Matrix4x4 to SKMatrix (use 2D portion)
+        // For now, apply the transform matrix directly without transform-origin handling
+        // to debug the offset issue
         var m = panel.TransformMatrix;
         var skMatrix = new SKMatrix(
             m.M11, m.M21, m.M41,  // First row (scaleX, skewY, translateX)
@@ -310,8 +300,6 @@ public class SkiaPanelRenderer : IPanelRenderer
             m.M14, m.M24, m.M44   // Perspective row
         );
         canvas.Concat(ref skMatrix);
-        
-        canvas.Translate(-originX, -originY);
         
         // Update GlobalMatrix for child panels
         // Note: We don't have full matrix chain support yet, but this provides the local transform
