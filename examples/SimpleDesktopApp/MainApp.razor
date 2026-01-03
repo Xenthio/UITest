@@ -20,6 +20,9 @@
             <button class="button" @onclick="@OpenThemeSelector">
                 <span class="button-text">🎨 Open Theme Selector</span>
             </button>
+            <button class="button" @onclick="@OpenTextEntryTest">
+                <span class="button-text">📝 Text Entry Test</span>
+            </button>
             <button class="button disabled">
                 <span class="button-text">Disabled Button</span>
             </button>
@@ -135,6 +138,15 @@
     {
         showThemeSelector = true;
         Console.WriteLine("Opening theme selector");
+    }
+    
+    private void OpenTextEntryTest()
+    {
+        // Create and open text entry test window
+        var textEntryWindow = new TextEntryTest();
+        var root = FindRootPanel();
+        root?.AddChild(textEntryWindow);
+        Console.WriteLine("Opening text entry test window");
     }
     
     private void CloseThemeSelector()
