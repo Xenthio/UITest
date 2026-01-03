@@ -20,6 +20,11 @@ namespace Avalazor.UI;
 /// Direct3D support in SkiaSharp is limited. This implementation provides a working
 /// D3D11 swapchain with a software-rendered SkiaSharp surface that is then blitted
 /// to the D3D11 back buffer. For full hardware acceleration, use the OpenGL or Vulkan backends.
+/// 
+/// Resize Handling: This backend uses DXGI Scaling.None and dimension validation to prevent
+/// stretched rendering during window resize. Frames with mismatched dimensions are skipped
+/// to maintain visual quality. This approach works better than OpenGL on Windows due to
+/// D3D11's more robust handling of swapchain resize operations.
 /// </remarks>
 public class D3D11Backend : IGraphicsBackend
 {
@@ -280,12 +285,12 @@ public class D3D11Backend : IGraphicsBackend
     {
         if (_device.Handle == null || size.X <= 0 || size.Y <= 0) return;
 
-        Console.WriteLine($"[D3D11Backend] Resize called: {size.X}x{size.Y}, current: {_width}x{_height}");
+        //Console.WriteLine($"[D3D11Backend] Resize called: {size.X}x{size.Y}, current: {_width}x{_height}");
 
         // Don't resize if dimensions haven't changed
         if (size.X == _width && size.Y == _height)
         {
-            Console.WriteLine($"[D3D11Backend] Skipping resize - dimensions unchanged");
+            //Console.WriteLine($"[D3D11Backend] Skipping resize - dimensions unchanged");
             return;
         }
 
