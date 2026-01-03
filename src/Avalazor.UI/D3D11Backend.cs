@@ -37,6 +37,9 @@ public class D3D11Backend : IGraphicsBackend
     private IWindow? _window;
     private int _width;
     private int _height;
+    
+    // Reusable pixel buffer to avoid allocations per frame
+    private byte[]? _pixelBuffer;
 
     public unsafe void Initialize(IWindow window)
     {
@@ -200,8 +203,10 @@ public class D3D11Backend : IGraphicsBackend
         _backBuffer = new ComPtr<ID3D11Texture2D>(backBufferPtr);
         
         // Create render target view
+        // Using null for render target view description to use defaults based on back buffer format.
+        // This is the standard approach when the back buffer is already in the desired format (BGRA8).
         ID3D11RenderTargetView* rtvPtr;
-        RenderTargetViewDesc* rtvDescPtr = null; // Use null for default description
+        RenderTargetViewDesc* rtvDescPtr = null;
         var hr = _device.Handle->CreateRenderTargetView((ID3D11Resource*)_backBuffer.Handle, rtvDescPtr, &rtvPtr);
         if (hr < 0)
         {
@@ -242,8 +247,9 @@ public class D3D11Backend : IGraphicsBackend
             MiscFlags = 0
         };
         
+        // Create texture without initial data - we'll upload pixel data each frame via UpdateSubresource
         ID3D11Texture2D* stagingPtr;
-        SubresourceData* subresData = null; // Use null for no initial data
+        SubresourceData* subresData = null;
         var hr = _device.Handle->CreateTexture2D(&textureDesc, subresData, &stagingPtr);
         if (hr < 0)
         {
@@ -326,11 +332,16 @@ public class D3D11Backend : IGraphicsBackend
     {
         if (_surface == null) return;
         
-        // Get pixels from Skia surface
-        var info = new SKImageInfo(_width, _height, SKColorType.Bgra8888, SKAlphaType.Premul);
-        var pixelData = new byte[_width * _height * 4];
+        // Reuse pixel buffer to avoid allocations per frame
+        int requiredSize = _width * _height * 4;
+        if (_pixelBuffer == null || _pixelBuffer.Length < requiredSize)
+        {
+            _pixelBuffer = new byte[requiredSize];
+        }
         
-        fixed (byte* pixelsPtr = pixelData)
+        var info = new SKImageInfo(_width, _height, SKColorType.Bgra8888, SKAlphaType.Premul);
+        
+        fixed (byte* pixelsPtr = _pixelBuffer)
         {
             _surface.ReadPixels(info, (IntPtr)pixelsPtr, _width * 4, 0, 0);
             
