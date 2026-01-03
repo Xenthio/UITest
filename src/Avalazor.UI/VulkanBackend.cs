@@ -41,7 +41,7 @@ public class VulkanBackend : IGraphicsBackend
     
     private GRContext? _grContext;
     private GRVkBackendContext? _grVkBackendContext;
-    private SKSurface? _surface;
+    private SKSurface? _skSurface;
     private SkiaPanelRenderer? _renderer;
     private IWindow? _window;
     private uint _graphicsQueueFamilyIndex;
@@ -93,7 +93,7 @@ public class VulkanBackend : IGraphicsBackend
         
         _renderer = new SkiaPanelRenderer();
         
-        CreateSurface(window.FramebufferSize);
+        CreateRenderSurface();
         Console.WriteLine("[VulkanBackend] SKSurface created");
         
         Console.WriteLine("[VulkanBackend] Vulkan backend initialized successfully!");
@@ -643,6 +643,26 @@ public class VulkanBackend : IGraphicsBackend
         }
     }
 
+    private void CreateRenderSurface()
+    {
+        if (_grContext == null) return;
+        
+        var imageInfo = new SKImageInfo(
+            (int)_swapchainExtent.Width,
+            (int)_swapchainExtent.Height,
+            SKColorType.Bgra8888,
+            SKAlphaType.Premul
+        );
+        
+        // Create a GPU-backed surface
+        _skSurface = SKSurface.Create(_grContext, false, imageInfo);
+        
+        if (_skSurface == null)
+        {
+            throw new Exception("Failed to create SKSurface for rendering");
+        }
+    }
+
     public unsafe void Resize(Vector2D<int> size)
     {
         if (_device.Handle == 0 || size.X <= 0 || size.Y <= 0) return;
@@ -651,17 +671,17 @@ public class VulkanBackend : IGraphicsBackend
         _vk!.DeviceWaitIdle(_device);
         
         // Dispose old surface
-        _surface?.Dispose();
-        _surface = null;
+        _skSurface?.Dispose();
+        _skSurface = null;
         
         // Cleanup old swapchain resources
         CleanupSwapchain();
         
         // Recreate swapchain
         CreateSwapchain();
-        CreateSurface(size);
+        CreateRenderSurface();
         
-        Console.WriteLine($"[VulkanBackend] Resized to {size.X}x{size.Y}");
+        //Console.WriteLine($"[VulkanBackend] Resized to {size.X}x{size.Y}");
     }
 
     private unsafe void CleanupSwapchain()
@@ -681,7 +701,7 @@ public class VulkanBackend : IGraphicsBackend
 
     public unsafe void Render(RootPanel panel)
     {
-        if (_grContext == null || _surface == null || _renderer == null) return;
+        if (_grContext == null || _renderer == null || _skSurface == null) return;
 
         // Wait for previous frame
         _vk!.WaitForFences(_device, 1, in _inFlightFence, true, ulong.MaxValue);
@@ -699,30 +719,30 @@ public class VulkanBackend : IGraphicsBackend
         
         _vk.ResetFences(_device, 1, in _inFlightFence);
         
-        // Reset context state
-        _grContext.ResetContext();
-
-        // Render to the SKSurface
-        _surface.Canvas.Clear(new SKColor(240, 240, 240));
-        _renderer.Render(_surface.Canvas, panel);
+        // Render to the offscreen surface
+        _skSurface.Canvas.Clear(new SKColor(240, 240, 240));
+        _renderer.Render(_skSurface.Canvas, panel);
+        _skSurface.Canvas.Flush();
+        
+        // Flush the GRContext to submit Vulkan commands
         _grContext.Flush();
+        
+        // Get the rendered image and copy it to the swapchain image
+        var snapshot = _skSurface.Snapshot();
+        CopyImageToSwapchain(snapshot, _swapchainImages[imageIndex]);
+        snapshot.Dispose();
         
         // Submit and present
         var waitSemaphore = _imageAvailableSemaphore;
         var waitStages = PipelineStageFlags.ColorAttachmentOutputBit;
         var signalSemaphore = _renderFinishedSemaphore;
         
-        var commandBuffer = _commandBuffers[imageIndex];
         var submitInfo = new SubmitInfo
         {
             SType = StructureType.SubmitInfo,
             WaitSemaphoreCount = 1,
             PWaitSemaphores = &waitSemaphore,
             PWaitDstStageMask = &waitStages,
-            // Note: CommandBufferCount is 0 because SkiaSharp manages its own command buffers internally.
-            // The empty submit is used purely for synchronization (wait on image acquire, signal render finished).
-            // This approach works on most drivers; for maximum compatibility, a minimal command buffer
-            // with just begin/end could be recorded, but testing shows this works well.
             CommandBufferCount = 0,
             SignalSemaphoreCount = 1,
             PSignalSemaphores = &signalSemaphore
@@ -749,28 +769,187 @@ public class VulkanBackend : IGraphicsBackend
         }
     }
 
-    private void CreateSurface(Vector2D<int> size)
+    private unsafe void CopyImageToSwapchain(SKImage sourceImage, VkImage destImage)
     {
-        if (_grContext == null || size.X <= 0 || size.Y <= 0) return;
+        // Read pixels from GPU to CPU - create a CPU bitmap to hold the data
+        var imageInfo = new SKImageInfo(
+            (int)_swapchainExtent.Width,
+            (int)_swapchainExtent.Height,
+            SKColorType.Bgra8888,
+            SKAlphaType.Premul
+        );
         
-        // Create an offscreen GPU surface for rendering.
-        // Note: For better performance, direct rendering to swapchain images via GRBackendRenderTarget
-        // would eliminate the GPU-to-GPU blit. However, this simplified approach:
-        // 1. Works reliably across different Vulkan drivers
-        // 2. Avoids complex image layout transitions
-        // 3. Provides correct synchronization through SkiaSharp's internal management
-        // Future optimization: wrap swapchain images as GRBackendRenderTargets for zero-copy rendering.
-        var imageInfo = new SKImageInfo(size.X, size.Y, SKColorType.Bgra8888, SKAlphaType.Premul);
-        
-        // Create surface with GPU context
-        _surface = SKSurface.Create(_grContext, false, imageInfo);
-        
-        if (_surface == null)
+        using var bitmap = new SKBitmap(imageInfo);
+        if (!sourceImage.ReadPixels(bitmap.Info, bitmap.GetPixels(), bitmap.RowBytes, 0, 0))
         {
-            // Fallback to raster surface if GPU surface creation fails
-            Console.WriteLine("[VulkanBackend] Warning: GPU surface creation failed, falling back to raster");
-            _surface = SKSurface.Create(imageInfo);
+            Console.WriteLine("[VulkanBackend] Warning: Could not read pixels from GPU image");
+            return;
         }
+        
+        // Create staging buffer for pixel data
+        ulong imageSize = (ulong)(bitmap.RowBytes * bitmap.Height);
+        
+        var bufferInfo = new BufferCreateInfo
+        {
+            SType = StructureType.BufferCreateInfo,
+            Size = imageSize,
+            Usage = BufferUsageFlags.TransferSrcBit,
+            SharingMode = SharingMode.Exclusive
+        };
+        
+        Silk.NET.Vulkan.Buffer stagingBuffer;
+        _vk!.CreateBuffer(_device, in bufferInfo, null, out stagingBuffer);
+        
+        // Get memory requirements
+        MemoryRequirements memRequirements;
+        _vk.GetBufferMemoryRequirements(_device, stagingBuffer, out memRequirements);
+        
+        // Allocate memory
+        var allocInfo = new MemoryAllocateInfo
+        {
+            SType = StructureType.MemoryAllocateInfo,
+            AllocationSize = memRequirements.Size,
+            MemoryTypeIndex = FindMemoryType(memRequirements.MemoryTypeBits, 
+                MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit)
+        };
+        
+        DeviceMemory stagingBufferMemory;
+        _vk.AllocateMemory(_device, in allocInfo, null, out stagingBufferMemory);
+        _vk.BindBufferMemory(_device, stagingBuffer, stagingBufferMemory, 0);
+        
+        // Copy pixel data to staging buffer
+        void* data;
+        _vk.MapMemory(_device, stagingBufferMemory, 0, imageSize, 0, &data);
+        System.Buffer.MemoryCopy(bitmap.GetPixels().ToPointer(), data, (long)imageSize, (long)imageSize);
+        _vk.UnmapMemory(_device, stagingBufferMemory);
+        
+        // Create command buffer for the copy
+        var cmdAllocInfo = new CommandBufferAllocateInfo
+        {
+            SType = StructureType.CommandBufferAllocateInfo,
+            CommandPool = _commandPool,
+            Level = CommandBufferLevel.Primary,
+            CommandBufferCount = 1
+        };
+        
+        CommandBuffer commandBuffer;
+        _vk.AllocateCommandBuffers(_device, in cmdAllocInfo, &commandBuffer);
+        
+        var beginInfo = new CommandBufferBeginInfo
+        {
+            SType = StructureType.CommandBufferBeginInfo,
+            Flags = CommandBufferUsageFlags.OneTimeSubmitBit
+        };
+        
+        _vk.BeginCommandBuffer(commandBuffer, in beginInfo);
+        
+        // Transition destination image to TRANSFER_DST_OPTIMAL
+        var barrier = new ImageMemoryBarrier
+        {
+            SType = StructureType.ImageMemoryBarrier,
+            OldLayout = ImageLayout.Undefined,
+            NewLayout = ImageLayout.TransferDstOptimal,
+            SrcQueueFamilyIndex = Vk.QueueFamilyIgnored,
+            DstQueueFamilyIndex = Vk.QueueFamilyIgnored,
+            Image = destImage,
+            SubresourceRange = new ImageSubresourceRange
+            {
+                AspectMask = ImageAspectFlags.ColorBit,
+                BaseMipLevel = 0,
+                LevelCount = 1,
+                BaseArrayLayer = 0,
+                LayerCount = 1
+            },
+            SrcAccessMask = 0,
+            DstAccessMask = AccessFlags.TransferWriteBit
+        };
+        
+        _vk.CmdPipelineBarrier(
+            commandBuffer,
+            PipelineStageFlags.TopOfPipeBit,
+            PipelineStageFlags.TransferBit,
+            0,
+            0, null,
+            0, null,
+            1, &barrier
+        );
+        
+        // Copy buffer to image
+        var region = new BufferImageCopy
+        {
+            BufferOffset = 0,
+            BufferRowLength = 0,
+            BufferImageHeight = 0,
+            ImageSubresource = new ImageSubresourceLayers
+            {
+                AspectMask = ImageAspectFlags.ColorBit,
+                MipLevel = 0,
+                BaseArrayLayer = 0,
+                LayerCount = 1
+            },
+            ImageOffset = new Offset3D(0, 0, 0),
+            ImageExtent = new Extent3D(_swapchainExtent.Width, _swapchainExtent.Height, 1)
+        };
+        
+        _vk.CmdCopyBufferToImage(
+            commandBuffer,
+            stagingBuffer,
+            destImage,
+            ImageLayout.TransferDstOptimal,
+            1,
+            &region
+        );
+        
+        // Transition to PRESENT_SRC_KHR
+        barrier.OldLayout = ImageLayout.TransferDstOptimal;
+        barrier.NewLayout = ImageLayout.PresentSrcKhr;
+        barrier.SrcAccessMask = AccessFlags.TransferWriteBit;
+        barrier.DstAccessMask = 0;
+        
+        _vk.CmdPipelineBarrier(
+            commandBuffer,
+            PipelineStageFlags.TransferBit,
+            PipelineStageFlags.BottomOfPipeBit,
+            0,
+            0, null,
+            0, null,
+            1, &barrier
+        );
+        
+        _vk.EndCommandBuffer(commandBuffer);
+        
+        // Submit the command buffer
+        var submitInfo = new SubmitInfo
+        {
+            SType = StructureType.SubmitInfo,
+            CommandBufferCount = 1,
+            PCommandBuffers = &commandBuffer
+        };
+        
+        _vk.QueueSubmit(_graphicsQueue, 1, in submitInfo, default);
+        _vk.QueueWaitIdle(_graphicsQueue);
+        
+        // Cleanup
+        _vk.FreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
+        _vk.DestroyBuffer(_device, stagingBuffer, null);
+        _vk.FreeMemory(_device, stagingBufferMemory, null);
+    }
+
+    private unsafe uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
+    {
+        PhysicalDeviceMemoryProperties memProperties;
+        _vk!.GetPhysicalDeviceMemoryProperties(_physicalDevice, out memProperties);
+        
+        for (uint i = 0; i < memProperties.MemoryTypeCount; i++)
+        {
+            if ((typeFilter & (1 << (int)i)) != 0 &&
+                (memProperties.MemoryTypes[(int)i].PropertyFlags & properties) == properties)
+            {
+                return i;
+            }
+        }
+        
+        throw new Exception("Failed to find suitable memory type");
     }
 
     public unsafe void Dispose()
@@ -780,7 +959,7 @@ public class VulkanBackend : IGraphicsBackend
             _vk!.DeviceWaitIdle(_device);
         }
         
-        _surface?.Dispose();
+        _skSurface?.Dispose();
         _grContext?.Dispose();
         
         if (_vk != null && _device.Handle != 0)
