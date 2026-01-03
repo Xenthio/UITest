@@ -17,6 +17,7 @@
 	<ItemGroup>
 		<!-- Core rendering dependencies (ALL VERSIONS MUST MATCH 2.22.0) -->
 		<PackageReference Include="Silk.NET.Direct3D11" Version="2.22.0" />
+		<PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.Windowing" Version="2.22.0" />
 		<PackageReference Include="Silk.NET.Input.Sdl" Version="2.22.0" />
