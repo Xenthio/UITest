@@ -273,7 +273,7 @@ public class SkiaPanelRenderer : IPanelRenderer
     /// Apply the panel's transform matrix to the canvas.
     /// Matches S&box's approach: applies transform-origin by wrapping the transform matrix
     /// with translations to/from the origin point.
-    /// Based on PanelRenderer.Matrix.cs from S&box engine.
+    /// Based on PanelRenderer.Matrix.cs from S&box engine (lines 39-49).
     /// </summary>
     /// <param name="canvas">The canvas to transform</param>
     /// <param name="panel">The panel whose transform to apply</param>
@@ -287,12 +287,16 @@ public class SkiaPanelRenderer : IPanelRenderer
         if (style.Transform?.IsEmpty() ?? true) return false;
         if (panel.TransformMatrix == System.Numerics.Matrix4x4.Identity) return false;
         
-        // Debug: Log transform info
-        Console.WriteLine($"[Transform] Panel: {panel.ElementName} at ({panel.Box.Rect.Left},{panel.Box.Rect.Top}) Transform: {panel.TransformMatrix}");
+        // Calculate transform origin point (default is 0,0 - top-left of panel)
+        // S&box: origin.x += style.TransformOriginX.Value.GetPixels( panel.Box.Rect.Width, 0.0f );
+        float originX = panel.Box.Rect.Left + (style.TransformOriginX?.GetPixels(panel.Box.Rect.Width) ?? 0f);
+        float originY = panel.Box.Rect.Top + (style.TransformOriginY?.GetPixels(panel.Box.Rect.Height) ?? 0f);
+        
+        // Apply transform with origin: translate(origin) * transform * translate(-origin)
+        // This matches S&box's Matrix.CreateTranslation approach
+        canvas.Translate(originX, originY);
         
         // Convert Matrix4x4 to SKMatrix (use 2D portion)
-        // For now, apply the transform matrix directly without transform-origin handling
-        // to debug the offset issue
         var m = panel.TransformMatrix;
         var skMatrix = new SKMatrix(
             m.M11, m.M21, m.M41,  // First row (scaleX, skewY, translateX)
@@ -301,8 +305,9 @@ public class SkiaPanelRenderer : IPanelRenderer
         );
         canvas.Concat(ref skMatrix);
         
+        canvas.Translate(-originX, -originY);
+        
         // Update GlobalMatrix for child panels
-        // Note: We don't have full matrix chain support yet, but this provides the local transform
         panel.LocalMatrix = panel.TransformMatrix;
         panel.GlobalMatrix = panel.TransformMatrix;
         
