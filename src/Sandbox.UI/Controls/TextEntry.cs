@@ -463,6 +463,8 @@ public class TextEntry : Panel
     /// </summary>
     private bool SelectingWords = false;
 
+    private bool _isMouseDown = false;
+
     /// <summary>
     /// Handle mouse down for caret positioning and selection start
     /// </summary>
@@ -470,20 +472,21 @@ public class TextEntry : Panel
     {
         e.StopPropagation();
 
+        _isMouseDown = true;
+
         if (string.IsNullOrEmpty(Text))
             return;
 
         var pos = Label.GetLetterAtScreenPosition(e.ScreenPosition);
 
-        Label.SelectionStart = 0;
-        Label.SelectionEnd = 0;
-
+        // Clear selection only if we successfully determined a position (matches S&box behavior)
         if (pos >= 0)
         {
+            Label.SelectionStart = 0;
+            Label.SelectionEnd = 0;
             Label.SetCaretPosition(pos);
+            Label.ScrollToCaret();
         }
-
-        Label.ScrollToCaret();
     }
 
     /// <summary>
@@ -492,6 +495,7 @@ public class TextEntry : Panel
     protected override void OnMouseUp(MousePanelEvent e)
     {
         SelectingWords = false;
+        _isMouseDown = false;
 
         var pos = Label.GetLetterAtScreenPosition(e.ScreenPosition);
         if (Label.SelectionEnd > 0) pos = Label.SelectionEnd;
@@ -502,11 +506,33 @@ public class TextEntry : Panel
     }
 
     /// <summary>
-    /// Handle mouse move to prevent propagation
+    /// Handle mouse move for drag selection
+    /// Note: S&box uses OnDragSelect event which isn't implemented yet.
+    /// This implements drag selection via OnMouseMove as a workaround.
     /// </summary>
     protected override void OnMouseMove(MousePanelEvent e)
     {
         base.OnMouseMove(e);
+        
+        // Implement drag selection when left mouse button is held down
+        if (_isMouseDown && !string.IsNullOrEmpty(Text) && Label != null)
+        {
+            var pos = Label.GetLetterAtScreenPosition(e.ScreenPosition);
+            if (pos >= 0)
+            {
+                // Anchor selection at the starting caret position on first drag
+                if (Label.SelectionStart == Label.SelectionEnd)
+                {
+                    Label.SelectionStart = Label.CaretPosition;
+                }
+                
+                var clampedPos = Math.Clamp(pos, 0, TextLength);
+                Label.SelectionEnd = clampedPos;
+                Label.CaretPosition = clampedPos;
+                Label.ScrollToCaret();
+            }
+        }
+        
         e.StopPropagation();
     }
 
@@ -583,11 +609,9 @@ public class TextEntry : Panel
     /// </summary>
     public override void DrawContent(ref RenderState state)
     {
+        // Caret rendering is handled by the renderer (e.g. SkiaPanelRenderer.DrawTextEntryCaret).
+        // This method ensures selection rendering is enabled when the control has focus.
         Label.ShouldDrawSelection = HasFocus;
-
-        // Caret rendering will be done by creating a temporary caret panel
-        // For now, we'll rely on selection rendering only
-        // TODO: Implement proper caret rendering via renderer or custom draw method
     }
 
     /// <summary>

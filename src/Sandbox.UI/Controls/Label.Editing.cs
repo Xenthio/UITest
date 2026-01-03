@@ -294,13 +294,17 @@ public partial class Label
     {
         var result = new List<int>() { 0, StringInfo.LengthInTextElements };
         var e = StringInfo.GetTextElementEnumerator(Text);
-        var input = string.Empty;
+        
+        // Use StringBuilder to avoid string concatenation in loop
+        var inputBuilder = new System.Text.StringBuilder();
 
         // make it work with graphemes by assuming everything is 1 char long
         while (e.MoveNext())
         {
-            input += e.GetTextElement()[0];
+            inputBuilder.Append(e.GetTextElement()[0]);
         }
+        
+        var input = inputBuilder.ToString();
 
         var match = System.Text.RegularExpressions.Regex.Match(input, @"\b");
 
@@ -458,9 +462,10 @@ public partial class Label
                 int index = textBlock.HitTest(textLocalX, textLocalY);
                 return index >= 0 ? index : 0;
             }
-            catch
+            catch (Exception ex)
             {
-                // Fall through to fallback
+                // Log and fall through to fallback hit-testing
+                Console.WriteLine($"Label.GetLetterAtScreenPosition: HitTest failed: {ex.Message}");
             }
         }
 

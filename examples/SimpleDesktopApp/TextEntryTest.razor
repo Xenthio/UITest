@@ -43,12 +43,25 @@
     TextEntry? SingleLineEntry;
     TextEntry? MultiLineEntry;
 
+    // Cached values to avoid unnecessary re-renders every Tick
+    string _lastSingleLineValue = "";
+    string _lastMultiLineValue = "";
+
     string SingleLineValue => SingleLineEntry?.Text ?? "";
     string MultiLineValue => MultiLineEntry?.Text ?? "";
 
     public override void Tick()
     {
         base.Tick();
-        StateHasChanged();
+
+        var currentSingle = SingleLineEntry?.Text ?? "";
+        var currentMulti = MultiLineEntry?.Text ?? "";
+
+        if (currentSingle != _lastSingleLineValue || currentMulti != _lastMultiLineValue)
+        {
+            _lastSingleLineValue = currentSingle;
+            _lastMultiLineValue = currentMulti;
+            StateHasChanged();
+        }
     }
 }

@@ -1125,7 +1125,8 @@ public class SkiaPanelRenderer : IPanelRenderer
 
         if (timeSinceFocus is float time)
         {
-            var blink = (time * blinkRate) % blinkRate < (blinkRate * 0.5f);
+            // Proper blink cycle: time % blinkRate creates repeating pattern from 0 to blinkRate
+            var blink = (time % blinkRate) < (blinkRate * 0.5f);
             if (!blink) return; // Caret is in off phase
 
             var caret = textEntry.Label.GetCaretRect(textEntry.CaretPosition);

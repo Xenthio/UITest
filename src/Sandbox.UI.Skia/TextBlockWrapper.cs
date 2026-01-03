@@ -125,7 +125,8 @@ internal class TextBlockWrapper
         };
         
         // Add selection if provided (matches S&box implementation)
-        if (selectionStart > 0 || selectionEnd > 0)
+        // Only render selection when there's an actual range (start != end)
+        if ((selectionStart > 0 || selectionEnd > 0) && selectionStart != selectionEnd)
         {
             paintOptions.Selection = new TextRange(selectionStart, selectionEnd);
             paintOptions.SelectionColor = selectionColor.HasValue 
@@ -170,9 +171,10 @@ internal class TextBlockWrapper
                 (float)caretInfo.CaretRectangle.Height
             );
         }
-        catch
+        catch (Exception ex)
         {
-            // Fallback if index is out of range
+            // Log and fallback if index is out of range
+            Console.WriteLine($"TextBlockWrapper.GetCaretRect: Failed for charIndex {charIndex}: {ex.Message}");
             return new Rect(0, 0, 2, _fontSize * 1.2f);
         }
     }
@@ -191,8 +193,9 @@ internal class TextBlockWrapper
             var hit = _block.HitTest(x, y);
             return hit.ClosestCodePointIndex;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"TextBlockWrapper.HitTest: Failed at ({x}, {y}): {ex.Message}");
             return -1;
         }
     }
@@ -243,9 +246,10 @@ internal class TextBlockWrapper
                 rects.Add(rect);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail and return empty list
+            Console.WriteLine($"TextBlockWrapper.GetSelectionRects: Failed for range ({selectionStart}, {selectionEnd}): {ex.Message}");
+            // Return empty list on failure
         }
 
         return rects;
