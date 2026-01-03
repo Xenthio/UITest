@@ -2,6 +2,7 @@ using SkiaSharp;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Numerics;
+using Sandbox.UI;
 
 namespace Sandbox.UI.Skia;
 
@@ -486,12 +487,15 @@ public class SkiaPanelRenderer : IPanelRenderer
             return cached;
             
         SKImage? image = null;
+        bool foundFile = false;
+        bool hadException = false;
         
         try
         {
             // Try to load as file path
             if (File.Exists(path))
             {
+                foundFile = true;
                 using var stream = File.OpenRead(path);
                 image = SKImage.FromEncodedData(stream);
             }
@@ -511,6 +515,7 @@ public class SkiaPanelRenderer : IPanelRenderer
                 {
                     if (File.Exists(possiblePath))
                     {
+                        foundFile = true;
                         using var stream = File.OpenRead(possiblePath);
                         image = SKImage.FromEncodedData(stream);
                         if (image != null) break;
@@ -520,7 +525,23 @@ public class SkiaPanelRenderer : IPanelRenderer
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load texture '{path}': {ex.Message}");
+            hadException = true;
+            Log.Warning($"Failed to load texture '{path}': {ex.Message}");
+        }
+        
+        // Only log more specific warnings if no exception occurred (to avoid duplicate logging)
+        if (!hadException)
+        {
+            // Warn if image file was not found in any search path
+            if (!foundFile)
+            {
+                Log.Warning($"Could not find texture file: {path}");
+            }
+            // Warn if file was found but failed to decode
+            else if (image == null)
+            {
+                Log.Warning($"Found texture file but failed to decode: {path}");
+            }
         }
         
         // Cache result (even if null to avoid repeated load attempts)
