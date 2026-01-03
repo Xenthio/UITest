@@ -126,6 +126,7 @@ public partial class Label : Panel
 
             _text = value;
             StringInfo.String = value;
+            CaretSanity();
             SetNeedsPreLayout();
             YogaNode?.MarkDirty();
         }
