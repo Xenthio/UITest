@@ -134,6 +134,11 @@ public class TextEntry : Panel
     /// </summary>
     public event Action<string>? OnTextEdited;
 
+    /// <summary>
+    /// TextEntry always has content (it needs DrawContent to be called for caret rendering)
+    /// </summary>
+    public override bool HasContent => true;
+
     public TextEntry()
     {
         AddClass("textentry");
