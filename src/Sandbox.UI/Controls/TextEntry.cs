@@ -467,7 +467,7 @@ public class TextEntry : Panel
         if (string.IsNullOrEmpty(Text))
             return;
 
-        var pos = Label.GetLetterAtScreenPosition(e.LocalPosition);
+        var pos = Label.GetLetterAtScreenPosition(e.ScreenPosition);
 
         Label.SelectionStart = 0;
         Label.SelectionEnd = 0;
@@ -487,7 +487,7 @@ public class TextEntry : Panel
     {
         SelectingWords = false;
 
-        var pos = Label.GetLetterAtScreenPosition(e.LocalPosition);
+        var pos = Label.GetLetterAtScreenPosition(e.ScreenPosition);
         if (Label.SelectionEnd > 0) pos = Label.SelectionEnd;
         Label.CaretPosition = Math.Clamp(pos, 0, TextLength);
 
@@ -514,7 +514,7 @@ public class TextEntry : Panel
 
         if (e.Button == "mouseleft")
         {
-            Label.SelectWord(Label.GetLetterAtScreenPosition(e.LocalPosition));
+            Label.SelectWord(Label.GetLetterAtScreenPosition(e.ScreenPosition));
             SelectingWords = true;
         }
     }

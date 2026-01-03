@@ -439,24 +439,20 @@ public partial class Label
         if (string.IsNullOrEmpty(Text))
             return -1;
 
+        // Transform screen position to panel space (matches S&box implementation)
+        if (GlobalMatrix.HasValue)
+        {
+            screenPos = GlobalMatrix.Value.Transform(screenPos);
+        }
+
         // Use the cached TextBlockWrapper if available (via dynamic to avoid assembly reference)
         if (_textBlockWrapper != null)
         {
             try
             {
-                // Transform screen position to local text rect coordinates
-                var localPos = screenPos;
-                
-                // Apply inverse transform if we have a global matrix
-                if (GlobalMatrix.HasValue)
-                {
-                    // TODO: Apply proper inverse transform
-                    // For now, just use as-is
-                }
-
                 // Convert to text block local coordinates
-                var textLocalX = localPos.x - _textRect.Left;
-                var textLocalY = localPos.y - _textRect.Top;
+                var textLocalX = screenPos.x - _textRect.Left;
+                var textLocalY = screenPos.y - _textRect.Top;
                 
                 dynamic textBlock = _textBlockWrapper;
                 int index = textBlock.HitTest(textLocalX, textLocalY);
