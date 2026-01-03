@@ -1,5 +1,6 @@
 .TextBox,
-.TextEntry {
+.TextEntry,
+.textentry {
 	padding: 5px;
 	height: 24px;
 	align-items: center;
@@ -25,7 +26,8 @@
 
 .self-layout {
 	> .TextBox,
-	> .TextEntry {
+	> .TextEntry,
+	> .textentry {
 		width: 128px;
 	}
 }
