@@ -59,26 +59,22 @@ $background: #008080;
 
 $control-colour: #E1E1E1;
 $control-colour-inset: #FFFFFF;
-$control-colour-hover: #E0EEF9;
+$control-colour-hover: #E5F1FB;
 $control-colour-active: #CCE4F7;
 $control-colour-focus: #FDFDFD;
 $control-colour-open: #CCE4F7;
 
 $border-colour-window: #000000DD; 
 
-$control-border-colour: #ADADAD; 
+$control-border-colour: #ADADAD;
 
-$control-border-colour-hover: #0078D4;
-$control-border-colour-bottom-hover: #006BBE;
+$control-border-colour-hover: #0078D7;
 
 $control-border-colour-active: #005499;
-$control-border-colour-bottom-active: #005499;
 
 $control-border-colour-focus: #0078D4;
-$control-border-colour-bottom-focus: #006BBE;
 
 $control-border-colour-open: #005FB7;
-$control-border-colour-bottom-open: #005FB7;
 
 $style-background: #F9F9F9;
 $style-background-alt: #F3F3F3;
@@ -288,7 +284,7 @@ xguirootpanel {
 		border-bottom-left-radius: 1px;
 		border-bottom-right-radius: 1px;
 		transition: all 0.2s linear;
-		border-bottom: solid 2px #0067C0;
+		border: solid 0.25px #0078D7;
 	}
 }
 
