@@ -660,15 +660,8 @@ public class VulkanBackend : IGraphicsBackend
         var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
         
         // Create a GPU-backed surface with subpixel rendering enabled
-        _skSurface = SKSurface.Create(
-            context: _grContext,
-            budgeted: false,
-            imageInfo: imageInfo,
-            sampleCount: 0,
-            origin: GRSurfaceOrigin.TopLeft,
-            surfaceProps: surfProps,
-            shouldCreateWithMips: false
-        );
+        // Using the overload: Create(GRContext, bool, SKImageInfo, int, GRSurfaceOrigin, SKSurfaceProperties, bool)
+        _skSurface = SKSurface.Create(_grContext, false, imageInfo, 0, GRSurfaceOrigin.TopLeft, surfProps, false);
         
         if (_skSurface == null)
         {

@@ -18,7 +18,11 @@ Without proper pixel geometry configuration, SkiaSharp uses standard grayscale a
 
 ### Key Changes
 
-The fix involves adding `SKSurfaceProperties` with `SKPixelGeometry.RgbHorizontal` when creating rendering surfaces in both the D3D11 and Vulkan backends.
+The fix involves two main improvements:
+
+1. **Adding `SKSurfaceProperties` with `SKPixelGeometry.RgbHorizontal`** when creating rendering surfaces in both the D3D11 and Vulkan backends - this enables LCD subpixel rendering.
+
+2. **Setting `SKFontHinting.Full`** in the text rendering pipeline - this provides stronger grid-fitting and makes text look thicker and more like native Windows ClearType.
 
 #### 1. D3D11Backend.cs Changes
 
@@ -76,6 +80,17 @@ SkiaSharp (and Skia in general) supports LCD subpixel text rendering through the
 
 The `RgbHorizontal` geometry is the most common configuration for modern LCD displays and matches Windows ClearType's default settings.
 
+### Font Hinting for Thickness
+
+Font hinting is the process of grid-fitting font outlines to align with screen pixels. SkiaSharp supports multiple hinting levels:
+
+- **None** - No grid-fitting, may look blurry or thin
+- **Slight** - Minimal grid-fitting, preserves glyph shape
+- **Normal** - Balanced grid-fitting (default in RichTextKit)
+- **Full** - Strong grid-fitting, makes text thicker and more substantial
+
+Windows ClearType typically uses Full hinting to make text appear thicker and more readable. By setting `SKFontHinting.Full`, we match the native Windows text appearance more closely.
+
 ### Why This Wasn't Caught Earlier
 
 The OpenGL backend was already correctly configured with `SKSurfaceProperties` because:
@@ -86,8 +101,9 @@ The OpenGL backend was already correctly configured with `SKSurfaceProperties` b
 ## Benefits of This Fix
 
 1. **Sharper Text** - Text appears significantly sharper and more readable, especially at smaller font sizes (10-14px)
-2. **Thicker Appearance** - Subpixel antialiasing fills in the gaps between pixels, making text appear fuller and more substantial
-3. **Native Look** - Windows applications using Fazor now match the text rendering quality of native Win32/WPF/UWP applications
+2. **Thicker Appearance** - Combination of subpixel antialiasing and full hinting makes text appear fuller and more substantial, matching native Windows
+3. **Better Grid-Fitting** - Full hinting ensures text aligns better with pixel boundaries, reducing blurriness
+4. **Native Look** - Windows applications using Fazor now match the text rendering quality of native Win32/WPF/UWP applications
 4. **Better UX** - Users perceive the application as more professional and polished due to high-quality text rendering
 
 ## Platform Considerations
