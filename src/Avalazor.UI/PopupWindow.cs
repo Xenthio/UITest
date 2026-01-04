@@ -13,12 +13,13 @@ namespace Avalazor.UI;
 /// </summary>
 public class PopupWindow : IDisposable
 {
-    private readonly IWindow _window;
-    private IGraphicsBackend _backend;
+    private IWindow? _window;
+    private IGraphicsBackend? _backend;
     private IInputContext? _input;
     private IMouse? _mouse;
     private IKeyboard? _keyboard;
     private bool _disposed = false;
+    private bool _initialized = false;
 
     /// <summary>
     /// The root panel for this popup window
@@ -42,105 +43,141 @@ public class PopupWindow : IDisposable
 
     public PopupWindow(int x, int y, int width, int height, GraphicsBackendType? backendType = null)
     {
-        var options = WindowOptions.Default;
-        options.Size = new Vector2D<int>(width, height);
-        options.Position = new Vector2D<int>(x, y);
-        options.Title = "";
-        options.VSync = true;
-        options.IsEventDriven = false;
-        
-        // Popup window configuration
-        options.WindowBorder = WindowBorder.Hidden; // No title bar
-        options.IsVisible = true;
-        options.TopMost = true; // Stay on top
-
-        // Auto-select best backend for platform if not specified
-        if (backendType == null)
+        try
         {
-            if (OperatingSystem.IsWindows())
+            var options = WindowOptions.Default;
+            options.Size = new Vector2D<int>(width, height);
+            options.Position = new Vector2D<int>(x, y);
+            options.Title = "";
+            options.VSync = false; // Don't vsync popups independently
+            options.IsEventDriven = false;
+            
+            // Popup window configuration
+            options.WindowBorder = WindowBorder.Resizable; // Allow some border for visibility
+            options.IsVisible = false; // Start hidden, show after load
+            
+            // Auto-select best backend for platform if not specified
+            if (backendType == null)
             {
-                backendType = GraphicsBackendType.DirectX11;
-            }
-            else
-            {
-                backendType = GraphicsBackendType.OpenGL;
-            }
-        }
-
-        // Select backend and configure window options
-        switch (backendType)
-        {
-            case GraphicsBackendType.OpenGL:
-                options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(3, 3));
-                _backend = new OpenGLBackend();
-                break;
-
-            case GraphicsBackendType.Vulkan:
-                options.API = GraphicsAPI.DefaultVulkan;
-                options.ShouldSwapAutomatically = false;
-                _backend = new VulkanBackend();
-                break;
-
-            case GraphicsBackendType.DirectX11:
-                if (!OperatingSystem.IsWindows())
+                if (OperatingSystem.IsWindows())
                 {
-                    throw new PlatformNotSupportedException("DirectX11 backend is only available on Windows");
+                    backendType = GraphicsBackendType.DirectX11;
                 }
-                options.API = GraphicsAPI.None;
-                _backend = new D3D11Backend();
-                break;
+                else
+                {
+                    backendType = GraphicsBackendType.OpenGL;
+                }
+            }
 
-            default:
-                throw new ArgumentException($"Unsupported backend type: {backendType}");
+            // Select backend and configure window options
+            switch (backendType)
+            {
+                case GraphicsBackendType.OpenGL:
+                    options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(3, 3));
+                    _backend = new OpenGLBackend();
+                    break;
+
+                case GraphicsBackendType.Vulkan:
+                    options.API = GraphicsAPI.DefaultVulkan;
+                    options.ShouldSwapAutomatically = false;
+                    _backend = new VulkanBackend();
+                    break;
+
+                case GraphicsBackendType.DirectX11:
+                    if (!OperatingSystem.IsWindows())
+                    {
+                        throw new PlatformNotSupportedException("DirectX11 backend is only available on Windows");
+                    }
+                    options.API = GraphicsAPI.None;
+                    _backend = new D3D11Backend();
+                    break;
+
+                default:
+                    throw new ArgumentException($"Unsupported backend type: {backendType}");
+            }
+
+            _window = Silk.NET.Windowing.Window.Create(options);
+
+            _window.Load += OnLoad;
+            _window.Render += OnRender;
+            _window.Closing += OnClosing;
+            _window.FramebufferResize += OnFramebufferResize;
+            _window.FocusChanged += OnFocusChanged;
+            
+            // Initialize immediately - Silk.NET will handle event pumping
+            _window.Initialize();
+            
+            Console.WriteLine($"[PopupWindow] Created and initialized popup window at ({x}, {y})");
         }
-
-        _window = Silk.NET.Windowing.Window.Create(options);
-
-        _window.Load += OnLoad;
-        _window.Render += OnRender;
-        _window.Closing += OnClosing;
-        _window.FramebufferResize += OnFramebufferResize;
-        _window.FocusChanged += OnFocusChanged;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[PopupWindow] Error creating popup window: {ex.Message}");
+            throw;
+        }
     }
 
     /// <summary>
-    /// Start the popup window's event loop
+    /// Check if this popup window is still valid
     /// </summary>
-    public void Run() => _window.Run();
+    public bool IsValid()
+    {
+        return !_disposed && _window != null && !_window.IsClosing;
+    }
 
     /// <summary>
     /// Close the popup window
     /// </summary>
     public void Close()
     {
-        _window.Close();
+        if (_window != null && !_window.IsClosing)
+        {
+            _window.Close();
+        }
     }
 
     private void OnLoad()
     {
-        _backend.Initialize(_window);
-
-        _input = _window.CreateInput();
-        if (_input.Mice.Count > 0)
+        if (_backend == null || _window == null) return;
+        
+        try
         {
-            _mouse = _input.Mice[0];
-            _mouse.MouseDown += OnMouseDown;
-            _mouse.MouseUp += OnMouseUp;
-            _mouse.Scroll += OnMouseScroll;
-        }
-        if (_input.Keyboards.Count > 0)
-        {
-            _keyboard = _input.Keyboards[0];
-            _keyboard.KeyDown += OnKeyDown;
-            _keyboard.KeyUp += OnKeyUp;
-            _keyboard.KeyChar += OnKeyChar;
-        }
+            _backend.Initialize(_window);
 
-        UpdateDpiScale();
+            _input = _window.CreateInput();
+            if (_input.Mice.Count > 0)
+            {
+                _mouse = _input.Mice[0];
+                _mouse.MouseDown += OnMouseDown;
+                _mouse.MouseUp += OnMouseUp;
+                _mouse.Scroll += OnMouseScroll;
+            }
+            if (_input.Keyboards.Count > 0)
+            {
+                _keyboard = _input.Keyboards[0];
+                _keyboard.KeyDown += OnKeyDown;
+                _keyboard.KeyUp += OnKeyUp;
+                _keyboard.KeyChar += OnKeyChar;
+            }
+
+            UpdateDpiScale();
+            
+            _initialized = true;
+            
+            // Show window now that it's initialized
+            _window.IsVisible = true;
+            
+            Console.WriteLine("[PopupWindow] Popup window loaded and visible");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[PopupWindow] Error in OnLoad: {ex.Message}");
+        }
     }
 
     private void UpdateDpiScale()
     {
+        if (_window == null) return;
+        
         var size = _window.Size;
         var fbSize = _window.FramebufferSize;
 
@@ -149,13 +186,17 @@ public class PopupWindow : IDisposable
             var dpiScaleX = (float)fbSize.X / size.X;
             var dpiScaleY = (float)fbSize.Y / size.Y;
 
-            RootPanel.SystemDpiScale = Math.Max(dpiScaleX, dpiScaleY);
+            if (RootPanel != null)
+            {
+                RootPanel.SystemDpiScale = Math.Max(dpiScaleX, dpiScaleY);
+            }
         }
     }
 
     private void OnFramebufferResize(Vector2D<int> size)
     {
         if (size.X <= 0 || size.Y <= 0) return;
+        if (_backend == null) return;
 
         _backend.Resize(size);
 
@@ -169,20 +210,27 @@ public class PopupWindow : IDisposable
 
     private void OnRender(double delta)
     {
-        if (RootPanel == null) return;
+        if (!_initialized || RootPanel == null || _backend == null) return;
 
-        // Update panel time for transitions and animations
-        PanelRealTime.Update(delta);
-        RealTime.Update(delta);
+        try
+        {
+            // Update panel time for transitions and animations
+            PanelRealTime.Update(delta);
+            RealTime.Update(delta);
 
-        var size = _window.FramebufferSize;
-        RootPanel.PanelBounds = new Rect(0, 0, size.X, size.Y);
+            var size = _window?.FramebufferSize ?? new Vector2D<int>(1, 1);
+            RootPanel.PanelBounds = new Rect(0, 0, size.X, size.Y);
 
-        var mousePos = _mouse != null ? new UIVector2(_mouse.Position.X, _mouse.Position.Y) : UIVector2.Zero;
-        RootPanel.UpdateInput(mousePos, _mouse != null);
-        RootPanel.Layout();
+            var mousePos = _mouse != null ? new UIVector2(_mouse.Position.X, _mouse.Position.Y) : UIVector2.Zero;
+            RootPanel.UpdateInput(mousePos, _mouse != null);
+            RootPanel.Layout();
 
-        _backend.Render(RootPanel);
+            _backend.Render(RootPanel);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[PopupWindow] Error in OnRender: {ex.Message}");
+        }
     }
 
     private void OnFocusChanged(bool focused)
@@ -190,22 +238,42 @@ public class PopupWindow : IDisposable
         // Close popup when it loses focus (clicked outside)
         if (!focused)
         {
+            Console.WriteLine("[PopupWindow] Lost focus, closing");
             Close();
         }
     }
 
     private void OnClosing()
     {
+        Console.WriteLine("[PopupWindow] Popup window closing");
         OnClosed?.Invoke();
-        _backend.Dispose();
-        _input?.Dispose();
+        
+        if (_backend != null)
+        {
+            _backend.Dispose();
+            _backend = null;
+        }
+        
+        if (_input != null)
+        {
+            _input.Dispose();
+            _input = null;
+        }
     }
 
     public void Dispose()
     {
         if (_disposed) return;
-        OnClosing();
-        _window?.Dispose();
+        
+        Console.WriteLine("[PopupWindow] Disposing popup window");
+        
+        if (_window != null && !_window.IsClosing)
+        {
+            OnClosing();
+            _window.Dispose();
+            _window = null;
+        }
+        
         _disposed = true;
     }
 

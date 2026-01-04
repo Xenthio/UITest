@@ -100,11 +100,19 @@ public partial class Popup : BasePopup
     /// <param name="offset">Offset away from the <paramref name="sourcePanel"/>.</param>
     public void SetPositioning(Panel sourcePanel, PositionMode position, float offset)
     {
-        Parent = sourcePanel.FindPopupPanel();
         PopupSource = sourcePanel;
         Position = position;
         PopupSourceOffset = offset;
 
+        // Try to create OS-level popup window first via callback
+        if (TryCreateOSWindow())
+        {
+            Console.WriteLine("[Popup] Created OS-level popup window");
+            return;
+        }
+
+        // Fallback to in-window popup
+        Parent = sourcePanel.FindPopupPanel();
         AddClass("popup-panel");
         PositionMe(true);
 
@@ -138,6 +146,93 @@ public partial class Popup : BasePopup
                 AddClass("below-stretch");
                 break;
         }
+    }
+
+    /// <summary>
+    /// Delegate for creating OS-level popup windows.
+    /// Returns an object representing the OS window, or null if creation failed.
+    /// </summary>
+    public delegate object? PopupWindowFactory(Panel popup, Panel sourcePanel, int screenX, int screenY, int width, int height);
+
+    /// <summary>
+    /// Global factory for creating OS-level popup windows.
+    /// Set this to enable OS-level popup windows instead of in-window popups.
+    /// </summary>
+    public static PopupWindowFactory? OSWindowFactory { get; set; }
+
+    /// <summary>
+    /// The OS-level popup window, if one was created
+    /// </summary>
+    private object? _osWindow;
+
+    /// <summary>
+    /// Try to create an OS-level popup window. Returns true if successful.
+    /// </summary>
+    private bool TryCreateOSWindow()
+    {
+        if (PopupSource == null || OSWindowFactory == null) return false;
+
+        try
+        {
+            // Calculate screen position
+            var rootPanel = PopupSource.FindRootPanel();
+            if (rootPanel == null) return false;
+
+            // Get the source panel's screen rect
+            var rect = PopupSource.Box.Rect;
+            
+            // Calculate popup size (use a reasonable default for now)
+            int popupWidth = (int)(rect.Width > 0 ? rect.Width : 200);
+            int popupHeight = 200; // Will be adjusted by content
+
+            // Calculate screen position based on positioning mode
+            int screenX = 0;
+            int screenY = 0;
+
+            switch (Position)
+            {
+                case PositionMode.BelowStretch:
+                case PositionMode.BelowLeft:
+                case PositionMode.BelowCenter:
+                    screenX = (int)(rect.Left);
+                    screenY = (int)(rect.Bottom + PopupSourceOffset);
+                    break;
+
+                case PositionMode.AboveLeft:
+                case PositionMode.AboveCenter:
+                    screenX = (int)(rect.Left);
+                    screenY = (int)(rect.Top - popupHeight - PopupSourceOffset);
+                    break;
+
+                case PositionMode.Left:
+                case PositionMode.LeftBottom:
+                    screenX = (int)(rect.Left - popupWidth - PopupSourceOffset);
+                    screenY = (int)(rect.Top);
+                    break;
+
+                case PositionMode.UnderMouse:
+                    screenX = (int)(rootPanel.MousePos.x);
+                    screenY = (int)(rootPanel.MousePos.y + PopupSourceOffset);
+                    break;
+            }
+
+            // Call the factory to create the OS window
+            _osWindow = OSWindowFactory(this, PopupSource, screenX, screenY, popupWidth, popupHeight);
+
+            if (_osWindow != null)
+            {
+                // Mark this popup as using an OS window
+                AddClass("os-window-popup");
+                
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Popup] Failed to create OS window: {ex.Message}");
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -256,7 +351,32 @@ public partial class Popup : BasePopup
             return;
         }
 
-        PositionMe(false);
+        // Only position if we're not using an OS window
+        if (_osWindow == null)
+        {
+            PositionMe(false);
+        }
+    }
+
+    public override void OnDeleted()
+    {
+        // Close OS window if we have one
+        if (_osWindow != null)
+        {
+            // Call Close() method if it exists via reflection
+            try
+            {
+                var closeMethod = _osWindow.GetType().GetMethod("Close");
+                closeMethod?.Invoke(_osWindow, null);
+            }
+            catch
+            {
+                // Ignore errors during cleanup
+            }
+            _osWindow = null;
+        }
+
+        base.OnDeleted();
     }
 
     public override void OnLayout(ref Rect layoutRect)

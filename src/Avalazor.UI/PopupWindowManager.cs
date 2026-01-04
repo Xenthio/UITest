@@ -1,10 +1,12 @@
 using Sandbox.UI;
+using Silk.NET.Windowing;
 
 namespace Avalazor.UI;
 
 /// <summary>
 /// Manages popup windows in the application.
 /// Tracks active popup windows and provides utilities for creating and closing them.
+/// Uses shared event loop approach for proper window management.
 /// </summary>
 public static class PopupWindowManager
 {
@@ -22,56 +24,58 @@ public static class PopupWindowManager
     public static GraphicsBackendType BackendType { get; set; } = GraphicsBackendType.OpenGL;
 
     /// <summary>
-    /// Create a popup window at the specified screen position
+    /// Whether popup windows are enabled. When false, falls back to in-window popups.
     /// </summary>
-    public static PopupWindow CreatePopup(int screenX, int screenY, int width, int height, Panel content, Panel? sourcePanel = null)
+    public static bool EnablePopupWindows { get; set; } = true;
+
+    /// <summary>
+    /// Create a popup window at the specified screen position.
+    /// The popup window is created immediately but doesn't block - it shares the main event loop.
+    /// </summary>
+    public static PopupWindow? CreatePopup(int screenX, int screenY, int width, int height, Panel content, Panel? sourcePanel = null)
     {
+        if (!EnablePopupWindows)
+        {
+            Console.WriteLine("[PopupWindowManager] Popup windows disabled, returning null");
+            return null;
+        }
+
         lock (_lock)
         {
-            // Create root panel for the popup
-            var rootPanel = new RootPanel();
-            rootPanel.PanelBounds = new Rect(0, 0, width, height);
-            
-            // Add content to root panel
-            content.Parent = rootPanel;
-
-            // Create popup window
-            var popup = new PopupWindow(screenX, screenY, width, height, BackendType);
-            popup.RootPanel = rootPanel;
-            popup.SourcePanel = sourcePanel;
-            popup.OwnerWindow = MainWindow;
-            
-            // Handle cleanup when popup closes
-            popup.OnClosed = () =>
+            try
             {
-                lock (_lock)
+                // Create root panel for the popup
+                var rootPanel = new RootPanel();
+                rootPanel.PanelBounds = new Rect(0, 0, width, height);
+                
+                // Add content to root panel
+                content.Parent = rootPanel;
+
+                // Create popup window - it will handle its own event loop integration
+                var popup = new PopupWindow(screenX, screenY, width, height, BackendType);
+                popup.RootPanel = rootPanel;
+                popup.SourcePanel = sourcePanel;
+                popup.OwnerWindow = MainWindow;
+                
+                // Handle cleanup when popup closes
+                popup.OnClosed = () =>
                 {
-                    _activePopups.Remove(popup);
-                }
-            };
+                    lock (_lock)
+                    {
+                        _activePopups.Remove(popup);
+                    }
+                };
 
-            _activePopups.Add(popup);
+                _activePopups.Add(popup);
 
-            // Run the popup window in a new thread so it doesn't block the main window
-            var thread = new System.Threading.Thread(() =>
+                Console.WriteLine($"[PopupWindowManager] Created popup window at ({screenX}, {screenY}) size {width}x{height}");
+                return popup;
+            }
+            catch (Exception ex)
             {
-                try
-                {
-                    popup.Run();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[PopupWindowManager] Error running popup: {ex.Message}");
-                }
-                finally
-                {
-                    popup.Dispose();
-                }
-            });
-            thread.IsBackground = true;
-            thread.Start();
-
-            return popup;
+                Console.WriteLine($"[PopupWindowManager] Error creating popup: {ex.Message}");
+                return null;
+            }
         }
     }
 
@@ -82,6 +86,7 @@ public static class PopupWindowManager
     {
         lock (_lock)
         {
+            Console.WriteLine($"[PopupWindowManager] Closing {_activePopups.Count} popup windows");
             foreach (var popup in _activePopups.ToArray())
             {
                 try
@@ -94,6 +99,23 @@ public static class PopupWindowManager
                 }
             }
             _activePopups.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Update all popup windows (called from main window render loop)
+    /// </summary>
+    internal static void UpdateAll()
+    {
+        lock (_lock)
+        {
+            foreach (var popup in _activePopups.ToArray())
+            {
+                if (!popup.IsValid())
+                {
+                    _activePopups.Remove(popup);
+                }
+            }
         }
     }
 

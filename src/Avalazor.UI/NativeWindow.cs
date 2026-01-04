@@ -118,6 +118,36 @@ public class NativeWindow : INativeWindow, IDisposable
 
         // Register as main window for popup management
         PopupWindowManager.MainWindow = this;
+
+        // Register the OS window factory for Popup class
+        Sandbox.UI.Popup.OSWindowFactory = PopupWindowFactory;
+    }
+
+    /// <summary>
+    /// Factory function that creates OS-level popup windows for Popup panels
+    /// </summary>
+    private static object? PopupWindowFactory(Sandbox.UI.Panel popup, Sandbox.UI.Panel sourcePanel, int screenX, int screenY, int width, int height)
+    {
+        try
+        {
+            // Get the main window position to offset the popup
+            var mainWindow = PopupWindowManager.MainWindow;
+            if (mainWindow != null)
+            {
+                var (winX, winY) = mainWindow.GetPosition();
+                screenX += winX;
+                screenY += winY;
+            }
+
+            // Create popup window with the popup panel as content
+            var osWindow = PopupWindowManager.CreatePopup(screenX, screenY, width, height, popup, sourcePanel);
+            return osWindow;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NativeWindow] Error in PopupWindowFactory: {ex.Message}");
+            return null;
+        }
     }
 
     private void UpdateDpiScale()
