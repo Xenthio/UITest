@@ -283,6 +283,31 @@ public partial class RootPanel : Panel
     }
 
     /// <summary>
+    /// Get the cursor that should be displayed based on the currently hovered panel's CSS cursor property.
+    /// Returns null if no cursor is specified or if it's set to "auto".
+    /// </summary>
+    public StandardCursor? GetCurrentCursor()
+    {
+        var hovered = Input.Hovered;
+        if (hovered == null) return null;
+
+        // Walk up the hierarchy to find the first panel with a cursor style
+        while (hovered != null)
+        {
+            if (hovered.ComputedStyle?.Cursor != null)
+            {
+                var cursor = CursorHelper.FromCssString(hovered.ComputedStyle.Cursor);
+                if (cursor.HasValue)
+                    return cursor.Value;
+            }
+
+            hovered = hovered.Parent;
+        }
+
+        return null; // Default to system cursor
+    }
+
+    /// <summary>
     /// A list of panels waiting to have their styles re-evaluated
     /// </summary>
     private readonly HashSet<Panel> styleRuleUpdates = new();

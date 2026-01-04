@@ -1,0 +1,50 @@
+@namespace SimpleDesktopApp
+@using Sandbox.UI
+@attribute [StyleSheet("CursorTest.scss")]
+@inherits Panel
+
+<root class="cursor-test">
+    <div class="cursor-header">
+        <h1>Cursor CSS Support Test</h1>
+        <p>Hover over each box to see different cursors</p>
+    </div>
+
+    <div class="cursor-grid">
+        <div class="cursor-box cursor-default">
+            <span>default</span>
+        </div>
+        <div class="cursor-box cursor-pointer">
+            <span>pointer</span>
+        </div>
+        <div class="cursor-box cursor-text">
+            <span>text</span>
+        </div>
+        <div class="cursor-box cursor-wait">
+            <span>wait</span>
+        </div>
+        <div class="cursor-box cursor-crosshair">
+            <span>crosshair</span>
+        </div>
+        <div class="cursor-box cursor-grab">
+            <span>grab</span>
+        </div>
+        <div class="cursor-box cursor-grabbing">
+            <span>grabbing</span>
+        </div>
+        <div class="cursor-box cursor-not-allowed">
+            <span>not-allowed</span>
+        </div>
+        <div class="cursor-box cursor-move">
+            <span>move</span>
+        </div>
+        <div class="cursor-box cursor-ew-resize">
+            <span>ew-resize</span>
+        </div>
+        <div class="cursor-box cursor-ns-resize">
+            <span>ns-resize</span>
+        </div>
+        <div class="cursor-box cursor-nesw-resize">
+            <span>nesw-resize</span>
+        </div>
+    </div>
+</root>

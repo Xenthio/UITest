@@ -162,7 +162,30 @@ public class NativeWindow : INativeWindow, IDisposable
         RootPanel.UpdateInput(mousePos, _mouse != null);
         RootPanel.Layout();
 
+        // Update cursor based on hovered panel's CSS cursor property
+        UpdateCursor();
+
         _backend.Render(RootPanel);
+    }
+
+    /// <summary>
+    /// Update the window cursor based on the currently hovered panel's CSS cursor property
+    /// </summary>
+    private void UpdateCursor()
+    {
+        if (_mouse?.Cursor == null || RootPanel == null) return;
+
+        var panelCursor = RootPanel.GetCurrentCursor();
+        if (panelCursor.HasValue)
+        {
+            var silkCursor = panelCursor.Value.ToSilkCursor();
+            _mouse.Cursor.StandardCursor = silkCursor;
+        }
+        else
+        {
+            // Reset to default arrow cursor when no cursor is specified
+            _mouse.Cursor.StandardCursor = Silk.NET.Input.StandardCursor.Arrow;
+        }
     }
 
     private void OnClosing()
