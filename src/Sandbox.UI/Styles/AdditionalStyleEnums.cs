@@ -119,9 +119,10 @@ MatchSource = 2
 /// </summary>
 public enum MaskScope
 {
-Default = 0,
-Panel = 1,
-Parent = 2
+	Default = 0,
+	Panel = 1,
+	Parent = 2,
+	Filter = 3
 }
 
 /// <summary>
@@ -129,12 +130,13 @@ Parent = 2
 /// </summary>
 public enum BackgroundRepeat
 {
-Repeat = 0,
-RepeatX = 1,
-RepeatY = 2,
-NoRepeat = 3,
-Space = 4,
-Round = 5
+	Repeat = 0,
+	RepeatX = 1,
+	RepeatY = 2,
+	NoRepeat = 3,
+	Space = 4,
+	Round = 5,
+	Clamp = 6
 }
 
 /// <summary>
@@ -164,12 +166,15 @@ Space = 3
 /// </summary>
 public enum ImageRendering
 {
-Auto = 0,
-Smooth = 1,
-HighQuality = 2,
-CrispEdges = 3,
-Pixelated = 4,
-Anisotropic = 5
+	Auto = 0,
+	Smooth = 1,
+	HighQuality = 2,
+	CrispEdges = 3,
+	Pixelated = 4,
+	Anisotropic = 5,
+	Bilinear = 6,
+	Trilinear = 7,
+	Point = 8
 }
 
 /// <summary>
@@ -290,9 +295,10 @@ public static class RenderingFilters
 /// </summary>
 public enum FilterMode
 {
-None = 0,
-Bilinear = 1,
-Trilinear = 2,
-Point = 3
+	None = 0,
+	Bilinear = 1,
+	Trilinear = 2,
+	Point = 3,
+	Anisotropic = 4
 }
 }
