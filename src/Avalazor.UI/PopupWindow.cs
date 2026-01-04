@@ -52,9 +52,17 @@ public class PopupWindow : IDisposable
             options.VSync = false; // Don't vsync popups independently
             options.IsEventDriven = false;
             
-            // Popup window configuration
-            options.WindowBorder = WindowBorder.Resizable; // Allow some border for visibility
+            // Popup window configuration - no decorations or borders
+            options.WindowBorder = WindowBorder.Hidden; // No title bar or borders
             options.IsVisible = false; // Start hidden, show after load
+            options.TransparentFramebuffer = false; // Don't need transparency
+            
+            // Disable animations on Windows (platform-specific hint)
+            if (OperatingSystem.IsWindows())
+            {
+                // Note: Silk.NET doesn't directly expose animation control
+                // This is handled by the OS, but Hidden border helps
+            }
             
             // Auto-select best backend for platform if not specified
             if (backendType == null)
@@ -161,6 +169,16 @@ public class PopupWindow : IDisposable
 
             UpdateDpiScale();
             
+            // Initialize RootPanel bounds and layout
+            if (RootPanel != null && _window != null)
+            {
+                var size = _window.FramebufferSize;
+                RootPanel.PanelBounds = new Rect(0, 0, size.X, size.Y);
+                RootPanel.InvalidateLayout();
+                RootPanel.Layout();
+                Console.WriteLine($"[PopupWindow] RootPanel initialized with bounds: {size.X}x{size.Y}");
+            }
+            
             _initialized = true;
             
             // Show window now that it's initialized
@@ -171,6 +189,7 @@ public class PopupWindow : IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"[PopupWindow] Error in OnLoad: {ex.Message}");
+            Console.WriteLine($"[PopupWindow] Stack trace: {ex.StackTrace}");
         }
     }
 
@@ -210,7 +229,7 @@ public class PopupWindow : IDisposable
 
     private void OnRender(double delta)
     {
-        if (!_initialized || RootPanel == null || _backend == null) return;
+        if (!_initialized || RootPanel == null || _backend == null || _window == null) return;
 
         try
         {
@@ -218,18 +237,22 @@ public class PopupWindow : IDisposable
             PanelRealTime.Update(delta);
             RealTime.Update(delta);
 
-            var size = _window?.FramebufferSize ?? new Vector2D<int>(1, 1);
+            var size = _window.FramebufferSize;
             RootPanel.PanelBounds = new Rect(0, 0, size.X, size.Y);
 
             var mousePos = _mouse != null ? new UIVector2(_mouse.Position.X, _mouse.Position.Y) : UIVector2.Zero;
             RootPanel.UpdateInput(mousePos, _mouse != null);
+            
+            // Ensure layout is up to date
             RootPanel.Layout();
 
+            // Render the panel tree
             _backend.Render(RootPanel);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[PopupWindow] Error in OnRender: {ex.Message}");
+            Console.WriteLine($"[PopupWindow] Stack trace: {ex.StackTrace}");
         }
     }
 
@@ -267,11 +290,25 @@ public class PopupWindow : IDisposable
         
         Console.WriteLine("[PopupWindow] Disposing popup window");
         
-        if (_window != null && !_window.IsClosing)
+        try
         {
-            OnClosing();
-            _window.Dispose();
-            _window = null;
+            if (_window != null)
+            {
+                // Force window to close if not already closing
+                if (!_window.IsClosing)
+                {
+                    _window.Close();
+                }
+                
+                // Clean up resources
+                OnClosing();
+                _window.Dispose();
+                _window = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[PopupWindow] Error disposing window: {ex.Message}");
         }
         
         _disposed = true;
