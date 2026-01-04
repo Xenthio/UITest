@@ -204,6 +204,11 @@ public partial class Panel
         if (e.Is("onforward")) OnForward(e);
         if (e.Is("onescape")) OnEscape(e);
 
+        if (e is SelectionEvent se)
+        {
+            if (e.Is("ondragselect")) OnDragSelect(se);
+        }
+
         if (!e.Propagate)
             return;
 
@@ -297,4 +302,9 @@ public partial class Panel
     /// Called when this panel loses input focus.
     /// </summary>
     protected virtual void OnBlur(PanelEvent e) { }
+
+    /// <summary>
+    /// Called when the user performs a drag selection operation (e.g., text selection with mouse drag).
+    /// </summary>
+    protected virtual void OnDragSelect(SelectionEvent e) { }
 }

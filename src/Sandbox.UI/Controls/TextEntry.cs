@@ -463,16 +463,12 @@ public class TextEntry : Panel
     /// </summary>
     private bool SelectingWords = false;
 
-    private bool _isMouseDown = false;
-
     /// <summary>
     /// Handle mouse down for caret positioning and selection start
     /// </summary>
     protected override void OnMouseDown(MousePanelEvent e)
     {
         e.StopPropagation();
-
-        _isMouseDown = true;
 
         if (string.IsNullOrEmpty(Text))
             return;
@@ -495,7 +491,6 @@ public class TextEntry : Panel
     protected override void OnMouseUp(MousePanelEvent e)
     {
         SelectingWords = false;
-        _isMouseDown = false;
 
         var pos = Label.GetLetterAtScreenPosition(e.ScreenPosition);
         if (Label.SelectionEnd > 0) pos = Label.SelectionEnd;
@@ -506,33 +501,45 @@ public class TextEntry : Panel
     }
 
     /// <summary>
-    /// Handle mouse move for drag selection
-    /// Note: S&box uses OnDragSelect event which isn't implemented yet.
-    /// This implements drag selection via OnMouseMove as a workaround.
+    /// Handle drag selection (text selection with mouse drag)
+    /// </summary>
+    protected override void OnDragSelect(SelectionEvent e)
+    {
+        if (string.IsNullOrEmpty(Text) || Label is null)
+            return;
+
+        Label.ShouldDrawSelection = true;
+
+        var tl = new Vector2(e.SelectionRect.Left, e.SelectionRect.Top);
+        var br = new Vector2(e.SelectionRect.Right, e.SelectionRect.Bottom);
+        Label.SelectionStart = Label.GetLetterAtScreenPosition(tl);
+        Label.SelectionEnd = Label.GetLetterAtScreenPosition(br);
+
+        if (SelectingWords)
+        {
+            var boundaries = Label.GetWordBoundaryIndices();
+
+            var left = boundaries.LastOrDefault(x => x < Label.SelectionStart);
+            var right = boundaries.FirstOrDefault(x => x > Label.SelectionEnd);
+
+            left = Math.Min(left, Label.SelectionStart);
+            right = Math.Max(right, Label.SelectionEnd);
+
+            Label.SelectionStart = left;
+            Label.SelectionEnd = right;
+        }
+
+        var pos = Label.GetLetterAtScreenPosition(e.EndPoint);
+        Label.CaretPosition = Math.Clamp(pos, 0, TextLength);
+        Label.ScrollToCaret();
+    }
+
+    /// <summary>
+    /// Handle mouse move to prevent event propagation
     /// </summary>
     protected override void OnMouseMove(MousePanelEvent e)
     {
         base.OnMouseMove(e);
-        
-        // Implement drag selection when left mouse button is held down
-        if (_isMouseDown && !string.IsNullOrEmpty(Text) && Label != null)
-        {
-            var pos = Label.GetLetterAtScreenPosition(e.ScreenPosition);
-            if (pos >= 0)
-            {
-                // Anchor selection at the starting caret position on first drag
-                if (Label.SelectionStart == Label.SelectionEnd)
-                {
-                    Label.SelectionStart = Label.CaretPosition;
-                }
-                
-                var clampedPos = Math.Clamp(pos, 0, TextLength);
-                Label.SelectionEnd = clampedPos;
-                Label.CaretPosition = clampedPos;
-                Label.ScrollToCaret();
-            }
-        }
-        
         e.StopPropagation();
     }
 
