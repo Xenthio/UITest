@@ -18,6 +18,7 @@ public class NativeWindow : INativeWindow, IDisposable
 {
     private readonly IWindow _window;
     private IGraphicsBackend _backend;
+    private GraphicsBackendType _backendType;
 
     private IInputContext? _input;
     private IMouse? _mouse;
@@ -48,6 +49,9 @@ public class NativeWindow : INativeWindow, IDisposable
                 Console.WriteLine("Auto-selected OpenGL backend");
             }
         }
+
+        _backendType = backendType.Value;
+        PopupWindowManager.BackendType = _backendType;
 
         // Select backend and configure window options
         switch (backendType)
@@ -111,6 +115,45 @@ public class NativeWindow : INativeWindow, IDisposable
 
         // Set system DPI scale for UI rendering
         UpdateDpiScale();
+
+        // Register as main window for popup management
+        PopupWindowManager.MainWindow = this;
+
+        // Register the OS window factory for Popup class
+        Sandbox.UI.Popup.OSWindowFactory = PopupWindowFactory;
+    }
+
+    /// <summary>
+    /// Factory function that creates OS-level popup windows for Popup panels
+    /// </summary>
+    private static object? PopupWindowFactory(Sandbox.UI.Panel popup, Sandbox.UI.Panel sourcePanel, int screenX, int screenY, int width, int height)
+    {
+        try
+        {
+            // Get the main window position to offset the popup
+            var mainWindow = PopupWindowManager.MainWindow;
+            if (mainWindow != null)
+            {
+                var (winX, winY) = mainWindow.GetPosition();
+                screenX += winX;
+                screenY += winY;
+            }
+
+            // Create a container for the popup content
+            // We can't just pass the popup panel directly because it might not have children yet
+            // Instead, we create a container and the popup will be its child
+            Console.WriteLine($"[PopupWindowFactory] Creating OS window for popup {popup.GetType().Name} with {popup.ChildrenCount} children");
+            
+            // Create popup window with the popup panel as content
+            var osWindow = PopupWindowManager.CreatePopup(screenX, screenY, width, height, popup, sourcePanel);
+            return osWindow;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NativeWindow] Error in PopupWindowFactory: {ex.Message}");
+            Console.WriteLine($"[NativeWindow] Stack trace: {ex.StackTrace}");
+            return null;
+        }
     }
 
     private void UpdateDpiScale()
@@ -210,6 +253,14 @@ public class NativeWindow : INativeWindow, IDisposable
     public void SetTitle(string title)
     {
         _window.Title = title;
+    }
+
+    /// <summary>
+    /// Get the native window position
+    /// </summary>
+    public (int x, int y) GetPosition()
+    {
+        return (_window.Position.X, _window.Position.Y);
     }
 
     /// <summary>

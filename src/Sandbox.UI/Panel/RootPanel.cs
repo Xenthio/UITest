@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Sandbox.UI;
 
 /// <summary>
@@ -244,6 +246,17 @@ public partial class RootPanel : Panel
 
         if (button.StartsWith("mouse"))
         {
+            // On mouse button press, check if we should close popups
+            if (pressed && button == "mouseleft")
+            {
+                var target = Input.Hovered;
+                // Close all popups if clicking outside them
+                if (target != null && !target.AncestorsAndSelf.OfType<BasePopup>().Any())
+                {
+                    BasePopup.CloseAll(target);
+                }
+            }
+
             Input.AddMouseButton(button, pressed);
         }
         else
