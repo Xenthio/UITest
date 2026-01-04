@@ -210,12 +210,42 @@ public class PopupWindow : IDisposable
     }
 
     // --- Input Helpers ---
-    private void OnMouseDown(IMouse mouse, MouseButton button) => RootPanel?.ProcessButtonEvent(MouseButtonToString(button), true, GetKeyboardModifiers());
-    private void OnMouseUp(IMouse mouse, MouseButton button) => RootPanel?.ProcessButtonEvent(MouseButtonToString(button), false, GetKeyboardModifiers());
-    private void OnMouseScroll(IMouse mouse, ScrollWheel scroll) => RootPanel?.ProcessMouseWheel(new UIVector2(scroll.X, -scroll.Y), GetKeyboardModifiers());
-    private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) => RootPanel?.ProcessButtonEvent(key.ToString().ToLower(), true, GetKeyboardModifiers());
-    private void OnKeyUp(IKeyboard keyboard, Key key, int scancode) => RootPanel?.ProcessButtonEvent(key.ToString().ToLower(), false, GetKeyboardModifiers());
-    private void OnKeyChar(IKeyboard keyboard, char character) => RootPanel?.ProcessCharTyped(character);
-    private string MouseButtonToString(MouseButton button) => button switch { MouseButton.Left => "mouseleft", MouseButton.Right => "mouseright", MouseButton.Middle => "mousemiddle", _ => $"mouse{(int)button}" };
-    private KeyboardModifiers GetKeyboardModifiers() { if (_keyboard == null) return KeyboardModifiers.None; var m = KeyboardModifiers.None; if (_keyboard.IsKeyPressed(Key.ShiftLeft) || _keyboard.IsKeyPressed(Key.ShiftRight)) m |= KeyboardModifiers.Shift; if (_keyboard.IsKeyPressed(Key.ControlLeft) || _keyboard.IsKeyPressed(Key.ControlRight)) m |= KeyboardModifiers.Ctrl; if (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight)) m |= KeyboardModifiers.Alt; return m; }
+    private void OnMouseDown(IMouse mouse, MouseButton button) 
+        => RootPanel?.ProcessButtonEvent(MouseButtonToString(button), true, GetKeyboardModifiers());
+    
+    private void OnMouseUp(IMouse mouse, MouseButton button) 
+        => RootPanel?.ProcessButtonEvent(MouseButtonToString(button), false, GetKeyboardModifiers());
+    
+    private void OnMouseScroll(IMouse mouse, ScrollWheel scroll) 
+        => RootPanel?.ProcessMouseWheel(new UIVector2(scroll.X, -scroll.Y), GetKeyboardModifiers());
+    
+    private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) 
+        => RootPanel?.ProcessButtonEvent(key.ToString().ToLower(), true, GetKeyboardModifiers());
+    
+    private void OnKeyUp(IKeyboard keyboard, Key key, int scancode) 
+        => RootPanel?.ProcessButtonEvent(key.ToString().ToLower(), false, GetKeyboardModifiers());
+    
+    private void OnKeyChar(IKeyboard keyboard, char character) 
+        => RootPanel?.ProcessCharTyped(character);
+    
+    private string MouseButtonToString(MouseButton button) => button switch 
+    { 
+        MouseButton.Left => "mouseleft", 
+        MouseButton.Right => "mouseright", 
+        MouseButton.Middle => "mousemiddle", 
+        _ => $"mouse{(int)button}" 
+    };
+    
+    private KeyboardModifiers GetKeyboardModifiers() 
+    { 
+        if (_keyboard == null) return KeyboardModifiers.None; 
+        var m = KeyboardModifiers.None; 
+        if (_keyboard.IsKeyPressed(Key.ShiftLeft) || _keyboard.IsKeyPressed(Key.ShiftRight)) 
+            m |= KeyboardModifiers.Shift; 
+        if (_keyboard.IsKeyPressed(Key.ControlLeft) || _keyboard.IsKeyPressed(Key.ControlRight)) 
+            m |= KeyboardModifiers.Ctrl; 
+        if (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight)) 
+            m |= KeyboardModifiers.Alt; 
+        return m; 
+    }
 }

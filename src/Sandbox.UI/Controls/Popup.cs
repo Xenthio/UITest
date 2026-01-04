@@ -55,7 +55,7 @@ public partial class Popup : BasePopup
         AboveLeft,
 
         /// <summary>
-        /// Below the source panel, aliging on the left. Do not stretch to size of <see cref="Popup.PopupSource"/>.
+        /// Below the source panel, aligning on the left. Do not stretch to size of <see cref="Popup.PopupSource"/>.
         /// </summary>
         BelowLeft,
 
@@ -196,7 +196,7 @@ public partial class Popup : BasePopup
     public void Success()
     {
         AddClass("success");
-        Popup.CloseAll();
+        BasePopup.CloseAll();
     }
 
     /// <summary>
@@ -205,7 +205,7 @@ public partial class Popup : BasePopup
     public void Failure()
     {
         AddClass("failure");
-        Popup.CloseAll();
+        BasePopup.CloseAll();
     }
 
     /// <summary>
@@ -215,7 +215,7 @@ public partial class Popup : BasePopup
     {
         return AddChild(new Button(text, () =>
         {
-            CloseAll();
+            BasePopup.CloseAll();
             action?.Invoke();
         }));
     }
@@ -225,7 +225,7 @@ public partial class Popup : BasePopup
     /// </summary>
     public Panel AddOption(string text, string icon, Action? action = null)
     {
-        var btn = new Button(text, () => { CloseAll(); action?.Invoke(); });
+        var btn = new Button(text, () => { BasePopup.CloseAll(); action?.Invoke(); });
         btn.Icon = icon;
         return AddChild(btn);
     }
@@ -250,7 +250,7 @@ public partial class Popup : BasePopup
     {
         base.Tick();
 
-        if (CloseWhenParentIsHidden && !PopupSource.IsValid())
+        if (CloseWhenParentIsHidden && PopupSource != null && !PopupSource.IsValid())
         {
             Delete();
             return;
