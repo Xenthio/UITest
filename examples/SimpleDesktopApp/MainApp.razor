@@ -26,6 +26,9 @@
             <button class="button" @onclick="@OpenTextOverflowTest">
                 <span class="button-text">📄 Text Overflow Test</span>
             </button>
+            <button class="button" @onclick="@OpenCursorTest">
+                <span class="button-text">🖱️ Cursor CSS Test</span>
+            </button>
             <button class="button disabled">
                 <span class="button-text">Disabled Button</span>
             </button>
@@ -159,6 +162,15 @@
         var root = FindRootPanel();
         root?.AddChild(textOverflowWindow);
         Console.WriteLine("Opening text overflow test window");
+    }
+    
+    private void OpenCursorTest()
+    {
+        // Create and open cursor test window
+        var cursorTestWindow = new CursorTest();
+        var root = FindRootPanel();
+        root?.AddChild(cursorTestWindow);
+        Console.WriteLine("Opening cursor test window");
     }
     
     private void CloseThemeSelector()
