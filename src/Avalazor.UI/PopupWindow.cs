@@ -258,7 +258,14 @@ public class PopupWindow : IDisposable
 
     private void OnRender(double delta)
     {
-        if (!_initialized || RootPanel == null || _backend == null || _window == null) return;
+        if (!_initialized || RootPanel == null || _backend == null || _window == null)
+        {
+            if (_renderCount++ == 0)
+            {
+                Console.WriteLine($"[PopupWindow] OnRender called but not ready: initialized={_initialized}, RootPanel={RootPanel != null}, backend={_backend != null}, window={_window != null}");
+            }
+            return;
+        }
 
         try
         {
@@ -279,16 +286,22 @@ public class PopupWindow : IDisposable
             if (_renderCount++ % 60 == 0) // Every 60 frames
             {
                 var childCount = RootPanel.ChildrenCount;
-                Console.WriteLine($"[PopupWindow] Rendering frame {_renderCount}, RootPanel children: {childCount}");
+                Console.WriteLine($"[PopupWindow] Rendering frame {_renderCount}, RootPanel children: {childCount}, size: {size.X}x{size.Y}");
                 if (childCount > 0)
                 {
                     var child = RootPanel.GetChild(0);
                     Console.WriteLine($"[PopupWindow]   First child: {child?.GetType().Name}, visible: {child?.IsVisible}, children: {child?.ChildrenCount}");
+                    Console.WriteLine($"[PopupWindow]   Calling backend.Render()...");
                 }
             }
 
             // Render the panel tree
             _backend.Render(RootPanel);
+            
+            if (_renderCount == 1)
+            {
+                Console.WriteLine($"[PopupWindow] First frame rendered successfully");
+            }
         }
         catch (Exception ex)
         {
