@@ -104,7 +104,7 @@ The OpenGL backend was already correctly configured with `SKSurfaceProperties` b
 2. **Thicker Appearance** - Combination of subpixel antialiasing and full hinting makes text appear fuller and more substantial, matching native Windows
 3. **Better Grid-Fitting** - Full hinting ensures text aligns better with pixel boundaries, reducing blurriness
 4. **Native Look** - Windows applications using Fazor now match the text rendering quality of native Win32/WPF/UWP applications
-4. **Better UX** - Users perceive the application as more professional and polished due to high-quality text rendering
+5. **Better UX** - Users perceive the application as more professional and polished due to high-quality text rendering
 
 ## Platform Considerations
 
