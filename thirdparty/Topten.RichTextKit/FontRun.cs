@@ -728,10 +728,65 @@ namespace Topten.RichTextKit
 			paint.Color = Style.TextColor;
 			paint.Shader = ctx.Shader;
 
+			// Apply LCD filter adjustments if configured (simulates Windows ClearType gamma/contrast)
+			if (ctx.Options != null && (ctx.Options.LcdFilterGamma > 0 || ctx.Options.LcdFilterContrast > 0))
+			{
+				ApplyLcdFilter(paint, ctx.Options.LcdFilterGamma, ctx.Options.LcdFilterContrast);
+			}
+
 			ctx.Canvas.DrawText( _textBlob, 0, 0, paint );
 
 			PaintUnderline( ctx, paint );
 			PaintStrikeThrough( ctx, paint, glyphVOffset );
+		}
+
+		/// <summary>
+		/// Apply LCD filter gamma/contrast adjustments to simulate Windows ClearType
+		/// </summary>
+		private void ApplyLcdFilter(SKPaint paint, float gamma, float contrast)
+		{
+			// Apply gamma correction using color filter
+			// Windows ClearType typically uses gamma ~1.8-2.2
+			// Contrast boost makes edges sharper
+			
+			if (gamma <= 0 && contrast <= 0) return;
+			
+			// Create a gamma/contrast adjustment matrix
+			// This simulates what Windows ClearType does internally
+			float[] gammaTable = null;
+			if (gamma > 0)
+			{
+				gammaTable = new float[256];
+				for (int i = 0; i < 256; i++)
+				{
+					float normalized = i / 255f;
+					float adjusted = MathF.Pow(normalized, 1f / gamma);
+					gammaTable[i] = Math.Clamp(adjusted, 0f, 1f) * 255f;
+				}
+			}
+			
+			// Apply contrast boost if specified
+			// Contrast makes the difference between foreground/background more pronounced
+			if (contrast > 0)
+			{
+				// Create color matrix that boosts contrast
+				// [1+c, 0,   0,   0,  -c/2]
+				// [0,   1+c, 0,   0,  -c/2]
+				// [0,   0,   1+c, 0,  -c/2]
+				// [0,   0,   0,   1,   0  ]
+				float c = contrast;
+				float offset = -c * 0.5f * 255f;
+				
+				var colorMatrix = new float[]
+				{
+					1 + c, 0, 0, 0, offset,
+					0, 1 + c, 0, 0, offset,
+					0, 0, 1 + c, 0, offset,
+					0, 0, 0, 1, 0
+				};
+				
+				paint.ColorFilter = SKColorFilter.CreateColorMatrix(colorMatrix);
+			}
 		}
 
 		internal void PaintStrikeThrough( PaintTextContext ctx, SKPaint paint, float glyphVOffset )

@@ -9,6 +9,19 @@ namespace Sandbox.UI.Skia;
 /// </summary>
 public class TextBlockWrapper
 {
+    /// <summary>
+    /// Global LCD filter contrast for text rendering to simulate Windows ClearType.
+    /// Range: 0.0 (none) to 1.0 (max). Try 0.2-0.3 for Windows-like appearance.
+    /// </summary>
+    public static float LcdFilterContrast = 0.0f;
+    
+    /// <summary>
+    /// Global LCD filter gamma for text rendering to simulate Windows ClearType.
+    /// Range: 0.0 (none) to 5.0. Try 1.8-2.2 for Windows-like appearance.
+    /// Note: Gamma affects overall lightness; contrast affects edge sharpness.
+    /// </summary>
+    public static float LcdFilterGamma = 2.2f;
+    
     private Topten.RichTextKit.TextBlock? _block;
     private Topten.RichTextKit.Style? _style;
     private readonly Dictionary<int, Vector2> _sizeCache = new();
@@ -154,6 +167,9 @@ public class TextBlockWrapper
             Edging = edging,
             // Disable subpixel positioning when aliased rendering is requested for consistency
             SubpixelPositioning = edging != SKFontEdging.Alias,
+            // Apply LCD filter settings to simulate Windows ClearType
+            LcdFilterGamma = LcdFilterGamma,
+            LcdFilterContrast = LcdFilterContrast,
         };
         
         // Add selection if provided (matches S&box implementation)

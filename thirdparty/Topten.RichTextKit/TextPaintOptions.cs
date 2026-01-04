@@ -99,6 +99,28 @@ namespace Topten.RichTextKit
 		} = SKFontHinting.Normal;
 
 		/// <summary>
+		/// LCD filter gamma adjustment for subpixel antialiasing.
+		/// Range: 0.0 to 5.0. Default is 0 (no adjustment).
+		/// Higher values (e.g., 1.8-2.2) simulate Windows ClearType gamma, making text appear heavier.
+		/// </summary>
+		public float LcdFilterGamma
+		{
+			get;
+			set;
+		} = 0;
+
+		/// <summary>
+		/// LCD filter contrast adjustment for subpixel antialiasing.
+		/// Range: 0.0 to 1.0. Default is 0 (no adjustment).
+		/// Higher values (e.g., 0.2-0.4) increase edge contrast, simulating Windows ClearType.
+		/// </summary>
+		public float LcdFilterContrast
+		{
+			get;
+			set;
+		} = 0;
+
+		/// <summary>
 		/// A gradient used when rendering text
 		/// </summary>
 		public TextGradient TextGradient
