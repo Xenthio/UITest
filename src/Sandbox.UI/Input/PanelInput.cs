@@ -19,6 +19,7 @@ internal class PanelInput
 
 	internal MouseButtonState[] MouseStates;
 	private Vector2 _lastMousePosition;
+	private Selection _selection = new Selection();
 
 	public PanelInput()
 	{
@@ -63,6 +64,21 @@ internal class PanelInput
 		if (!hoveredAny)
 		{
 			SetHovered(null);
+		}
+
+		// Handle drag selection
+		var leftButton = MouseStates[0]; // mouseleft
+		bool isDragging = leftButton.Active != null && mouseMoved;
+		bool isStarted = leftButton.Active != null && leftButton.JustPressed;
+		bool isEnded = !leftButton.Down && _lastMousePosition != mousePosition;
+
+		if (isDragging || isStarted || isEnded)
+		{
+			var root = panels.FirstOrDefault();
+			if (root != null)
+			{
+				_selection.UpdateSelection(root, Hovered, isDragging, isStarted, isEnded, mousePosition);
+			}
 		}
 
 		// Dispatch onmousemove event if mouse moved and we have an active panel
@@ -206,6 +222,8 @@ internal class PanelInput
 		public string ButtonName { get; init; }
 
 		public bool Pressed;
+		public bool Down;
+		public bool JustPressed;
 		public Panel? Active;
 
 		public MouseButtonState(PanelInput input, string buttonName)
@@ -216,6 +234,9 @@ internal class PanelInput
 
 		public void Update(bool down, Panel? hovered)
 		{
+			JustPressed = !Down && down;
+			Down = down;
+			
 			if (Pressed == down) return;
 			Pressed = down;
 

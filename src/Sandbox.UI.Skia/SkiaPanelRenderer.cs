@@ -1135,6 +1135,54 @@ public class SkiaPanelRenderer : IPanelRenderer
             // Allow custom content drawing
             panel.DrawContent(ref state);
         }
+
+        // Draw caret for TextEntry if focused
+        if (panel is TextEntry textEntry && textEntry.HasFocus && textEntry.Label != null)
+        {
+            DrawTextEntryCaret(canvas, textEntry, ref state);
+        }
+    }
+
+    private void DrawTextEntryCaret(SKCanvas canvas, TextEntry textEntry, ref RenderState state)
+    {
+        // Don't draw caret if there's a selection
+        if (textEntry.Label.HasSelection())
+            return;
+
+        var blinkRate = 0.8f;
+        var timeSinceFocus = textEntry.GetType().GetField("TimeSinceNotInFocus", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.GetValue(textEntry);
+
+        if (timeSinceFocus is float time)
+        {
+            // Proper blink cycle: time % blinkRate creates repeating pattern from 0 to blinkRate
+            var blink = (time % blinkRate) < (blinkRate * 0.5f);
+            if (!blink) return; // Caret is in off phase
+
+            var caret = textEntry.Label.GetCaretRect(textEntry.CaretPosition);
+            
+            // GetCaretRect returns coordinates that already include _textRect.Position.
+            // Since _textRect is set from label.Box.RectInner (which is in parent/TextEntry space),
+            // the caret coordinates are already in TextEntry's coordinate space. No offset needed.
+            
+            caret.Left = MathF.Floor(caret.Left); // avoid subpixel positions
+            caret.Width = 1;
+
+            var opacity = textEntry.Opacity * state.RenderOpacity;
+            var style = textEntry.ComputedStyle;
+            var caretColor = style?.CaretColor ?? style?.FontColor ?? Color.Black;
+
+            using var paint = new SKPaint
+            {
+                Color = ToSKColor(caretColor, opacity),
+                Style = SKPaintStyle.Fill,
+                IsAntialias = false // Crisp 1px line
+            };
+
+            var skRect = new SKRect(caret.Left, caret.Top, caret.Left + caret.Width, caret.Bottom);
+            canvas.DrawRect(skRect, paint);
+        }
     }
 
     private void DrawLabel(SKCanvas canvas, Label label, ref RenderState state)
@@ -1158,8 +1206,19 @@ public class SkiaPanelRenderer : IPanelRenderer
         // Get text rect
         var rect = label.Box.RectInner;
 
-        // Create and configure TextBlock using RichTextKit (matches s&box approach)
-        var textBlock = new TextBlockWrapper();
+        // Get or create cached TextBlockWrapper
+        TextBlockWrapper textBlock;
+        if (label._textBlockWrapper is TextBlockWrapper cached)
+        {
+            textBlock = cached;
+        }
+        else
+        {
+            textBlock = new TextBlockWrapper();
+            label._textBlockWrapper = textBlock;
+        }
+        
+        // Update the text block
         textBlock.Update(processedText, fontFamily, fontSize, fontWeight, fontSmooth);
         
         // Measure with width constraint if wrapping is enabled
@@ -1197,9 +1256,21 @@ public class SkiaPanelRenderer : IPanelRenderer
             y = rect.Bottom - textBlock.MeasuredHeight;
         }
 
-        // Paint the text using RichTextKit with font-smooth settings
+        // Update label's _textRect to match the actual rendered position
+        // This is needed for accurate hit testing in GetLetterAtScreenPosition
+        label._textRect = new Rect(x, y, textBlock.MeasuredWidth, textBlock.MeasuredHeight);
+
+        // Paint the text using RichTextKit with selection if enabled
+        // RichTextKit handles selection rendering automatically like S&box
         var skColor = ToSKColor(textColor, opacity);
-        textBlock.Paint(canvas, x, y, skColor);
+        if (label.ShouldDrawSelection && label.SelectionStart != label.SelectionEnd)
+        {
+            textBlock.Paint(canvas, x, y, skColor, label.SelectionStart, label.SelectionEnd, label.SelectionColor);
+        }
+        else
+        {
+            textBlock.Paint(canvas, x, y, skColor);
+        }
     }
 
     private static SKTypeface GetCachedTypeface(string fontFamily, SKFontStyle fontStyle)

@@ -52,6 +52,21 @@ public class MousePanelEvent : PanelEvent
     public Vector2 LocalPosition;
 
     /// <summary>
+    /// Position of the cursor in screen coordinates (not panel-relative).
+    /// </summary>
+    public Vector2 ScreenPosition
+    {
+        get
+        {
+            if (Target?.FindRootPanel() is RootPanel root)
+            {
+                return root.MousePos;
+            }
+            return LocalPosition;
+        }
+    }
+
+    /// <summary>
     /// Which button triggered the event, in string form.
     /// </summary>
     public new string? Button;

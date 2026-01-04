@@ -93,7 +93,7 @@ internal class TextBlockWrapper
     /// <summary>
     /// Paint the text block to the canvas at the specified position.
     /// </summary>
-    public void Paint(SKCanvas canvas, float x, float y, SKColor color)
+    public void Paint(SKCanvas canvas, float x, float y, SKColor color, int selectionStart = 0, int selectionEnd = 0, Color? selectionColor = null)
     {
         if (_block == null)
             return;
@@ -121,8 +121,21 @@ internal class TextBlockWrapper
         {
             Edging = edging,
             // Disable subpixel positioning when aliased rendering is requested for consistency
-            SubpixelPositioning = edging != SKFontEdging.Alias, 
+            SubpixelPositioning = edging != SKFontEdging.Alias,
         };
+        
+        // Add selection if provided (matches S&box implementation)
+        // Only render selection when there's an actual range (start != end)
+        if ((selectionStart > 0 || selectionEnd > 0) && selectionStart != selectionEnd)
+        {
+            paintOptions.Selection = new TextRange(selectionStart, selectionEnd);
+            paintOptions.SelectionColor = selectionColor.HasValue 
+                ? new SKColor((byte)(selectionColor.Value.r * 255), 
+                             (byte)(selectionColor.Value.g * 255), 
+                             (byte)(selectionColor.Value.b * 255), 
+                             (byte)(selectionColor.Value.a * 255))
+                : new SKColor(0, 255, 255, 100); // Default cyan with alpha
+        }
         
         // Paint the text block with configured options
         _block.Paint(canvas, new SKPoint(x, y), paintOptions);
@@ -137,4 +150,108 @@ internal class TextBlockWrapper
     /// Get the measured height of the text block.
     /// </summary>
     public float MeasuredHeight => _block?.MeasuredHeight ?? 0;
+
+    /// <summary>
+    /// Get the caret rect at a given character index.
+    /// Returns the position and size of the caret for rendering.
+    /// </summary>
+    public Rect GetCaretRect(int charIndex)
+    {
+        if (_block == null)
+            return new Rect(0, 0, 2, 10);
+
+        try
+        {
+            var caretInfo = _block.GetCaretInfo(new CaretPosition { CodePointIndex = charIndex });
+            
+            return new Rect(
+                (float)caretInfo.CaretRectangle.Left,
+                (float)caretInfo.CaretRectangle.Top,
+                2f, // Standard caret width
+                (float)caretInfo.CaretRectangle.Height
+            );
+        }
+        catch (Exception ex)
+        {
+            // Log and fallback if index is out of range
+            Console.WriteLine($"TextBlockWrapper.GetCaretRect: Failed for charIndex {charIndex}: {ex.Message}");
+            return new Rect(0, 0, 2, _fontSize * 1.2f);
+        }
+    }
+
+    /// <summary>
+    /// Get the character index at a given position.
+    /// Returns -1 if no text or position is invalid.
+    /// </summary>
+    public int HitTest(float x, float y)
+    {
+        if (_block == null)
+            return -1;
+
+        try
+        {
+            var hit = _block.HitTest(x, y);
+            return hit.ClosestCodePointIndex;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"TextBlockWrapper.HitTest: Failed at ({x}, {y}): {ex.Message}");
+            return -1;
+        }
+    }
+
+    /// <summary>
+    /// Get the rectangles for a text selection range.
+    /// Returns a list of rectangles that cover the selected text.
+    /// </summary>
+    public List<Rect> GetSelectionRects(int selectionStart, int selectionEnd)
+    {
+        var rects = new List<Rect>();
+        
+        if (_block == null || selectionStart >= selectionEnd)
+            return rects;
+
+        try
+        {
+            // Get rectangles for the selection range
+            var lines = _block.Lines;
+            if (lines == null || lines.Count == 0)
+                return rects;
+
+            // For each line, check if it contains part of the selection
+            foreach (var line in lines)
+            {
+                var lineStart = line.Start;
+                var lineEnd = line.Start + line.Length;
+
+                // Check if this line overlaps with the selection
+                if (lineEnd <= selectionStart || lineStart >= selectionEnd)
+                    continue;
+
+                // Calculate the intersection
+                var rangeStart = Math.Max(lineStart, selectionStart);
+                var rangeEnd = Math.Min(lineEnd, selectionEnd);
+
+                // Get caret positions for start and end of selection in this line
+                var startCaret = _block.GetCaretInfo(new CaretPosition { CodePointIndex = rangeStart });
+                var endCaret = _block.GetCaretInfo(new CaretPosition { CodePointIndex = rangeEnd });
+
+                var rect = new Rect(
+                    (float)startCaret.CaretRectangle.Left,
+                    (float)line.YCoord,
+                    (float)(endCaret.CaretRectangle.Left - startCaret.CaretRectangle.Left),
+                    (float)line.Height
+                );
+
+                rects.Add(rect);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"TextBlockWrapper.GetSelectionRects: Failed for range ({selectionStart}, {selectionEnd}): {ex.Message}");
+            // Return empty list on failure
+        }
+
+        return rects;
+    }
 }
