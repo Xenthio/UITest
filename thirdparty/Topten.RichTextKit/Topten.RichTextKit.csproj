@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\BidiClasses.trie" />
+    <None Remove="Resources\GraphemeClusterClasses.trie" />
+    <None Remove="Resources\LineBreakClasses.trie" />
+    <None Remove="Resources\WordBoundaryClasses.trie" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="3.116.0" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="3.116.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Sandbox.UI\Sandbox.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\BidiClasses.trie" />
+    <EmbeddedResource Include="Resources\GraphemeClusterClasses.trie" />
+    <EmbeddedResource Include="Resources\LineBreakClasses.trie" />
+    <EmbeddedResource Include="Resources\WordBoundaryClasses.trie" />
+  </ItemGroup>
+
+</Project>

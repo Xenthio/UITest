@@ -448,18 +448,3 @@ The themes in `themes/XGUI/` are ported from [XGUI-3](https://github.com/Xenthio
 - [XGUI-3](https://github.com/Xenthio/XGUI-3)
 
 
-## RichTextKit Submodule Note
-
-The RichTextKit submodule includes custom modifications for text overflow support:
-- TextOverflow.None enum value
-- WordBreakMode enum (Word, Character)  
-- NoWrap and WordBreak properties on TextBlock
-
-Current submodule commit: 15c573eb657aede96ef3c477a6699f04e6a8c93c
-
-To push these changes to the RichTextKit fork:
-```bash
-cd thirdparty/RichTextKit
-git push origin HEAD:refs/heads/text-overflow-support
-```
-
