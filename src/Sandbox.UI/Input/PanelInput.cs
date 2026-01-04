@@ -68,9 +68,9 @@ internal class PanelInput
 
 		// Handle drag selection
 		var leftButton = MouseStates[0]; // mouseleft
-		bool isDragging = leftButton.Active != null && mouseMoved;
+		bool isDragging = leftButton.Active != null && mouseMoved && leftButton.Down;
 		bool isStarted = leftButton.Active != null && leftButton.JustPressed;
-		bool isEnded = !leftButton.Down && _lastMousePosition != mousePosition;
+		bool isEnded = leftButton.JustReleased; // Selection ends when mouse button is released
 
 		if (isDragging || isStarted || isEnded)
 		{
@@ -224,6 +224,7 @@ internal class PanelInput
 		public bool Pressed;
 		public bool Down;
 		public bool JustPressed;
+		public bool JustReleased;
 		public Panel? Active;
 
 		public MouseButtonState(PanelInput input, string buttonName)
@@ -235,6 +236,7 @@ internal class PanelInput
 		public void Update(bool down, Panel? hovered)
 		{
 			JustPressed = !Down && down;
+			JustReleased = Down && !down;
 			Down = down;
 			
 			if (Pressed == down) return;
