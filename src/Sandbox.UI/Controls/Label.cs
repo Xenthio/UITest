@@ -167,6 +167,34 @@ public partial class Label : Panel
     /// </summary>
     public int TextLength => StringInfo.LengthInTextElements;
 
+    internal override void PreLayout(LayoutCascade cascade)
+    {
+        base.PreLayout(cascade);
+
+        // Check if CSS content property is set and use it to override the text
+        // This is how S&box handles it - see engine/Sandbox.Engine/Systems/UI/Controls/Label.cs
+        string styleContent = null;
+
+        if (ComputedStyle?.Content != null)
+        {
+            styleContent = ComputedStyle.Content;
+
+            // If content starts with '#', treat it as a language token (not implemented yet)
+            // For now, just use the content as-is
+        }
+
+        // Use style content if set, otherwise use the Text property
+        var effectiveText = styleContent ?? _text ?? "";
+        
+        // Only update if different to avoid unnecessary relayout
+        if (_text != effectiveText)
+        {
+            _text = effectiveText;
+            StringInfo.String = effectiveText;
+            YogaNode?.MarkDirty();
+        }
+    }
+
     public override void FinalLayout(Vector2 offset)
     {
         base.FinalLayout(offset);
