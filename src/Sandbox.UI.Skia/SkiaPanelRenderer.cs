@@ -51,6 +51,10 @@ public class SkiaPanelRenderer : IPanelRenderer
         // This ensures measurement works even if RegisterAsActiveRenderer isn't called
         Label.TextMeasureFunc = (text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping) => 
             MeasureTextStatic(text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping);
+        
+        // Register extended text measurement function with overflow support (matches s&box)
+        Label.TextMeasureFuncEx = (text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping, textOverflow, wordBreak, whiteSpace) =>
+            MeasureTextStaticEx(text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping, textOverflow, wordBreak, whiteSpace);
     }
 
     /// <summary>
@@ -72,6 +76,9 @@ public class SkiaPanelRenderer : IPanelRenderer
     {
         Label.TextMeasureFunc = (text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping) => 
             MeasureTextStatic(text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping);
+        
+        Label.TextMeasureFuncEx = (text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping, textOverflow, wordBreak, whiteSpace) =>
+            MeasureTextStaticEx(text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping, textOverflow, wordBreak, whiteSpace);
     }
 
     /// <summary>
@@ -88,9 +95,22 @@ public class SkiaPanelRenderer : IPanelRenderer
     /// </summary>
     private static Vector2 MeasureTextStatic(string text, string? fontFamily, float fontSize, int fontWeight, float maxWidth, bool allowWrapping)
     {
-        // Create a TextBlock wrapper for measurement
+        // Use defaults for overflow properties
+        return MeasureTextStaticEx(text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping,
+                                   TextOverflow.None, WordBreak.Normal, WhiteSpace.Normal);
+    }
+    
+    /// <summary>
+    /// Extended static text measurement with overflow property support (matches s&box).
+    /// </summary>
+    private static Vector2 MeasureTextStaticEx(string text, string? fontFamily, float fontSize, int fontWeight, 
+                                               float maxWidth, bool allowWrapping,
+                                               TextOverflow textOverflow, WordBreak wordBreak, WhiteSpace whiteSpace)
+    {
+        // Create a TextBlock wrapper for measurement with overflow properties
         var textBlock = new TextBlockWrapper();
-        textBlock.Update(text, fontFamily, fontSize, fontWeight);
+        textBlock.Update(text, fontFamily, fontSize, fontWeight, FontSmooth.Auto, 
+                        textOverflow, wordBreak, whiteSpace);
         
         // If wrapping is disabled or no width constraint, measure without width limit
         if (!allowWrapping || float.IsNaN(maxWidth) || maxWidth <= 0)
@@ -1218,8 +1238,14 @@ public class SkiaPanelRenderer : IPanelRenderer
             label._textBlockWrapper = textBlock;
         }
         
-        // Update the text block
-        textBlock.Update(processedText, fontFamily, fontSize, fontWeight, fontSmooth);
+        // Get overflow-related style properties (matches s&box)
+        var textOverflow = style.TextOverflow ?? TextOverflow.None;
+        var wordBreak = style.WordBreak ?? WordBreak.Normal;
+        var whiteSpace = style.WhiteSpace ?? WhiteSpace.Normal;
+        
+        // Update the text block with all style properties
+        textBlock.Update(processedText, fontFamily, fontSize, fontWeight, fontSmooth, 
+                        textOverflow, wordBreak, whiteSpace);
         
         // Measure with width constraint if wrapping is enabled
         var shouldWrap = style.WhiteSpace != WhiteSpace.NoWrap;
