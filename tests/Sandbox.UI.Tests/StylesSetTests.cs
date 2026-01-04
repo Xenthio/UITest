@@ -162,11 +162,15 @@ public class StylesSetTests
 		Assert.Equal(1f, styles.FlexShrink);
 		Assert.Equal(LengthUnit.Auto, styles.FlexBasis?.Unit);
 
-		// "initial" expands to 0 1 auto (s&box behavior: shrink=0, grow=1)
+		// "initial" behavior from s&box (not CSS spec compliant)
+		// NOTE: CSS spec says "flex: initial" should be "0 1 auto" (grow=0, shrink=1, basis=auto)
+		// However, s&box implements it as FlexShrink=0, FlexGrow=1, FlexBasis=auto
+		// This test validates the s&box behavior to maintain compatibility with existing s&box UI code
+		// Source: https://github.com/Facepunch/sbox-public/blob/main/engine/Sandbox.Engine/Systems/UI/Styles/Styles.Set.cs#L556-563
 		styles = new Styles();
 		Assert.True(styles.Set("flex", "initial"));
-		Assert.Equal(1f, styles.FlexGrow); // s&box has grow=1
-		Assert.Equal(0f, styles.FlexShrink); // s&box has shrink=0
+		Assert.Equal(1f, styles.FlexGrow); // s&box: FlexGrow=1 (not spec compliant)
+		Assert.Equal(0f, styles.FlexShrink); // s&box: FlexShrink=0 (not spec compliant)
 		Assert.Equal(LengthUnit.Auto, styles.FlexBasis?.Unit);
 	}
 
