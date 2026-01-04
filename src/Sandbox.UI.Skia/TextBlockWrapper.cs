@@ -104,19 +104,24 @@ internal class TextBlockWrapper
             _style.TextColor = color;
         }
         
-        // Configure paint options to match S&box's TextBlock implementation
-        // S&box uses grayscale antialiasing (NOT subpixel) with full hinting
-        // This produces thicker, more substantial text that matches native Windows
-        // Reference: engine/Sandbox.Engine/Systems/UI/Engine/TextBlock.cs lines 556-562
+        // Configure paint options for Windows ClearType-style rendering
+        // Windows ClearType uses LCD subpixel antialiasing with light hinting
+        // This produces sharp, thick text that matches native Windows applications
         var edging = _fontSmooth switch
         {
-            FontSmooth.None => SKFontEdging.Alias,  // No antialiasing (matches S&box FontSmooth.Never)
-            _ => SKFontEdging.Antialias,  // Grayscale antialiasing for all other modes (matches S&box)
+            FontSmooth.None => SKFontEdging.Alias,  // No antialiasing
+            FontSmooth.GrayscaleAntialiased => SKFontEdging.Antialias,  // Standard grayscale antialiasing 
+            _ => SKFontEdging.SubpixelAntialias,  // LCD subpixel rendering for all other modes
         };
         
-        // S&box always uses Full hinting regardless of font-smooth setting
-        // This provides strong grid-fitting and makes text thicker
-        var hinting = SKFontHinting.Full;
+        // Windows ClearType typically uses Slight hinting for thicker, more natural text
+        // Full hinting can make text too blocky, Normal can make it too thin
+        // Slight provides the best balance for Windows-like appearance
+        var hinting = _fontSmooth switch
+        {
+            FontSmooth.None => SKFontHinting.None,  // No hinting for aliased text
+            _ => SKFontHinting.Slight,  // Slight hinting matches Windows ClearType
+        };
         
         var paintOptions = new TextPaintOptions
         {
