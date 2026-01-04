@@ -104,14 +104,11 @@ public partial class Popup : BasePopup
         Position = position;
         PopupSourceOffset = offset;
 
-        // Try to create OS-level popup window first via callback
-        if (TryCreateOSWindow())
-        {
-            Console.WriteLine("[Popup] Created OS-level popup window");
-            return;
-        }
+        // Don't try to create OS window yet - defer until first Tick when children are added
+        // This allows ComboBox and other controls to add children before OS window creation
+        _needsOSWindowCreation = OSWindowFactory != null;
 
-        // Fallback to in-window popup
+        // Fallback to in-window popup for now
         Parent = sourcePanel.FindPopupPanel();
         AddClass("popup-panel");
         PositionMe(true);
@@ -164,6 +161,11 @@ public partial class Popup : BasePopup
     /// The OS-level popup window, if one was created
     /// </summary>
     private object? _osWindow;
+
+    /// <summary>
+    /// Flag indicating we need to create an OS window on first tick
+    /// </summary>
+    private bool _needsOSWindowCreation = false;
 
     /// <summary>
     /// Try to create an OS-level popup window. Returns true if successful.
@@ -344,6 +346,18 @@ public partial class Popup : BasePopup
     public override void Tick()
     {
         base.Tick();
+
+        // Try to create OS window on first tick if needed and we have children
+        if (_needsOSWindowCreation && ChildrenCount > 0)
+        {
+            _needsOSWindowCreation = false;
+            
+            if (TryCreateOSWindow())
+            {
+                Console.WriteLine($"[Popup] Created OS-level popup window on first tick with {ChildrenCount} children");
+                return; // Don't do normal positioning for OS windows
+            }
+        }
 
         if (CloseWhenParentIsHidden && PopupSource != null && !PopupSource.IsValid())
         {
