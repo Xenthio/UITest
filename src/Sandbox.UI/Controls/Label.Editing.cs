@@ -488,8 +488,8 @@ public partial class Label
                 var textLocalX = screenPos.x - _textRect.Left;
                 var textLocalY = screenPos.y - _textRect.Top;
                 
-                dynamic textBlock = _textBlockWrapper;
-                int index = textBlock.HitTest(textLocalX, textLocalY);
+                dynamic wrapper = _textBlockWrapper;
+                int index = wrapper.HitTest(textLocalX, textLocalY);
                 return index >= 0 ? index : 0;
             }
             catch (Exception ex)

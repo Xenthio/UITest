@@ -7,7 +7,7 @@ namespace Sandbox.UI.Skia;
 /// Wrapper around RichTextKit's TextBlock for text measurement and rendering.
 /// Based on s&box's TextBlock implementation in engine/Sandbox.Engine/Systems/UI/Engine/TextBlock.cs
 /// </summary>
-internal class TextBlockWrapper
+public class TextBlockWrapper
 {
     private Topten.RichTextKit.TextBlock? _block;
     private Topten.RichTextKit.Style? _style;
