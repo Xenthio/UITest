@@ -176,7 +176,15 @@ public class PopupWindow : IDisposable
                 RootPanel.PanelBounds = new Rect(0, 0, size.X, size.Y);
                 RootPanel.InvalidateLayout();
                 RootPanel.Layout();
-                Console.WriteLine($"[PopupWindow] RootPanel initialized with bounds: {size.X}x{size.Y}");
+                
+                // Debug: Check what's in the RootPanel
+                var childCount = RootPanel.ChildrenCount;
+                Console.WriteLine($"[PopupWindow] RootPanel initialized with bounds: {size.X}x{size.Y}, children: {childCount}");
+                if (childCount > 0)
+                {
+                    var child = RootPanel.GetChild(0);
+                    Console.WriteLine($"[PopupWindow] First child: {child?.GetType().Name}, childCount: {child?.ChildrenCount}");
+                }
             }
             
             _initialized = true;
@@ -246,6 +254,18 @@ public class PopupWindow : IDisposable
             // Ensure layout is up to date
             RootPanel.Layout();
 
+            // Debug: Log rendering occasionally
+            if (_renderCount++ % 60 == 0) // Every 60 frames
+            {
+                var childCount = RootPanel.ChildrenCount;
+                Console.WriteLine($"[PopupWindow] Rendering frame {_renderCount}, RootPanel children: {childCount}");
+                if (childCount > 0)
+                {
+                    var child = RootPanel.GetChild(0);
+                    Console.WriteLine($"[PopupWindow]   First child: {child?.GetType().Name}, visible: {child?.IsVisible}, children: {child?.ChildrenCount}");
+                }
+            }
+
             // Render the panel tree
             _backend.Render(RootPanel);
         }
@@ -255,6 +275,8 @@ public class PopupWindow : IDisposable
             Console.WriteLine($"[PopupWindow] Stack trace: {ex.StackTrace}");
         }
     }
+    
+    private int _renderCount = 0;
 
     private void OnFocusChanged(bool focused)
     {

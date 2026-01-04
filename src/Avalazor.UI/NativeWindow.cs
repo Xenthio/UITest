@@ -139,6 +139,11 @@ public class NativeWindow : INativeWindow, IDisposable
                 screenY += winY;
             }
 
+            // Create a container for the popup content
+            // We can't just pass the popup panel directly because it might not have children yet
+            // Instead, we create a container and the popup will be its child
+            Console.WriteLine($"[PopupWindowFactory] Creating OS window for popup {popup.GetType().Name} with {popup.ChildrenCount} children");
+            
             // Create popup window with the popup panel as content
             var osWindow = PopupWindowManager.CreatePopup(screenX, screenY, width, height, popup, sourcePanel);
             return osWindow;
@@ -146,6 +151,7 @@ public class NativeWindow : INativeWindow, IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"[NativeWindow] Error in PopupWindowFactory: {ex.Message}");
+            Console.WriteLine($"[NativeWindow] Stack trace: {ex.StackTrace}");
             return null;
         }
     }

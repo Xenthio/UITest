@@ -49,7 +49,9 @@ public static class PopupWindowManager
                 rootPanel.PanelBounds = new Rect(0, 0, width, height);
                 
                 // Add content to root panel
+                Console.WriteLine($"[PopupWindowManager] Adding content panel {content.GetType().Name} with {content.ChildrenCount} children to RootPanel");
                 content.Parent = rootPanel;
+                Console.WriteLine($"[PopupWindowManager] After parent assignment, RootPanel has {rootPanel.ChildrenCount} children");
 
                 // Create popup window - it will handle its own event loop integration
                 var popup = new PopupWindow(screenX, screenY, width, height, BackendType);
