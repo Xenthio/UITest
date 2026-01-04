@@ -1,0 +1,55 @@
+.content-test-container {
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    background-color: #2b2d31;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.test-section {
+    flex-direction: column;
+    gap: 15px;
+}
+
+.title-label {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+
+.example-row {
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+}
+
+.example-row label {
+    padding: 10px 15px;
+    background-color: #383a40;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+/* CSS content property tests */
+.label-with-text {
+    content: "This text is from CSS content property!";
+}
+
+.label-no-text {
+    content: "Content property works without initial text";
+}
+
+.label-quoted {
+    content: "Double quoted content";
+}
+
+.label-single-quoted {
+    content: 'Single quoted content';
+}
+
+.label-unquoted {
+    content: none;
+}
