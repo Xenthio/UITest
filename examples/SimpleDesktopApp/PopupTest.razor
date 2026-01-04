@@ -1,0 +1,50 @@
+@namespace SimpleDesktopApp
+@using Sandbox.UI
+@inherits Window
+@attribute [StyleSheet("/themes/XGUI/DefaultStyles/OliveGreen.scss")]
+
+<root title="Popup Test" windowwidth="600" windowheight="400" hasminimise="true" hasmaximise="true">
+    <div class="window-content" style="padding: 20px;">
+        <h2>Popup System Test</h2>
+        
+        <div style="margin: 20px 0;">
+            <label>Test ComboBox (uses Popup system):</label>
+            <combobox default="Option 1">
+                <option value="1">Option 1</option>
+                <option value="2">Option 2</option>
+                <option value="3">Option 3</option>
+                <option value="4">Option 4 - Long text option to test wrapping</option>
+                <option value="5">Option 5</option>
+            </combobox>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <label>Another ComboBox:</label>
+            <combobox default="Theme A">
+                <option value="a">Theme A</option>
+                <option value="b">Theme B</option>
+                <option value="c">Theme C</option>
+            </combobox>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <p>The popup system now:</p>
+            <ul>
+                <li>Uses S&box-compatible Popup class</li>
+                <li>Positions relative to source element</li>
+                <li>Closes when clicking outside</li>
+                <li>Supports multiple positioning modes</li>
+            </ul>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3>Limitations:</h3>
+            <p>Popups cannot extend beyond the window boundaries because they render in the same graphics context. To achieve true OS-level popup windows that can extend beyond the main window:</p>
+            <ul>
+                <li>Would require separate OS windows for each popup</li>
+                <li>Complex threading for event loops</li>
+                <li>Platform-specific window management</li>
+            </ul>
+        </div>
+    </div>
+</root>
