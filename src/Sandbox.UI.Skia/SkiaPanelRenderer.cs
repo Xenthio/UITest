@@ -269,6 +269,20 @@ public class SkiaPanelRenderer : IPanelRenderer
         // Apply transform matrix if present
         var hasTransform = ApplyPanelTransform(_canvas, panel);
 
+        // Apply clipping for overflow:hidden (matches S&box behavior)
+        bool hasClipping = false;
+        if (panel.ComputedStyle.Overflow == OverflowMode.Hidden)
+        {
+            var clipRect = new SKRect(
+                panel.Box.Rect.Left,
+                panel.Box.Rect.Top,
+                panel.Box.Rect.Right,
+                panel.Box.Rect.Bottom
+            );
+            _canvas.ClipRect(clipRect);
+            hasClipping = true;
+        }
+
         // Draw background
         if (panel.HasBackground)
         {

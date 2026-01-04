@@ -107,12 +107,42 @@ public partial class Label
 
     /// <summary>
     /// Put the caret within the visible region.
+    /// Scrolls the parent panel to keep the caret visible (matches S&box).
     /// </summary>
     public void ScrollToCaret()
     {
-        // TODO: Implement scrolling for single-line text entries
-        // For now, just track the scroll position
-        if (Multiline) return;
+        if (Multiline) return; // Only for single-line text entries
+        
+        var parent = Parent;
+        if (parent == null) return;
+        
+        // Get the caret rectangle
+        var caretRect = GetCaretRect(CaretPosition);
+        if (caretRect.Width == 0 && caretRect.Height == 0) return;
+        
+        // Calculate the caret position relative to the parent's visible area
+        var parentBox = parent.Box.Rect;
+        var caretX = caretRect.Left + Box.Rect.Left; // Caret X in parent coordinates
+        
+        // Get current scroll offset
+        var currentScrollX = parent.ScrollOffset.x;
+        
+        // Define visible region with some padding (like S&box)
+        const float padding = 10f;
+        var visibleLeft = parentBox.Left - currentScrollX + padding;
+        var visibleRight = parentBox.Right - currentScrollX - padding;
+        
+        // Adjust scroll if caret is outside visible region
+        if (caretX < visibleLeft)
+        {
+            // Scroll left to show caret
+            parent.ScrollOffset = new Vector2(-(caretX - parentBox.Left - padding), parent.ScrollOffset.y);
+        }
+        else if (caretX > visibleRight)
+        {
+            // Scroll right to show caret  
+            parent.ScrollOffset = new Vector2(-(caretX - parentBox.Right + padding), parent.ScrollOffset.y);
+        }
     }
 
     /// <summary>

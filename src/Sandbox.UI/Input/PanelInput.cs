@@ -288,6 +288,7 @@ internal class PanelInput
 			{
 				// Just send onmouseup and remove hover from active
 				Active.CreateEvent(new MousePanelEvent("onmouseup", Active, ButtonName));
+				Active.ProcessPendingEvents(); // FIX: Process mouse up events even when not clicking
 				Panel.Switch(PseudoClass.Hover, false, Active, hovered);
 			}
 
