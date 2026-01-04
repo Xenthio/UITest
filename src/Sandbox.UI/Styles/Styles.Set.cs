@@ -461,9 +461,9 @@ namespace Sandbox.UI
 				}
 				else if ( word == "initial" )
 				{
-					// "initial" expands to 0 1 auto
-					FlexShrink ??= 0;
-					FlexGrow ??= 1;
+					// "initial" expands to 0 1 auto (grow shrink basis)
+					FlexGrow ??= 0;
+					FlexShrink ??= 1;
 					FlexBasis = Length.Auto;
 
 					return true;
