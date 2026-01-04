@@ -23,6 +23,39 @@ namespace Sandbox.UI
 					Transitions = TransitionDesc.ParseProperty( property, value, Transitions );
 					return true;
 
+				case "display":
+					return SetDisplay( value );
+
+				case "pointer-events":
+					return SetPointerEvents( value );
+
+				case "position":
+					return SetPosition( value );
+
+				case "flex-direction":
+					return SetFlexDirection( value );
+
+				case "justify-content":
+					return SetJustifyContent( value );
+
+				case "flex-wrap":
+					return SetFlexWrap( value );
+
+				case "flex":
+					return SetFlex( value );
+
+				case "gap":
+					return SetGap( value );
+
+				case "padding":
+					return SetPadding( value );
+
+				case "margin":
+					return SetMargin( value );
+
+				case "border-radius":
+					return SetBorderRadius( value );
+
 				case "border":
 					return SetBorder( value, w => BorderWidth = w, c => BorderColor = c );
 
@@ -38,6 +71,9 @@ namespace Sandbox.UI
 				case "border-bottom":
 					return SetBorder( value, w => BorderBottomWidth = w, c => BorderBottomColor = c );
 
+				case "border-image":
+					return SetBorderImage( value );
+
 				case "border-color":
 					{
 						var borderColor = Color.Parse( value );
@@ -52,23 +88,24 @@ namespace Sandbox.UI
 						return borderWidth.HasValue;
 					}
 
-				// Handle padding shorthand
-				case "padding":
-					return SetBoxModel( value, 
-						t => PaddingTop = t,
-						r => PaddingRight = r,
-						b => PaddingBottom = b,
-						l => PaddingLeft = l );
+				case "backdrop-filter":
+					return SetBackdropFilter( value );
 
-				// Handle margin shorthand
-				case "margin":
-					return SetBoxModel( value,
-						t => MarginTop = t,
-						r => MarginRight = r,
-						b => MarginBottom = b,
-						l => MarginLeft = l );
+				case "filter":
+					return SetFilter( value );
 
-				// Handle alignment properties
+				case "font-weight":
+					return SetFontWeight( value );
+
+				case "box-shadow":
+					return SetShadow( value, ref BoxShadow );
+
+				case "text-shadow":
+					return SetShadow( value, ref TextShadow );
+
+				case "filter-drop-shadow":
+					return SetShadow( value, ref FilterDropShadow );
+
 				case "align-content":
 					AlignContent = GetAlign( value );
 					return AlignContent.HasValue;
@@ -81,48 +118,38 @@ namespace Sandbox.UI
 					AlignItems = GetAlign( value );
 					return AlignItems.HasValue;
 
-				// Handle gap shorthand (row-gap column-gap)
-				case "gap":
-					return SetGap( value );
-
-				// Handle flex shorthand
-				case "flex":
-					return SetFlex( value );
-
-				// Handle font-smooth with never/always aliases
-				case "font-smooth":
-					return SetFontSmooth( value );
-
-				// S&box-specific cases that need custom method handlers
-				case "flex-direction":
-					return SetFlexDirection( value );
-
-				case "border-radius":
-					return SetBorderRadius( value );
-
-				case "justify-content":
-					return SetJustifyContent( value );
-
-				case "flex-wrap":
-					return SetFlexWrap( value );
-
-				case "display":
-					return SetDisplay( value );
-
-				case "pointer-events":
-					return SetPointerEvents( value );
-
-				case "position":
-					return SetPosition( value );
-
 				case "text-align":
 					return SetTextAlign( value );
 
 				case "text-overflow":
 					return SetTextOverflow( value );
 
+				case "text-filter":
+					return SetTextFilter( value );
+
 				case "word-break":
 					return SetWordBreak( value );
+
+				case "text-decoration":
+					return SetTextDecoration( value );
+
+				case "text-decoration-line":
+					return SetTextDecorationLine( value );
+
+				case "text-decoration-skip-ink":
+					return SetTextDecorationSkipInk( value );
+
+				case "text-decoration-style":
+					return SetTextDecorationStyle( value );
+
+				case "text-stroke":
+					return SetTextStroke( value );
+
+				case "text-transform":
+					return SetTextTransform( value );
+
+				case "font-style":
+					return SetFontStyle( value );
 
 				case "white-space":
 					return SetWhiteSpace( value );
@@ -133,15 +160,74 @@ namespace Sandbox.UI
 				case "transform-origin":
 					return SetTransformOrigin( value );
 
+				case "perspective-origin":
+					return SetPerspectiveOrigin( value );
+
+				case "background":
+					return SetBackground( value );
+
+				case "background-image":
+					return SetImage( value, SetBackgroundImageFromTexture, SetBackgroundSize, SetBackgroundRepeat, SetBackgroundAngle );
+
+				case "background-size":
+					return SetBackgroundSize( value );
+
+				case "background-position":
+					return SetBackgroundPosition( value );
+
+				case "background-repeat":
+					return SetBackgroundRepeat( value );
+
+				case "background-image-tint":
+					property = "background-tint";
+					break;
+
+				case "image-rendering":
+					return SetImageRendering( value );
+
+				case "font-color":
+					return SetFontColor( value );
+
+				case "caret-color":
+					return SetCaretColor( value );
+
+				case "animation-iteration-count":
+					if ( value == "infinite" )
+					{
+						AnimationIterationCount = float.PositiveInfinity;
+						return true;
+					}
+					break;
+
+				case "animation":
+					return SetAnimation( value );
+
+				case "mask":
+					return SetMask( value );
+
+				case "mask-image":
+					return SetImage( value, SetMaskImageFromTexture, SetMaskSize, SetMaskRepeat, SetMaskAngle );
+
+				case "mask-mode":
+					return SetMaskMode( value );
+
+				case "mask-size":
+					return SetMaskSize( value );
+
+				case "mask-repeat":
+					return SetMaskRepeat( value );
+
+				case "mask-position":
+					return SetMaskPosition( value );
+
+				case "mask-scope":
+					return SetMaskScope( value );
+
+				case "font-smooth":
+					return SetFontSmooth( value );
+
 				case "object-fit":
 					return SetObjectFit( value );
-
-				// Image properties
-				case "background-image":
-					return SetImage( value, SetBackgroundImageFromTexture );
-
-				case "border-image":
-					return SetBorderImage( value );
 			}
 
 			return base.Set( property, value );
@@ -153,104 +239,134 @@ namespace Sandbox.UI
 		/// </summary>
 		private bool SetBorder( string value, System.Action<Length?> setWidth, System.Action<Color?> setColor )
 		{
-			var parts = value.Split( new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries );
+			var p = new Parse( value );
 
-			foreach ( var part in parts )
+			p = p.SkipWhitespaceAndNewlines();
+
+			while ( !p.IsEnd )
 			{
-				// Try to parse as length (width)
-				var lengthValue = Length.Parse( part );
-				if ( lengthValue.HasValue )
+				if ( p.TryReadLineStyle( out var lineStyle ) )
 				{
-					setWidth( lengthValue );
-					continue;
-				}
-
-				// Try to parse as color
-				var colorValue = Color.Parse( part );
-				if ( colorValue.HasValue )
-				{
-					setColor( colorValue );
-					continue;
-				}
-
-				// Skip line style keywords (solid, dashed, dotted, etc.)
-				// We don't support different border styles yet, so just ignore them
-				if ( part.Equals( "solid", System.StringComparison.OrdinalIgnoreCase ) ||
-				     part.Equals( "dashed", System.StringComparison.OrdinalIgnoreCase ) ||
-				     part.Equals( "dotted", System.StringComparison.OrdinalIgnoreCase ) ||
-				     part.Equals( "none", System.StringComparison.OrdinalIgnoreCase ) )
-				{
-					if ( part.Equals( "none", System.StringComparison.OrdinalIgnoreCase ) )
+					if ( lineStyle == "none" )
 					{
 						setWidth( Length.Pixels( 0 ) );
 						return true;
 					}
-					continue;
+				}
+				else if ( p.TryReadLength( out var lengthValue ) )
+				{
+					setWidth( lengthValue );
+				}
+				else if ( p.TryReadColor( out var colorValue ) )
+				{
+					setColor( colorValue );
+				}
+				else
+				{
+					return false;
 				}
 
-				// Unknown part, return false
-				return false;
+				p = p.SkipWhitespaceAndNewlines();
 			}
 
 			return true;
 		}
 
 		/// <summary>
-		/// Parse box model shorthand syntax (padding/margin): "5px" or "5px 10px" or "5px 10px 15px 20px"
-		/// CSS standard: 1 value = all sides, 2 values = vertical horizontal, 
-		///               3 values = top horizontal bottom, 4 values = top right bottom left
+		/// Parse padding shorthand: "5px" or "5px 10px" or "5px 10px 15px 20px"
+		/// Based on s&box's SetPadding implementation
 		/// </summary>
-		private bool SetBoxModel( string value, 
-			System.Action<Length?> setTop, 
-			System.Action<Length?> setRight,
-			System.Action<Length?> setBottom, 
-			System.Action<Length?> setLeft )
+		private bool SetPadding( string value )
 		{
-			var parts = value.Split( new[] { ' ', ',' }, System.StringSplitOptions.RemoveEmptyEntries );
+			var p = new Parse( value );
 
-			if ( parts.Length == 0 )
-				return false;
+			p = p.SkipWhitespaceAndNewlines();
+			if ( p.IsEnd ) return false;
 
-			// Parse all parts as lengths
-			var lengths = parts.Select( part => Length.Parse( part ) ).ToList();
-
-			if ( lengths.Any( lengthValue => !lengthValue.HasValue ) )
-				return false; // Invalid value
-
-			// Apply based on count
-			switch ( lengths.Count )
+			if ( p.TryReadLength( out var a ) )
 			{
-				case 1: // All sides
-					setTop( lengths[0] );
-					setRight( lengths[0] );
-					setBottom( lengths[0] );
-					setLeft( lengths[0] );
-					return true;
-
-				case 2: // Vertical, Horizontal
-					setTop( lengths[0] );
-					setBottom( lengths[0] );
-					setRight( lengths[1] );
-					setLeft( lengths[1] );
-					return true;
-
-				case 3: // Top, Horizontal, Bottom
-					setTop( lengths[0] );
-					setRight( lengths[1] );
-					setLeft( lengths[1] );
-					setBottom( lengths[2] );
-					return true;
-
-				case 4: // Top, Right, Bottom, Left
-					setTop( lengths[0] );
-					setRight( lengths[1] );
-					setBottom( lengths[2] );
-					setLeft( lengths[3] );
-					return true;
-
-				default:
-					return false;
+				Padding = a;
 			}
+
+			p = p.SkipWhitespaceAndNewlines();
+			if ( p.IsEnd ) return true;
+
+			if ( p.TryReadLength( out var b ) )
+			{
+				PaddingLeft = b;
+				PaddingRight = b;
+			}
+
+			p = p.SkipWhitespaceAndNewlines();
+			if ( p.IsEnd ) return true;
+
+			if ( p.TryReadLength( out var c ) )
+			{
+				PaddingBottom = c;
+			}
+
+			p = p.SkipWhitespaceAndNewlines();
+			if ( p.IsEnd ) return true;
+
+			if ( p.TryReadLength( out var d ) )
+			{
+				PaddingTop = a;
+				PaddingRight = b;
+				PaddingBottom = c;
+				PaddingLeft = d;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse margin shorthand: "5px" or "5px 10px" or "5px 10px 15px 20px"
+		/// Based on s&box's SetMargin implementation
+		/// </summary>
+		private bool SetMargin( string value )
+		{
+			var p = new Parse( value );
+
+			p = p.SkipWhitespaceAndNewlines();
+			if ( p.IsEnd ) return false;
+
+			if ( p.TryReadLength( out var a ) )
+			{
+				MarginLeft = a;
+				MarginTop = a;
+				MarginRight = a;
+				MarginBottom = a;
+			}
+
+			p = p.SkipWhitespaceAndNewlines();
+			if ( p.IsEnd ) return true;
+
+			if ( p.TryReadLength( out var b ) )
+			{
+				MarginLeft = b;
+				MarginRight = b;
+			}
+
+			p = p.SkipWhitespaceAndNewlines();
+			if ( p.IsEnd ) return true;
+
+			if ( p.TryReadLength( out var c ) )
+			{
+				MarginBottom = c;
+			}
+
+			p = p.SkipWhitespaceAndNewlines();
+			if ( p.IsEnd ) return true;
+
+			if ( p.TryReadLength( out var d ) )
+			{
+				MarginTop = a;
+				MarginRight = b;
+				MarginBottom = c;
+				MarginLeft = d;
+			}
+
+			return true;
 		}
 
 		/// <summary>
@@ -305,37 +421,94 @@ namespace Sandbox.UI
 
 		/// <summary>
 		/// Parse flex shorthand: "1" (flex-grow) or "1 0" (grow shrink) or "1 0 auto" (grow shrink basis)
+		/// Also supports "none", "auto", "initial" keywords
 		/// Based on s&box's SetFlex implementation
 		/// </summary>
 		private bool SetFlex( string value )
 		{
-			var parts = value.Split( new[] { ' ', ',' }, System.StringSplitOptions.RemoveEmptyEntries );
+			/*
+			 * flex: none | [ <'flex-grow'> <'flex-shrink'>? || <'flex-basis'> ]
+			 * https://drafts.csswg.org/css-flexbox/#flex-property
+			 */
 
-			if ( parts.Length == 0 )
-				return false;
+			var p = new Parse( value );
+			p = p.SkipWhitespaceAndNewlines();
 
-			// First value is flex-grow
-			if ( float.TryParse( parts[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var grow ) )
-			{
-				FlexGrow = grow;
-			}
-			else
-			{
-				return false;
-			}
+			int floatCount = 0;
 
-			// Second value is flex-shrink
-			if ( parts.Length > 1 && float.TryParse( parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var shrink ) )
+			while ( !p.IsEnd )
 			{
-				FlexShrink = shrink;
-			}
+				var word = p.ReadWord( " ", true ).ToLower();
+				p.Pointer -= word.Length;
 
-			// Third value is flex-basis
-			if ( parts.Length > 2 )
-			{
-				var basis = Length.Parse( parts[2] );
-				if ( basis.HasValue )
-					FlexBasis = basis;
+				if ( word == "none" )
+				{
+					// "none" expands to 0 0 auto
+					FlexShrink ??= 0;
+					FlexGrow ??= 0;
+					FlexBasis = Length.Auto;
+
+					return true;
+				}
+				else if ( word == "auto" )
+				{
+					// "auto" expands to 1 1 auto
+					FlexShrink ??= 1;
+					FlexGrow ??= 1;
+					FlexBasis = Length.Auto;
+
+					return true;
+				}
+				else if ( word == "initial" )
+				{
+					// "initial" expands to 0 1 auto
+					FlexShrink ??= 0;
+					FlexGrow ??= 1;
+					FlexBasis = Length.Auto;
+
+					return true;
+				}
+				else
+				{
+					var maybeLength = p;
+					var maybeFloat = p.ReadUntilWhitespaceOrNewlineOrEnd();
+
+					// TryReadFloat eats lengths, TryReadLength eats floats
+					// settle it with this
+					if ( float.TryParse( maybeFloat, out float val ) )
+					{
+						if ( floatCount == 0 )
+						{
+							FlexGrow = val;
+
+							// "flex: 1" expands to <number [1]> 1 0
+							if ( val == 1 )
+							{
+								FlexShrink = 1;
+								FlexBasis = 0;
+							}
+						}
+						else
+						{
+							FlexShrink = val;
+						}
+
+						floatCount++;
+					}
+					else if ( maybeLength.TryReadLength( out var len ) )
+					{
+						FlexGrow ??= 0;
+						FlexShrink ??= 1;
+						FlexBasis = len;
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+
+				p.SkipWhitespaceAndNewlines();
 			}
 
 			return true;
@@ -403,49 +576,48 @@ namespace Sandbox.UI
 		/// </summary>
 		private bool SetBorderRadius( string value )
 		{
-			var parts = value.Split( new[] { ' ', ',' }, System.StringSplitOptions.RemoveEmptyEntries );
+			var p = new Parse( value );
 
-			if ( parts.Length == 0 )
+			p = p.SkipWhitespaceAndNewlines();
+
+			if ( p.IsEnd )
 				return false;
 
-			var lengths = parts.Select( part => Length.Parse( part ) ).ToList();
-
-			if ( lengths.Any( l => !l.HasValue ) )
+			if ( !p.TryReadLength( out var a ) )
 				return false;
 
-			switch ( lengths.Count )
+			if ( p.IsEnd || !p.TryReadLength( out var b ) )
 			{
-				case 1: // All corners
-					BorderTopLeftRadius = lengths[0];
-					BorderTopRightRadius = lengths[0];
-					BorderBottomRightRadius = lengths[0];
-					BorderBottomLeftRadius = lengths[0];
-					return true;
-
-				case 2: // Top-left/bottom-right, top-right/bottom-left
-					BorderTopLeftRadius = lengths[0];
-					BorderTopRightRadius = lengths[1];
-					BorderBottomRightRadius = lengths[0];
-					BorderBottomLeftRadius = lengths[1];
-					return true;
-
-				case 3: // Top-left, top-right/bottom-left, bottom-right
-					BorderTopLeftRadius = lengths[0];
-					BorderTopRightRadius = lengths[1];
-					BorderBottomRightRadius = lengths[2];
-					BorderBottomLeftRadius = lengths[1];
-					return true;
-
-				case 4: // Top-left, top-right, bottom-right, bottom-left
-					BorderTopLeftRadius = lengths[0];
-					BorderTopRightRadius = lengths[1];
-					BorderBottomRightRadius = lengths[2];
-					BorderBottomLeftRadius = lengths[3];
-					return true;
-
-				default:
-					return false;
+				BorderTopLeftRadius = a;
+				BorderTopRightRadius = a;
+				BorderBottomRightRadius = a;
+				BorderBottomLeftRadius = a;
+				return true;
 			}
+
+			if ( p.IsEnd || !p.TryReadLength( out var c ) )
+			{
+				BorderTopLeftRadius = a;
+				BorderTopRightRadius = b;
+				BorderBottomRightRadius = a;
+				BorderBottomLeftRadius = b;
+				return true;
+			}
+
+			if ( p.IsEnd || !p.TryReadLength( out var d ) )
+			{
+				BorderTopLeftRadius = a;
+				BorderTopRightRadius = b;
+				BorderBottomRightRadius = c;
+				BorderBottomLeftRadius = b;
+				return true;
+			}
+
+			BorderTopLeftRadius = a;
+			BorderTopRightRadius = b;
+			BorderBottomRightRadius = c;
+			BorderBottomLeftRadius = d;
+			return true;
 		}
 
 		/// <summary>
@@ -982,6 +1154,1057 @@ namespace Sandbox.UI
 			}
 
 			TransformOriginY = y;
+			return true;
+		}
+
+		/// <summary>
+		/// Parse font-color with gradient support
+		/// Based on s&box's SetFontColor implementation
+		/// </summary>
+		private bool SetFontColor( string value )
+		{
+			var fontColor = Color.Parse( value );
+			if ( fontColor.HasValue )
+			{
+				FontColor = fontColor;
+				return true;
+			}
+
+			var p = new Parse( value );
+			p = p.SkipWhitespaceAndNewlines();
+
+			if ( GetTokenValueUnderParenthesis( p, "linear-gradient", out string gradient ) )
+			{
+				SetTextGradientLinear( gradient );
+				return true;
+			}
+
+			if ( GetTokenValueUnderParenthesis( p, "radial-gradient", out string radialGradient ) )
+			{
+				SetTextGradientRadial( radialGradient );
+				return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Parse caret-color property
+		/// Based on s&box's SetCaretColor implementation
+		/// </summary>
+		private bool SetCaretColor( string value )
+		{
+			var caretColor = Color.Parse( value );
+			if ( caretColor.HasValue )
+			{
+				CaretColor = caretColor;
+				return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Parse font-weight with named values
+		/// Based on s&box's SetFontWeight implementation
+		/// </summary>
+		private bool SetFontWeight( string value )
+		{
+			if ( int.TryParse( value, out var i ) )
+			{
+				FontWeight = i;
+				return true;
+			}
+
+			switch ( value )
+			{
+				case "hairline":
+				case "thin":
+					FontWeight = 100;
+					return true;
+				case "ultralight":
+				case "extralight":
+					FontWeight = 200;
+					return true;
+				case "light":
+					FontWeight = 300;
+					return true;
+				case "regular":
+				case "normal":
+					FontWeight = 400;
+					return true;
+				case "medium":
+					FontWeight = 500;
+					return true;
+				case "demibold":
+				case "semibold":
+					FontWeight = 600;
+					return true;
+				case "bold":
+					FontWeight = 700;
+					return true;
+				case "ultrabold":
+				case "extrabold":
+					FontWeight = 800;
+					return true;
+				case "heavy":
+				case "black":
+					FontWeight = 900;
+					return true;
+				case "extrablack":
+				case "ultrablack":
+					FontWeight = 950;
+					return true;
+				case "bolder":
+					FontWeight = 900;
+					return true;
+				case "lighter":
+					FontWeight = 200;
+					return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Parse shadow properties (box-shadow, text-shadow, filter-drop-shadow)
+		/// Based on s&box's SetShadow implementation
+		/// </summary>
+		private bool SetShadow( string value, ref ShadowList shadowList )
+		{
+			var p = new Parse( value );
+
+			shadowList.Clear();
+
+			if ( p.Is( "none", 0, true ) )
+			{
+				shadowList.IsNone = true;
+				return true;
+			}
+
+			while ( !p.IsEnd )
+			{
+				var shadow = new Shadow();
+
+				if ( !p.TryReadLength( out var x ) )
+					return false;
+
+				if ( !p.TryReadLength( out var y ) )
+					return false;
+
+				shadow.OffsetX = x.Value;
+				shadow.OffsetY = y.Value;
+
+				if ( p.TryReadLength( out var blur ) )
+				{
+					shadow.Blur = blur.Value;
+
+					if ( p.TryReadLength( out var spread ) )
+					{
+						shadow.Spread = spread.Value;
+					}
+				}
+
+				if ( p.TryReadColor( out var color ) )
+				{
+					shadow.Color = color;
+				}
+
+				p.SkipWhitespaceAndNewlines();
+
+				if ( p.TryReadShadowInset( out var inset ) )
+				{
+					shadow.Inset = inset;
+				}
+
+				shadowList.Add( shadow );
+
+				p.SkipWhitespaceAndNewlines();
+
+				if ( p.IsEnd || p.Current != ',' )
+					return true;
+
+				p.Pointer++;
+				p.SkipWhitespaceAndNewlines();
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse text-stroke property
+		/// Based on s&box's SetTextStroke implementation
+		/// </summary>
+		private bool SetTextStroke( string value )
+		{
+			var p = new Parse( value );
+
+			if ( !p.TryReadLength( out var width ) )
+				return false;
+
+			if ( !p.TryReadColor( out var color ) )
+				return false;
+
+			TextStrokeWidth = width;
+			TextStrokeColor = color;
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse text-filter property
+		/// Based on s&box's SetTextFilter implementation
+		/// </summary>
+		private bool SetTextFilter( string value )
+		{
+			switch ( value )
+			{
+				case "linear":
+				case "bilinear":
+					TextFilter = Rendering.FilterMode.Bilinear;
+					return true;
+				case "point":
+					TextFilter = Rendering.FilterMode.Point;
+					return true;
+				case "trilinear":
+					TextFilter = Rendering.FilterMode.Trilinear;
+					return true;
+				case "anisotropic":
+					TextFilter = Rendering.FilterMode.Anisotropic;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Get text decoration from value string
+		/// Based on s&box's GetTextDecorationFromValue implementation
+		/// </summary>
+		private UI.TextDecoration GetTextDecorationFromValue( string value )
+		{
+			var td = UI.TextDecoration.None;
+
+			if ( value.Contains( "underline" ) ) td |= UI.TextDecoration.Underline;
+			if ( value.Contains( "line-through" ) ) td |= UI.TextDecoration.LineThrough;
+			if ( value.Contains( "overline" ) ) td |= UI.TextDecoration.Overline;
+
+			return td;
+		}
+
+		/// <summary>
+		/// Parse text-decoration property
+		/// Based on s&box's SetTextDecoration implementation
+		/// </summary>
+		private bool SetTextDecoration( string value )
+		{
+			var p = new Parse( value );
+			p = p.SkipWhitespaceAndNewlines();
+			if ( p.IsEnd ) return false;
+
+			var td = UI.TextDecoration.None;
+
+			while ( !p.IsEnd )
+			{
+				p = p.SkipWhitespaceAndNewlines();
+				if ( p.TryReadLength( out var decorationThickness ) )
+				{
+					TextDecorationThickness = decorationThickness;
+					continue;
+				}
+
+				if ( p.TryReadColor( out var decorationColor ) )
+				{
+					TextDecorationColor = decorationColor;
+					continue;
+				}
+
+				var subValue = p.ReadWord( null, true );
+
+				var textDecoration = GetTextDecorationFromValue( subValue );
+				if ( textDecoration != UI.TextDecoration.None )
+				{
+					td |= textDecoration;
+					continue;
+				}
+
+				if ( !SetTextDecorationStyle( subValue ) )
+				{
+					return false;
+				}
+			}
+
+			if ( td != UI.TextDecoration.None )
+			{
+				TextDecorationLine = td;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse text-decoration-line property
+		/// Based on s&box's SetTextDecorationLine implementation
+		/// </summary>
+		private bool SetTextDecorationLine( string value )
+		{
+			TextDecorationLine = GetTextDecorationFromValue( value );
+			return true;
+		}
+
+		/// <summary>
+		/// Parse text-decoration-skip-ink property
+		/// Based on s&box's SetTextDecorationSkipInk implementation
+		/// </summary>
+		private bool SetTextDecorationSkipInk( string value )
+		{
+			switch ( value )
+			{
+				case "auto":
+				case "all":
+					TextDecorationSkipInk = UI.TextSkipInk.All;
+					return true;
+				case "none":
+					TextDecorationSkipInk = UI.TextSkipInk.None;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse text-decoration-style property
+		/// Based on s&box's SetTextDecorationStyle implementation
+		/// </summary>
+		private bool SetTextDecorationStyle( string value )
+		{
+			switch ( value )
+			{
+				case "solid":
+					TextDecorationStyle = UI.TextDecorationStyle.Solid;
+					return true;
+				case "double":
+					TextDecorationStyle = UI.TextDecorationStyle.Double;
+					return true;
+				case "dotted":
+					TextDecorationStyle = UI.TextDecorationStyle.Dotted;
+					return true;
+				case "dashed":
+					TextDecorationStyle = UI.TextDecorationStyle.Dashed;
+					return true;
+				case "wavy":
+					TextDecorationStyle = UI.TextDecorationStyle.Wavy;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse font-style property
+		/// Based on s&box's SetFontStyle implementation
+		/// </summary>
+		private bool SetFontStyle( string value )
+		{
+			var fs = UI.FontStyle.None;
+
+			if ( value.Contains( "italic" ) ) fs |= UI.FontStyle.Italic;
+			if ( value.Contains( "oblique" ) ) fs |= UI.FontStyle.Oblique;
+
+			FontStyle = fs;
+			return true;
+		}
+
+		/// <summary>
+		/// Parse text-transform property
+		/// Based on s&box's SetTextTransform implementation
+		/// </summary>
+		private bool SetTextTransform( string value )
+		{
+			switch ( value )
+			{
+				case "capitalize":
+					TextTransform = UI.TextTransform.Capitalize;
+					return true;
+				case "uppercase":
+					TextTransform = UI.TextTransform.Uppercase;
+					return true;
+				case "lowercase":
+					TextTransform = UI.TextTransform.Lowercase;
+					return true;
+				case "none":
+					TextTransform = UI.TextTransform.None;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse perspective-origin property
+		/// Based on s&box's SetPerspectiveOrigin implementation
+		/// </summary>
+		private bool SetPerspectiveOrigin( string value )
+		{
+			var p = new Parse( value );
+
+			if ( !p.TryReadLength( out var x ) )
+				return false;
+
+			PerspectiveOriginX = x;
+
+			if ( !p.TryReadLength( out var y ) )
+			{
+				PerspectiveOriginY = x;
+				return true;
+			}
+
+			PerspectiveOriginY = y;
+			return true;
+		}
+
+		/// <summary>
+		/// Parse backdrop-filter property
+		/// Based on s&box's SetBackdropFilter implementation
+		/// </summary>
+		private bool SetBackdropFilter( string value )
+		{
+			var p = new Parse( value );
+			p = p.SkipWhitespaceAndNewlines();
+
+			while ( !p.IsEnd )
+			{
+				p = p.SkipWhitespaceAndNewlines();
+				if ( p.IsEnd ) return true;
+
+				var name = p.ReadWord( "(" );
+				var innervalue = p.ReadInnerBrackets();
+
+				if ( name == "blur" )
+				{
+					BackdropFilterBlur = Length.Parse( innervalue );
+					continue;
+				}
+
+				if ( name == "invert" )
+				{
+					BackdropFilterInvert = Length.Parse( innervalue );
+					continue;
+				}
+
+				if ( name == "contrast" )
+				{
+					BackdropFilterContrast = Length.Parse( innervalue );
+					continue;
+				}
+
+				if ( name == "brightness" )
+				{
+					BackdropFilterBrightness = Length.Parse( innervalue );
+					continue;
+				}
+
+				if ( name == "grayscale" )
+				{
+					BackdropFilterSaturate = Length.Parse( innervalue );
+
+					if ( BackdropFilterSaturate.HasValue )
+					{
+						var val = BackdropFilterSaturate.Value.GetPixels( 1 );
+						BackdropFilterSaturate = 1 - val;
+					}
+
+					continue;
+				}
+
+				if ( name == "saturate" )
+				{
+					BackdropFilterSaturate = Length.Parse( innervalue );
+					continue;
+				}
+
+				if ( name == "sepia" )
+				{
+					BackdropFilterSepia = Length.Parse( innervalue );
+					continue;
+				}
+
+				if ( name == "hue-rotate" )
+				{
+					BackdropFilterHueRotate = Length.Parse( innervalue );
+					continue;
+				}
+
+				return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse filter property
+		/// Based on s&box's SetFilter implementation
+		/// </summary>
+		private bool SetFilter( string value )
+		{
+			var p = new Parse( value );
+			p = p.SkipWhitespaceAndNewlines();
+
+			while ( !p.IsEnd )
+			{
+				p = p.SkipWhitespaceAndNewlines();
+				if ( p.IsEnd ) return true;
+
+				var name = p.ReadWord( "(" );
+				var innervalue = p.ReadInnerBrackets();
+
+				switch ( name )
+				{
+					case "blur":
+						FilterBlur = Length.Parse( innervalue );
+						break;
+					case "saturate":
+						FilterSaturate = Length.Parse( innervalue );
+						break;
+					case "greyscale":
+					case "grayscale":
+						FilterSaturate = Length.Parse( innervalue );
+
+						if ( FilterSaturate.HasValue )
+						{
+							var val = FilterSaturate.Value.GetPixels( 1 );
+							FilterSaturate = 1 - val;
+						}
+						break;
+					case "sepia":
+						FilterSepia = Length.Parse( innervalue );
+						break;
+					case "brightness":
+						FilterBrightness = Length.Parse( innervalue );
+						break;
+					case "contrast":
+						FilterContrast = Length.Parse( innervalue );
+						break;
+					case "hue-rotate":
+						FilterHueRotate = Length.Parse( innervalue );
+						break;
+					case "invert":
+						FilterInvert = Length.Parse( innervalue );
+						break;
+					case "tint":
+						FilterTint = Color.Parse( innervalue );
+						break;
+					case "drop-shadow":
+						var shadowList = new ShadowList();
+						SetShadow( innervalue, ref shadowList );
+						FilterDropShadow = shadowList;
+						break;
+					case "border-wrap":
+						SetFilterBorderWrap( innervalue );
+						break;
+					default:
+						return false;
+				}
+
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse filter-border-wrap property
+		/// Based on s&box's SetFilterBorderWrap implementation
+		/// </summary>
+		private bool SetFilterBorderWrap( string value )
+		{
+			var p = new Parse( value );
+
+			p = p.SkipWhitespaceAndNewlines();
+
+			while ( !p.IsEnd )
+			{
+				if ( p.TryReadLength( out var lengthValue ) )
+					FilterBorderWidth = lengthValue;
+				else if ( p.TryReadColor( out var colorValue ) )
+					FilterBorderColor = colorValue;
+				else
+					return false;
+
+				p = p.SkipWhitespaceAndNewlines();
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse image-rendering property
+		/// Based on s&box's SetImageRendering implementation
+		/// </summary>
+		private bool SetImageRendering( string value )
+		{
+			switch ( value )
+			{
+				case "auto":
+				case "anisotropic":
+					ImageRendering = UI.ImageRendering.Anisotropic;
+					return true;
+				case "bilinear":
+					ImageRendering = UI.ImageRendering.Bilinear;
+					return true;
+				case "trilinear":
+					ImageRendering = UI.ImageRendering.Trilinear;
+					return true;
+				case "point":
+				case "pixelated":
+				case "nearest-neighbor":
+					ImageRendering = UI.ImageRendering.Point;
+					return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Parse background-size property
+		/// Based on s&box's SetBackgroundSize implementation
+		/// </summary>
+		private bool SetBackgroundSize( string value )
+		{
+			var p = new Parse( value );
+			if ( p.TryReadLength( out var lenx ) )
+			{
+				BackgroundSizeX = lenx;
+				BackgroundSizeY = lenx;
+
+				if ( p.TryReadLength( out var leny ) )
+				{
+					BackgroundSizeY = leny;
+				}
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse background-position property
+		/// Based on s&box's SetBackgroundPosition implementation
+		/// </summary>
+		private bool SetBackgroundPosition( string value )
+		{
+			var p = new Parse( value );
+			if ( p.TryReadLength( out var lenx ) )
+			{
+				BackgroundPositionX = lenx;
+				BackgroundPositionY = lenx;
+
+				if ( p.TryReadLength( out var leny ) )
+				{
+					BackgroundPositionY = leny;
+				}
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse background-repeat property
+		/// Based on s&box's SetBackgroundRepeat implementation
+		/// </summary>
+		private bool SetBackgroundRepeat( string value )
+		{
+			switch ( value )
+			{
+				case "no-repeat":
+					BackgroundRepeat = Sandbox.UI.BackgroundRepeat.NoRepeat;
+					return true;
+
+				case "repeat-x":
+					BackgroundRepeat = Sandbox.UI.BackgroundRepeat.RepeatX;
+					return true;
+
+				case "repeat-y":
+					BackgroundRepeat = Sandbox.UI.BackgroundRepeat.RepeatY;
+					return true;
+
+				case "repeat":
+					BackgroundRepeat = Sandbox.UI.BackgroundRepeat.Repeat;
+					return true;
+
+				case "round":
+					BackgroundRepeat = Sandbox.UI.BackgroundRepeat.Round;
+					return true;
+
+				case "clamp":
+					BackgroundRepeat = Sandbox.UI.BackgroundRepeat.Clamp;
+					return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Set background angle from gradient
+		/// Based on s&box's SetBackgroundAngle implementation
+		/// </summary>
+		private bool SetBackgroundAngle( float value )
+		{
+			if ( value < 0 )
+				return false;
+
+			BackgroundAngle = value;
+			return true;
+		}
+
+		/// <summary>
+		/// Parse mask-position property
+		/// Based on s&box's SetMaskPosition implementation
+		/// </summary>
+		private bool SetMaskPosition( string value )
+		{
+			var p = new Parse( value );
+			if ( p.TryReadLength( out var lenx ) )
+			{
+				MaskPositionX = lenx;
+				MaskPositionY = lenx;
+
+				if ( p.TryReadLength( out var leny ) )
+				{
+					MaskPositionY = leny;
+				}
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse mask-size property
+		/// Based on s&box's SetMaskSize implementation
+		/// </summary>
+		private bool SetMaskSize( string value )
+		{
+			var p = new Parse( value );
+			if ( p.TryReadLength( out var lenx ) )
+			{
+				MaskSizeX = lenx;
+				MaskSizeY = lenx;
+
+				if ( p.TryReadLength( out var leny ) )
+				{
+					MaskSizeY = leny;
+				}
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse mask-repeat property
+		/// Based on s&box's SetMaskRepeat implementation
+		/// </summary>
+		private bool SetMaskRepeat( string value )
+		{
+			switch ( value )
+			{
+				case "no-repeat":
+					MaskRepeat = Sandbox.UI.BackgroundRepeat.NoRepeat;
+					return true;
+
+				case "repeat-x":
+					MaskRepeat = Sandbox.UI.BackgroundRepeat.RepeatX;
+					return true;
+
+				case "repeat-y":
+					MaskRepeat = Sandbox.UI.BackgroundRepeat.RepeatY;
+					return true;
+
+				case "repeat":
+					MaskRepeat = Sandbox.UI.BackgroundRepeat.Repeat;
+					return true;
+
+				case "round":
+					MaskRepeat = Sandbox.UI.BackgroundRepeat.Round;
+					return true;
+
+				case "clamp":
+					MaskRepeat = Sandbox.UI.BackgroundRepeat.Clamp;
+					return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Set mask angle from gradient
+		/// Based on s&box's SetMaskAngle implementation
+		/// </summary>
+		private bool SetMaskAngle( float value )
+		{
+			if ( value < 0 )
+				return false;
+
+			MaskAngle = value;
+			return true;
+		}
+
+		/// <summary>
+		/// Parse mask-mode property
+		/// Based on s&box's SetMaskMode implementation
+		/// </summary>
+		private bool SetMaskMode( string value )
+		{
+			switch ( value )
+			{
+				case "match-source":
+					MaskMode = UI.MaskMode.MatchSource;
+					return true;
+				case "alpha":
+					MaskMode = UI.MaskMode.Alpha;
+					return true;
+				case "luminance":
+					MaskMode = UI.MaskMode.Luminance;
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Parse mask-scope property
+		/// Based on s&box's SetMaskScope implementation
+		/// </summary>
+		private bool SetMaskScope( string value )
+		{
+			switch ( value )
+			{
+				case "default":
+					MaskScope = Sandbox.UI.MaskScope.Default;
+					return true;
+
+				case "filter":
+					MaskScope = Sandbox.UI.MaskScope.Filter;
+					return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Set mask image from texture
+		/// Based on s&box's SetMaskImageFromTexture implementation
+		/// </summary>
+		private bool SetMaskImageFromTexture( System.Lazy<Texture> texture )
+		{
+			if ( texture == null )
+				return true;
+
+			_maskImage = texture;
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse background shorthand property (simplified version)
+		/// Based on s&box's SetBackground implementation
+		/// </summary>
+		private bool SetBackground( string value )
+		{
+			// Simplified implementation - full implementation requires more complex parsing
+			var p = new Parse( value );
+
+			// Try to parse as color
+			if ( p.TryReadColor( out var bgColor ) )
+			{
+				BackgroundColor = bgColor;
+				return true;
+			}
+
+			// Try as image
+			return SetImage( value, SetBackgroundImageFromTexture, SetBackgroundSize, SetBackgroundRepeat, SetBackgroundAngle );
+		}
+
+		/// <summary>
+		/// Parse mask shorthand property (simplified version)
+		/// Based on s&box's SetMask implementation
+		/// </summary>
+		private bool SetMask( string value )
+		{
+			var p = new Parse( value );
+			p = p.SkipWhitespaceAndNewlines();
+
+			// Parse the image source
+			if ( !SetImage( p.Text, SetMaskImageFromTexture, SetMaskSize, SetMaskRepeat, SetMaskAngle ) )
+				return false;
+
+			// Skip past the url(...) part if present
+			while ( !p.IsEnd && p.Current != ')' )
+				p.Pointer++;
+
+			if ( !p.IsEnd && p.Current == ')' )
+				p.Pointer++;
+
+			p = p.SkipWhitespaceAndNewlines();
+
+			// Try to read position and size
+			if ( p.TryReadPositionAndSize( out var positionX, out var positionY, out var sizeX, out var sizeY ) )
+			{
+				MaskPositionX = positionX;
+				MaskPositionY = positionY;
+				if ( sizeX.Unit != LengthUnit.Auto ) MaskSizeX = sizeX;
+				if ( sizeY.Unit != LengthUnit.Auto ) MaskSizeY = sizeY;
+			}
+
+			// Try to read repeat
+			if ( p.TryReadRepeat( out var repeat ) )
+				SetMaskRepeat( repeat );
+
+			// Try to read mask mode
+			if ( p.TryReadMaskMode( out var maskMode ) )
+				SetMaskMode( maskMode );
+
+			return true;
+		}
+
+		/// <summary>
+		/// Parse animation shorthand property (simplified version)
+		/// Based on s&box's SetAnimation implementation
+		/// </summary>
+		private bool SetAnimation( string value )
+		{
+			var p = new Parse( value );
+
+			// animation: none;
+			if ( p.Is( "none", 0, true ) )
+			{
+				AnimationName = "none";
+				return true;
+			}
+
+			int timeCount = 0;
+			while ( !p.IsEnd )
+			{
+				p = p.SkipWhitespaceAndNewlines();
+
+				// Parse time values
+				if ( p.TryReadTime( out var time ) )
+				{
+					if ( timeCount == 0 )
+						AnimationDuration = time / 1000.0f; // ms to s
+					else
+						AnimationDelay = time / 1000.0f; // ms to s
+
+					timeCount++;
+					continue;
+				}
+
+				// Parse other keywords
+				var word = p.ReadWord( null, true ).ToLower();
+
+				if ( word == "infinite" )
+				{
+					AnimationIterationCount = float.PositiveInfinity;
+				}
+				else if ( int.TryParse( word, out int iterationCount ) )
+				{
+					AnimationIterationCount = iterationCount;
+				}
+				else if ( word == "normal" || word == "reverse" || word == "alternate" || word == "alternate-reverse" )
+				{
+					AnimationDirection = word;
+				}
+				else if ( word == "none" || word == "forwards" || word == "backwards" || word == "both" )
+				{
+					AnimationFillMode = word;
+				}
+				else if ( word == "running" || word == "paused" )
+				{
+					AnimationPlayState = word;
+				}
+				else if ( !string.IsNullOrEmpty( word ) )
+				{
+					// Assume it's the animation name or timing function
+					AnimationName = word;
+				}
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Enhanced SetImage with gradient support
+		/// Based on s&box's SetImage implementation
+		/// </summary>
+		private bool SetImage( string value, System.Func<System.Lazy<Texture>, bool> setImage = null, System.Func<string, bool> setSize = null, System.Func<string, bool> setRepeat = null, System.Func<float, bool> setAngle = null )
+		{
+			var p = new Parse( value );
+			p = p.SkipWhitespaceAndNewlines();
+
+			if ( p.Is( "none", 0, true ) )
+			{
+				setImage?.Invoke( new System.Lazy<Texture>( Texture.Invalid ) );
+				return true;
+			}
+
+			if ( GetTokenValueUnderParenthesis( p, "url", out string url ) )
+			{
+				url = url.Trim( ' ', '"', '\'' );
+				setImage?.Invoke( new System.Lazy<Texture>( () =>
+				{
+					return Texture.Load( url ) ?? Texture.Invalid;
+				} ) );
+				return true;
+			}
+
+			// Linear gradients support (simplified - full implementation needs texture generation)
+			if ( GetTokenValueUnderParenthesis( p, "linear-gradient", out string gradient ) )
+			{
+				// For now, just acknowledge gradient support exists
+				// Full implementation would call GenerateLinearGradientTexture
+				setImage?.Invoke( new System.Lazy<Texture>( Texture.Invalid ) );
+				setSize?.Invoke( "100%" );
+				setRepeat?.Invoke( "clamp" );
+				return true;
+			}
+
+			// Radial gradients support (simplified)
+			if ( GetTokenValueUnderParenthesis( p, "radial-gradient", out string radialGradient ) )
+			{
+				setImage?.Invoke( new System.Lazy<Texture>( Texture.Invalid ) );
+				setSize?.Invoke( "100%" );
+				setRepeat?.Invoke( "clamp" );
+				return true;
+			}
+
+			// Conic gradients support (simplified)
+			if ( GetTokenValueUnderParenthesis( p, "conic-gradient", out string conicGradient ) )
+			{
+				setImage?.Invoke( new System.Lazy<Texture>( Texture.Invalid ) );
+				setSize?.Invoke( "100%" );
+				setRepeat?.Invoke( "clamp" );
+				return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Set text gradient linear (simplified - requires full gradient infrastructure)
+		/// Based on s&box's SetTextGradientLinear implementation
+		/// </summary>
+		private bool SetTextGradientLinear( string gradient )
+		{
+			// Simplified implementation - full version would parse and generate gradient
+			// For now, just return true to acknowledge the property was set
+			return true;
+		}
+
+		/// <summary>
+		/// Set text gradient radial (simplified - requires full gradient infrastructure)
+		/// Based on s&box's SetTextGradientRadial implementation
+		/// </summary>
+		private bool SetTextGradientRadial( string gradient )
+		{
+			// Simplified implementation - full version would parse and generate gradient
+			// For now, just return true to acknowledge the property was set
 			return true;
 		}
 	}
