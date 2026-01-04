@@ -255,18 +255,25 @@ internal class PanelInput
 			if (Active == null)
 				return;
 
+			// Store Active in a local variable to prevent issues if it becomes null during processing
+			var activePanel = Active;
+
 			// Use static Switch to propagate :active to ancestors
-			Panel.Switch(PseudoClass.Active, true, Active);
+			Panel.Switch(PseudoClass.Active, true, activePanel);
 
 			// Always call Focus() - it will walk up to find a focusable parent (matches S&box)
-			Active.Focus();
+			activePanel.Focus();
 
 			// Create and dispatch onmousedown event
-			var mouseDownEvent = new MousePanelEvent("onmousedown", Active, ButtonName);
-			Active.CreateEvent(mouseDownEvent);
-			Active.ProcessPendingEvents();
+			var mouseDownEvent = new MousePanelEvent("onmousedown", activePanel, ButtonName);
+			activePanel.CreateEvent(mouseDownEvent);
+			activePanel.ProcessPendingEvents();
 
-			Active.OnButtonEvent(new ButtonEvent(ButtonName, true));
+			// Check if activePanel is still valid after event processing
+			if (activePanel.IsValid())
+			{
+				activePanel.OnButtonEvent(new ButtonEvent(ButtonName, true));
+			}
 		}
 
 		private void OnReleased(Panel? hovered)
@@ -276,28 +283,36 @@ internal class PanelInput
 			if (Active == null)
 				return;
 
+			// Store Active in a local variable to prevent issues if it becomes null during processing
+			var activePanel = Active;
+
 			if (canClick && ButtonName == "mouseleft")
 			{
 				// Create onmouseup event first, then onclick
-				Active.CreateEvent(new MousePanelEvent("onmouseup", Active, ButtonName));
+				activePanel.CreateEvent(new MousePanelEvent("onmouseup", activePanel, ButtonName));
 
 				// Create onclick event for the active panel
-				var clickEvent = new MousePanelEvent("onclick", Active, ButtonName);
-				Active.CreateEvent(clickEvent);
-				Active.ProcessPendingEvents();
+				var clickEvent = new MousePanelEvent("onclick", activePanel, ButtonName);
+				activePanel.CreateEvent(clickEvent);
+				activePanel.ProcessPendingEvents();
 			}
 			else
 			{
 				// Just send onmouseup and remove hover from active
-				Active.CreateEvent(new MousePanelEvent("onmouseup", Active, ButtonName));
-				Active.ProcessPendingEvents(); // FIX: Process mouse up events even when not clicking
-				Panel.Switch(PseudoClass.Hover, false, Active, hovered);
+				activePanel.CreateEvent(new MousePanelEvent("onmouseup", activePanel, ButtonName));
+				activePanel.ProcessPendingEvents(); // FIX: Process mouse up events even when not clicking
+				Panel.Switch(PseudoClass.Hover, false, activePanel, hovered);
 			}
 
 			// Use static Switch to propagate :active removal to ancestors
-			Panel.Switch(PseudoClass.Active, false, Active);
+			Panel.Switch(PseudoClass.Active, false, activePanel);
 
-			Active.OnButtonEvent(new ButtonEvent(ButtonName, false));
+			// Check if activePanel is still valid before calling OnButtonEvent
+			if (activePanel.IsValid())
+			{
+				activePanel.OnButtonEvent(new ButtonEvent(ButtonName, false));
+			}
+			
 			Active = null;
 		}
 	}
