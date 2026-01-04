@@ -10,6 +10,15 @@ public static class CursorExtensions
     /// <summary>
     /// Maps a Sandbox.UI StandardCursor enum value to Silk.NET's StandardCursor enum.
     /// </summary>
+    /// <remarks>
+    /// Due to Silk.NET's limited StandardCursor support, several cursor types fall back to Arrow:
+    /// - HourGlass, WaitArrow (no waiting cursors)
+    /// - SizeNWSE, SizeNESW (no diagonal resize cursors)
+    /// - SizeALL (no move-all cursor)
+    /// - No (no prohibited cursor)
+    /// - Up (rarely used)
+    /// HandClosed uses Hand as the closest available match.
+    /// </remarks>
     public static Silk.NET.Input.StandardCursor ToSilkCursor(this StandardCursor cursor)
     {
         return cursor switch

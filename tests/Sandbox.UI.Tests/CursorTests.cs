@@ -116,8 +116,10 @@ public class CursorTests
         }
 
         // Note: Up is not commonly used in CSS, so we accept it may not be mappable
-        // All other standard cursors should be reachable
-        Assert.True(mappedValues.Count >= 12, $"Expected at least 12 mappable cursors, got {mappedValues.Count}");
+        // We expect at least 12 unique cursor values from the 13 test mappings above
+        // (some CSS values may map to the same cursor, like grab→Hand and pointer→Hand)
+        Assert.True(mappedValues.Count >= 12, 
+            $"Expected at least 12 unique mappable cursors from {testMappings.Length} test cases, got {mappedValues.Count}");
     }
 }
 

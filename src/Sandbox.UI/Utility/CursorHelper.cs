@@ -12,6 +12,14 @@ public static class CursorHelper
     /// </summary>
     /// <param name="cursorString">CSS cursor value (e.g., "pointer", "text", "default")</param>
     /// <returns>StandardCursor enum value or null</returns>
+    /// <remarks>
+    /// The following CSS cursor values are intentionally unsupported and will return null:
+    /// - url(...) - Custom cursor images
+    /// - alias, cell, copy, help, zoom-in, zoom-out - Less common cursors
+    /// - context-menu, col-resize, row-resize - Specialized cursors
+    /// - none, inherit, initial, unset - CSS keywords
+    /// Any unrecognized value will also return null, defaulting to the system cursor.
+    /// </remarks>
     public static StandardCursor? FromCssString(string? cursorString)
     {
         if (string.IsNullOrWhiteSpace(cursorString) || cursorString == "auto")
