@@ -434,10 +434,16 @@ public class D3D11Backend : IGraphicsBackend
     {
         if (size.X <= 0 || size.Y <= 0) return;
         
-        // Create a raster surface for software rendering
+        // Create a raster surface for software rendering with ClearType-style subpixel rendering
         // This will be blitted to D3D11 for display
         var imageInfo = new SKImageInfo(size.X, size.Y, SKColorType.Bgra8888, SKAlphaType.Premul);
-        _surface = SKSurface.Create(imageInfo);
+        
+        // Configure surface properties for RGB subpixel rendering (ClearType on Windows)
+        // This makes text appear sharper and more like native Windows text rendering
+        // RgbHorizontal is the most common pixel layout on modern LCD displays
+        var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
+        
+        _surface = SKSurface.Create(imageInfo, surfProps);
         
         if (_surface == null)
         {

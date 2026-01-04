@@ -654,8 +654,14 @@ public class VulkanBackend : IGraphicsBackend
             SKAlphaType.Premul
         );
         
-        // Create a GPU-backed surface
-        _skSurface = SKSurface.Create(_grContext, false, imageInfo);
+        // Configure surface properties for RGB subpixel rendering (ClearType on Windows)
+        // This makes text appear sharper and more like native Windows text rendering
+        // RgbHorizontal is the most common pixel layout on modern LCD displays
+        var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
+        
+        // Create a GPU-backed surface with subpixel rendering enabled
+        // Using the overload: Create(GRContext, bool, SKImageInfo, int, GRSurfaceOrigin, SKSurfaceProperties, bool)
+        _skSurface = SKSurface.Create(_grContext, false, imageInfo, 0, GRSurfaceOrigin.TopLeft, surfProps, false);
         
         if (_skSurface == null)
         {

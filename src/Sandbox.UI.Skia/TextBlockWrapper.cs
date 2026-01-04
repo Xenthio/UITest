@@ -7,7 +7,7 @@ namespace Sandbox.UI.Skia;
 /// Wrapper around RichTextKit's TextBlock for text measurement and rendering.
 /// Based on s&box's TextBlock implementation in engine/Sandbox.Engine/Systems/UI/Engine/TextBlock.cs
 /// </summary>
-internal class TextBlockWrapper
+public class TextBlockWrapper
 {
     private Topten.RichTextKit.TextBlock? _block;
     private Topten.RichTextKit.Style? _style;
@@ -18,16 +18,29 @@ internal class TextBlockWrapper
     private float _fontSize;
     private int _fontWeight;
     private FontSmooth _fontSmooth;
+    private TextOverflow _textOverflow;
+    private WordBreak _wordBreak;
+    private WhiteSpace _whiteSpace;
     private int _fontHash;
 
     public Vector2 BlockSize { get; private set; }
+    
+    /// <summary>
+    /// Whether the text was truncated during layout (when using TextOverflow.Ellipsis or Clip)
+    /// </summary>
+    public bool IsTruncated => _block?.Truncated ?? false;
 
     /// <summary>
     /// Update the text and font properties. Recreates the block if properties changed.
+    /// Matches s&box's Update method which sets overflow properties.
     /// </summary>
-    public void Update(string text, string? fontFamily, float fontSize, int fontWeight, FontSmooth fontSmooth = FontSmooth.Auto)
+    public void Update(string text, string? fontFamily, float fontSize, int fontWeight, 
+                      FontSmooth fontSmooth = FontSmooth.Auto,
+                      TextOverflow textOverflow = TextOverflow.None, 
+                      WordBreak wordBreak = WordBreak.Normal,
+                      WhiteSpace whiteSpace = WhiteSpace.Normal)
     {
-        var newHash = HashCode.Combine(text, fontFamily, fontSize, fontWeight, fontSmooth);
+        var newHash = HashCode.Combine(text, fontFamily, fontSize, fontWeight, fontSmooth, textOverflow, wordBreak, whiteSpace);
         
         if (newHash == _fontHash && _block != null)
             return; // No changes
@@ -38,6 +51,9 @@ internal class TextBlockWrapper
         _fontSize = fontSize;
         _fontWeight = fontWeight;
         _fontSmooth = fontSmooth;
+        _textOverflow = textOverflow;
+        _wordBreak = wordBreak;
+        _whiteSpace = whiteSpace;
         
         // Clear cache when text/font changes
         _sizeCache.Clear();
@@ -54,6 +70,14 @@ internal class TextBlockWrapper
         // Create and configure the text block
         _block = new Topten.RichTextKit.TextBlock();
         _block.AddText(text, _style);
+        
+        // Configure overflow behavior (matches s&box)
+        // Cast to RichTextKit's enum types which have matching values
+        _block.Overflow = (Topten.RichTextKit.TextOverflow)_textOverflow;
+        _block.WordBreak = (Topten.RichTextKit.WordBreakMode)_wordBreak;
+        
+        // NoWrap is set when white-space is nowrap or pre (matches s&box logic)
+        _block.NoWrap = _whiteSpace == WhiteSpace.NoWrap || _whiteSpace == WhiteSpace.Pre;
     }
 
     /// <summary>
@@ -75,8 +99,16 @@ internal class TextBlockWrapper
         if (_sizeCache.TryGetValue(hash, out var size))
             return size;
         
-        // Set MaxWidth to enable wrapping (matches s&box)
-        _block.MaxWidth = float.IsNaN(width) ? null : (width + 1);
+        // Handle NoWrap with no overflow - let text expand freely (matches s&box)
+        if (_block.NoWrap && _textOverflow == TextOverflow.None)
+        {
+            _block.MaxWidth = null;
+        }
+        else
+        {
+            // Set MaxWidth to enable wrapping (matches s&box)
+            _block.MaxWidth = float.IsNaN(width) ? null : (width + 1);
+        }
         
         // Measure the block
         var measuredSize = new Vector2(
