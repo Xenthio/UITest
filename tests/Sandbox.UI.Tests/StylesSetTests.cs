@@ -162,11 +162,11 @@ public class StylesSetTests
 		Assert.Equal(1f, styles.FlexShrink);
 		Assert.Equal(LengthUnit.Auto, styles.FlexBasis?.Unit);
 
-		// "initial" expands to 0 1 auto
+		// "initial" expands to 0 1 auto (s&box behavior: shrink=0, grow=1)
 		styles = new Styles();
 		Assert.True(styles.Set("flex", "initial"));
-		Assert.Equal(0f, styles.FlexGrow);
-		Assert.Equal(1f, styles.FlexShrink);
+		Assert.Equal(1f, styles.FlexGrow); // s&box has grow=1
+		Assert.Equal(0f, styles.FlexShrink); // s&box has shrink=0
 		Assert.Equal(LengthUnit.Auto, styles.FlexBasis?.Unit);
 	}
 
