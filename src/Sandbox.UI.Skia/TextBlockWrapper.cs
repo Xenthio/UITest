@@ -120,12 +120,12 @@ internal class TextBlockWrapper
         // Select appropriate hinting level for ClearType-like rendering on Windows
         // Full hinting provides stronger grid-fitting and makes text look thicker and more like native Windows
         // Normal hinting is a good balance but may look thinner than Windows native text
-        var hinting = _fontSmooth switch
-        {
-            FontSmooth.None => SKFontHinting.None,  // No hinting for aliased text
-            FontSmooth.GrayscaleAntialiased => SKFontHinting.Normal,  // Normal hinting for grayscale
-            _ => SKFontHinting.Full  // Full hinting for subpixel rendering (matches Windows ClearType)
-        };
+        var hinting = SKFontHinting.Full; //_fontSmooth switch
+        // {
+        //     FontSmooth.None => SKFontHinting.None,  // No hinting for aliased text
+        //     FontSmooth.GrayscaleAntialiased => SKFontHinting.Normal,  // Normal hinting for grayscale
+        //     _ => SKFontHinting.Full  // Full hinting for subpixel rendering (matches Windows ClearType)
+        // };
         
         var paintOptions = new TextPaintOptions
         {
