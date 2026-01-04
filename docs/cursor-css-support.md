@@ -34,7 +34,7 @@ Simply add the `cursor` CSS property to any element's style:
 The following CSS cursor values are supported:
 
 ### Basic Cursors
-- `default` / `arrow` - Standard arrow pointer
+- `default` - Standard arrow pointer
 - `pointer` / `hand` - Pointing hand (for clickable items)
 - `text` - I-beam for text selection
 - `wait` - Hourglass/waiting cursor
