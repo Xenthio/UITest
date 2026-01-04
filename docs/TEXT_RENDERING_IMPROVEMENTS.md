@@ -2,81 +2,81 @@
 
 ## Overview
 
-This document explains the improvements made to text rendering in Fazor to make it look thicker and more like **native Windows applications** using ClearType.
+This document explains the improvements made to text rendering surface configuration in Fazor's D3D11 and Vulkan backends.
 
-## Problem
+## Changes Made
 
-The text in Fazor applications was appearing "too thin" when rendered. The goal is to match **native Windows applications** (like Chrome, VS Code, Notepad) which use ClearType rendering, not S&box which has its own text rendering characteristics.
+### Surface Configuration
 
-## Solution
+Both **D3D11Backend.cs** and **VulkanBackend.cs** were updated to include proper surface properties for text rendering:
 
-### Key Insight: Windows ClearType Settings
+#### D3D11Backend.cs
 
-Native Windows ClearType uses:
-1. **LCD Subpixel Antialiasing** (`SKFontEdging.SubpixelAntialias`) - This is the core of ClearType, using RGB subpixels for sharper text
-2. **Slight Hinting** (`SKFontHinting.Slight`) - Light grid-fitting that makes text thicker without being blocky
+Added `SKSurfaceProperties` with `SKPixelGeometry.RgbHorizontal` when creating raster surfaces:
 
-The combination of subpixel antialiasing with **slight** (not full, not normal) hinting produces the characteristic thick, smooth appearance of Windows ClearType.
-
-**Why Slight Hinting?**
-- **Full hinting** makes text too blocky and can look artificial
-- **Normal hinting** can make text look too thin
-- **Slight hinting** provides the best balance - thicker than normal but smoother than full
-
-### Changes Made
-
-#### TextBlockWrapper.cs - Critical Fix
-
-**Current Approach (Windows ClearType):**
 ```csharp
-// Windows ClearType uses LCD subpixel antialiasing with slight hinting
-var edging = _fontSmooth switch
-{
-    FontSmooth.None => SKFontEdging.Alias,
-    FontSmooth.GrayscaleAntialiased => SKFontEdging.Antialias,
-    _ => SKFontEdging.SubpixelAntialias,  // LCD rendering for ClearType
-};
+var imageInfo = new SKImageInfo(size.X, size.Y, SKColorType.Bgra8888, SKAlphaType.Premul);
 
-var hinting = _fontSmooth switch
-{
-    FontSmooth.None => SKFontHinting.None,
-    _ => SKFontHinting.Slight,  // Slight hinting matches Windows ClearType
-};
+// Configure surface properties for RGB subpixel rendering
+// RgbHorizontal is the most common pixel layout on modern LCD displays
+var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
 
-var paintOptions = new TextPaintOptions
-{
-    Edging = edging,
-    Hinting = hinting,
-};
+_surface = SKSurface.Create(imageInfo, surfProps);
 ```
 
-#### Surface Configuration
+#### VulkanBackend.cs
 
-Both D3D11Backend.cs and VulkanBackend.cs were updated to include `SKSurfaceProperties(SKPixelGeometry.RgbHorizontal)` which enables proper LCD subpixel rendering on the surface level.
+Added `SKSurfaceProperties` with `SKPixelGeometry.RgbHorizontal` when creating GPU surfaces:
+
+```csharp
+var imageInfo = new SKImageInfo(
+    (int)_swapchainExtent.Width,
+    (int)_swapchainExtent.Height,
+    SKColorType.Bgra8888,
+    SKAlphaType.Premul
+);
+
+// Configure surface properties for RGB subpixel rendering
+var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
+
+// Create a GPU-backed surface with subpixel rendering enabled
+_skSurface = SKSurface.Create(_grContext, false, imageInfo, 0, GRSurfaceOrigin.TopLeft, surfProps, false);
+```
+
+### OpenGL Backend
+
+The OpenGL backend already had proper surface properties configured.
 
 ## Technical Background
 
-### What is ClearType?
+### SKPixelGeometry
 
-ClearType is Microsoft's implementation of subpixel font rendering. It exploits the fact that each pixel on an LCD display consists of individually addressable red, green, and blue sub-pixels. By controlling these sub-pixels independently, ClearType can increase the apparent resolution of text by a factor of 3 horizontally.
+The `SKPixelGeometry` enumeration tells Skia how the physical pixels are arranged on the display:
 
-### Font Hinting Levels
+- **Unknown** - No specific pixel arrangement information
+- **RgbHorizontal** - RGB subpixels arranged horizontally (most common on LCD monitors)
+- **BgrHorizontal** - BGR subpixels arranged horizontally (some displays)
+- **RgbVertical** - RGB subpixels arranged vertically (some portrait displays)
+- **BgrVertical** - BGR subpixels arranged vertically (rare)
 
-- **None** - No grid-fitting, can look blurry
-- **Slight** - Minimal grid-fitting, preserves glyph shape, provides thickness ← **Windows ClearType default**
-- **Normal** - Balanced grid-fitting, but can look thin
-- **Full** - Strong grid-fitting, can look blocky
+Setting `RgbHorizontal` is appropriate for the vast majority of modern LCD displays and enables the graphics engine to properly handle text rendering with knowledge of the subpixel layout.
 
-## Benefits
+## Build Infrastructure
 
-1. **Thicker Text** - Slight hinting with subpixel AA makes text more substantial
-2. **Sharper Text** - LCD subpixel rendering provides better clarity
-3. **Natural Appearance** - Matches what users expect from Windows applications
-4. **Better Readability** - Especially at smaller font sizes (10-14px)
+### RichTextKit Build Fix
+
+Fixed build issues in the RichTextKit submodule by disabling code signing and documentation generation in `thirdparty/RichTextKit/buildtools/Topten.props`:
+
+```xml
+<TtsCodeSign>False</TtsCodeSign>
+<TtsInheritDoc>False</TtsInheritDoc>
+```
+
+This resolves build failures in CI environments where these tools are not available.
 
 ## Testing
 
-To verify the improvements:
+To verify the changes:
 
 1. **Build the project:**
    ```bash
@@ -89,9 +89,4 @@ To verify the improvements:
    dotnet run -c Release
    ```
 
-3. **Look for thicker, smoother text** compared to before.
-
-## References
-
-- [Microsoft ClearType Technology](https://learn.microsoft.com/en-us/typography/cleartype/)
-- [SkiaSharp Font Rendering](https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/text/skiasharp)
+3. Text rendering should work correctly on all three backends (OpenGL, D3D11, Vulkan).
