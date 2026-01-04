@@ -183,7 +183,8 @@ public class PopupWindow : IDisposable
                 if (childCount > 0)
                 {
                     var child = RootPanel.GetChild(0);
-                    Console.WriteLine($"[PopupWindow] First child: {child?.GetType().Name}, childCount: {child?.ChildrenCount}");
+                    Console.WriteLine($"[PopupWindow] First child: {child?.GetType().Name}, childCount: {child?.ChildrenCount}, IsVisible: {child?.IsVisible}");
+                    Console.WriteLine($"[PopupWindow] First child parent: {child?.Parent?.GetType().Name}, FindRootPanel: {child?.FindRootPanel()?.GetType().Name}");
                 }
             }
             

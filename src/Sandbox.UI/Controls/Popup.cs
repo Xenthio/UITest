@@ -355,6 +355,7 @@ public partial class Popup : BasePopup
             if (TryCreateOSWindow())
             {
                 Console.WriteLine($"[Popup] Created OS-level popup window on first tick with {ChildrenCount} children");
+                Console.WriteLine($"[Popup] After OS window creation, parent is: {Parent?.GetType().Name}");
                 return; // Don't do normal positioning for OS windows
             }
         }
