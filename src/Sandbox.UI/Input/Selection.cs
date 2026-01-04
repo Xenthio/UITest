@@ -36,7 +36,7 @@ internal class Selection
 
             SelectionEndPos = ScreenPositionToPanelPosition(SelectionStart, pos);
             var newHash = HashCode.Combine(SelectionStart, SelectionStartPos, SelectionEndPos);
-            if (newHash == hash) return;
+            if (newHash == hash && !ended) return; // Allow ended event even if position unchanged
 
             SelectionEvent e = new SelectionEvent("ondragselect", SelectionStart);
             e.StartPoint = PanelPositionToScreenPosition(SelectionStart, SelectionStartPos);
@@ -50,6 +50,12 @@ internal class Selection
             e.SelectionRect = new Rect(left, top, right - left, bottom - top);
 
             SelectionStart.CreateEvent(e);
+            
+            // Clear selection state when drag ends
+            if (ended)
+            {
+                SelectionStart = null;
+            }
         }
     }
 

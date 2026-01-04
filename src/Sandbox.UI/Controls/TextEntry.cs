@@ -254,6 +254,7 @@ public class TextEntry : Panel
                 Label.RemoveText(CaretPosition, 1);
                 OnValueChanged();
             }
+            Label.ScrollToCaret(); // Scroll to keep caret visible
             return;
         }
 
@@ -287,6 +288,7 @@ public class TextEntry : Panel
             Label.MoveCaretPos(1);
         }
 
+        Label.ScrollToCaret(); // Scroll to keep caret visible
         OnValueChanged();
     }
 
@@ -321,12 +323,14 @@ public class TextEntry : Panel
                     Label.MoveToWordBoundaryRight(true);
                     Label.ReplaceSelection(string.Empty);
                     OnValueChanged();
+                    Label.ScrollToCaret();
                     return;
                 }
 
                 Label.RemoveText(CaretPosition, 1);
                 OnValueChanged();
             }
+            Label.ScrollToCaret();
             return;
         }
 
@@ -369,6 +373,7 @@ public class TextEntry : Panel
             {
                 Label.SetCaretPosition(0, e.HasShift);
             }
+            Label.ScrollToCaret();
             return;
         }
 
@@ -383,6 +388,7 @@ public class TextEntry : Panel
             {
                 Label.SetCaretPosition(TextLength, e.HasShift);
             }
+            Label.ScrollToCaret();
             return;
         }
 
@@ -400,6 +406,7 @@ public class TextEntry : Panel
             {
                 Label.MoveToWordBoundaryLeft(e.HasShift);
             }
+            Label.ScrollToCaret();
             return;
         }
 
@@ -417,6 +424,7 @@ public class TextEntry : Panel
             {
                 Label.MoveToWordBoundaryRight(e.HasShift);
             }
+            Label.ScrollToCaret();
             return;
         }
 
@@ -593,6 +601,7 @@ public class TextEntry : Panel
         Label.InsertText(pasteResult, CaretPosition);
         Label.MoveCaretPos(pasteResult.Length);
 
+        Label.ScrollToCaret();
         OnValueChanged();
     }
 

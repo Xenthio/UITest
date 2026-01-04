@@ -1,0 +1,159 @@
+@namespace SimpleDesktopApp
+@using Sandbox.UI
+@inherits Panel
+
+<root>
+    <style>
+        .container {
+            padding: 20px;
+            background-color: #1a1a1a;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .test-section {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .test-label {
+            width: 300px;
+            padding: 8px;
+            background-color: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .description {
+            font-size: 12px;
+            color: #888888;
+            margin-top: 5px;
+        }
+
+        /* Text overflow tests */
+        .ellipsis-test {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .clip-test {
+            text-overflow: clip;
+            white-space: nowrap;
+        }
+
+        .nowrap-test {
+            white-space: nowrap;
+        }
+
+        .normal-wrap {
+            white-space: normal;
+        }
+
+        .pre-test {
+            white-space: pre;
+        }
+
+        .break-all-test {
+            word-break: break-all;
+        }
+
+        .break-normal {
+            word-break: normal;
+        }
+    </style>
+
+    <div class="container">
+        <div class="section-title">Text Overflow Properties Test</div>
+
+        <!-- Text Overflow: Ellipsis -->
+        <div class="test-section">
+            <div class="section-title">text-overflow: ellipsis</div>
+            <label class="test-label ellipsis-test">
+                This is a very long text that should be truncated with an ellipsis when it overflows the container width
+            </label>
+            <div class="description">Should show "..." at the end when text overflows</div>
+        </div>
+
+        <!-- Text Overflow: Clip -->
+        <div class="test-section">
+            <div class="section-title">text-overflow: clip</div>
+            <label class="test-label clip-test">
+                This is a very long text that should be clipped without any visual indication when it overflows the container width
+            </label>
+            <div class="description">Should hard-clip without ellipsis</div>
+        </div>
+
+        <!-- White-space: nowrap -->
+        <div class="test-section">
+            <div class="section-title">white-space: nowrap</div>
+            <label class="test-label nowrap-test">
+                This text has white-space: nowrap which prevents it from wrapping to multiple lines regardless of container width
+            </label>
+            <div class="description">Should stay on one line, may overflow</div>
+        </div>
+
+        <!-- White-space: normal (default wrapping) -->
+        <div class="test-section">
+            <div class="section-title">white-space: normal (default)</div>
+            <label class="test-label normal-wrap">
+                This text has normal white-space which allows it to wrap to multiple lines when it reaches the container width
+            </label>
+            <div class="description">Should wrap to multiple lines</div>
+        </div>
+
+        <!-- White-space: pre -->
+        <div class="test-section">
+            <div class="section-title">white-space: pre</div>
+            <label class="test-label pre-test">Line 1 with spaces
+Line 2 with    multiple    spaces
+Line 3 indented</label>
+            <div class="description">Should preserve whitespace and newlines</div>
+        </div>
+
+        <!-- Word-break: break-all -->
+        <div class="test-section">
+            <div class="section-title">word-break: break-all</div>
+            <label class="test-label break-all-test">
+                verylongwordwithoutanyspacesorbreaksshouldbreakatcharboundary
+            </label>
+            <div class="description">Should break long words at any character</div>
+        </div>
+
+        <!-- Word-break: normal -->
+        <div class="test-section">
+            <div class="section-title">word-break: normal (default)</div>
+            <label class="test-label break-normal">
+                verylongwordwithoutanyspacesorbreakswillonlybreakonnaturalwordboundaries
+            </label>
+            <div class="description">Should only break at word boundaries</div>
+        </div>
+
+        <!-- Combined: ellipsis + nowrap -->
+        <div class="test-section">
+            <div class="section-title">text-overflow: ellipsis + white-space: nowrap (combined)</div>
+            <label class="test-label ellipsis-test">
+                The most common use case: single line text with ellipsis when it's too long
+            </label>
+            <div class="description">Most common pattern for single-line truncated text</div>
+        </div>
+    </div>
+</root>
+
+@code {
+    public TextOverflowTest()
+    {
+        AddClass("text-overflow-test");
+    }
+}

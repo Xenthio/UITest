@@ -15,6 +15,14 @@ public partial class Label : Panel
     /// Returns: Vector2 with width and height
     /// </summary>
     public static Func<string, string?, float, int, float, bool, Vector2>? TextMeasureFunc { get; set; }
+    
+    /// <summary>
+    /// Extended delegate for measuring text with overflow properties.
+    /// Parameters: text, fontFamily, fontSize, fontWeight, maxWidth, allowWrapping, textOverflow, wordBreak, whiteSpace
+    /// Returns: Vector2 with width and height
+    /// Falls back to TextMeasureFunc if not set.
+    /// </summary>
+    public static Func<string, string?, float, int, float, bool, TextOverflow, WordBreak, WhiteSpace, Vector2>? TextMeasureFuncEx { get; set; }
 
     /// <summary>
     /// Information about the Text on a per-element scale.
@@ -70,14 +78,26 @@ public partial class Label : Panel
         var fontFamily = ComputedStyle?.FontFamily;
         var fontWeight = ComputedStyle?.FontWeight ?? 400;
         
+        // Get overflow-related style properties (matches s&box)
+        var textOverflow = ComputedStyle?.TextOverflow ?? TextOverflow.None;
+        var wordBreak = ComputedStyle?.WordBreak ?? WordBreak.Normal;
+        var whiteSpace = ComputedStyle?.WhiteSpace ?? WhiteSpace.Normal;
+        
         // Determine if text should wrap based on white-space property and width constraint
-        var whiteSpace = ComputedStyle?.WhiteSpace;
         var allowWrapping = whiteSpace != WhiteSpace.NoWrap && 
+                           whiteSpace != WhiteSpace.Pre &&
                            widthMode != YGMeasureMode.Undefined && 
                            !float.IsNaN(width) && 
                            width > 0;
 
-        // Use renderer-provided measurement if available
+        // Use extended renderer-provided measurement if available
+        if (TextMeasureFuncEx != null)
+        {
+            return TextMeasureFuncEx(processedText, fontFamily, fontSize, fontWeight, width, allowWrapping,
+                                    textOverflow, wordBreak, whiteSpace);
+        }
+        
+        // Fallback to basic measurement
         if (TextMeasureFunc != null)
         {
             return TextMeasureFunc(processedText, fontFamily, fontSize, fontWeight, width, allowWrapping);

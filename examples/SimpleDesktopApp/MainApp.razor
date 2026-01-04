@@ -23,6 +23,9 @@
             <button class="button" @onclick="@OpenTextEntryTest">
                 <span class="button-text">📝 Text Entry Test</span>
             </button>
+            <button class="button" @onclick="@OpenTextOverflowTest">
+                <span class="button-text">📄 Text Overflow Test</span>
+            </button>
             <button class="button disabled">
                 <span class="button-text">Disabled Button</span>
             </button>
@@ -147,6 +150,15 @@
         var root = FindRootPanel();
         root?.AddChild(textEntryWindow);
         Console.WriteLine("Opening text entry test window");
+    }
+    
+    private void OpenTextOverflowTest()
+    {
+        // Create and open text overflow test window
+        var textOverflowWindow = new TextOverflowTest();
+        var root = FindRootPanel();
+        root?.AddChild(textOverflowWindow);
+        Console.WriteLine("Opening text overflow test window");
     }
     
     private void CloseThemeSelector()
