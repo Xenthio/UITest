@@ -27,6 +27,26 @@ public class PopupWindow : IDisposable
     public RootPanel? RootPanel { get; set; }
 
     /// <summary>
+    /// Initialize the popup window. Must be called after RootPanel is set.
+    /// </summary>
+    public void InitializeWindow()
+    {
+        if (_window == null)
+        {
+            Console.WriteLine("[PopupWindow] Cannot initialize - window is null");
+            return;
+        }
+
+        if (RootPanel == null)
+        {
+            Console.WriteLine("[PopupWindow] WARNING: Initializing without RootPanel set!");
+        }
+
+        _window.Initialize();
+        Console.WriteLine($"[PopupWindow] Initialized popup window with RootPanel: {RootPanel != null}");
+    }
+
+    /// <summary>
     /// The panel that triggered this popup
     /// </summary>
     public Panel? SourcePanel { get; set; }
@@ -112,10 +132,10 @@ public class PopupWindow : IDisposable
             _window.FramebufferResize += OnFramebufferResize;
             _window.FocusChanged += OnFocusChanged;
             
-            // Initialize immediately - Silk.NET will handle event pumping
-            _window.Initialize();
+            // Don't initialize yet - wait for RootPanel to be set
+            // Initialize() will be called by PopupWindowManager after setting RootPanel
             
-            Console.WriteLine($"[PopupWindow] Created and initialized popup window at ({x}, {y})");
+            Console.WriteLine($"[PopupWindow] Created popup window at ({x}, {y}) - waiting for RootPanel");
         }
         catch (Exception ex)
         {

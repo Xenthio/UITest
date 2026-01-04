@@ -59,6 +59,9 @@ public static class PopupWindowManager
                 popup.SourcePanel = sourcePanel;
                 popup.OwnerWindow = MainWindow;
                 
+                // Initialize the window now that RootPanel is set
+                popup.InitializeWindow();
+                
                 // Handle cleanup when popup closes
                 popup.OnClosed = () =>
                 {
