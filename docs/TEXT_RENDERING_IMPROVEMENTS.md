@@ -8,9 +8,9 @@ This document explains the improvements made to text rendering in Fazor to make 
 
 The text in Fazor applications was appearing "too thin" when rendered, especially on Windows. This was because:
 
-1. **OpenGL Backend** (Linux/macOS focus) - ✅ Already correctly configured with `SKPixelGeometry.RgbHorizontal`
-2. **Direct3D 11 Backend** (Windows) - ❌ Creating raster surfaces without pixel geometry, defaulting to grayscale antialiasing
-3. **Vulkan Backend** (Cross-platform) - ❌ Creating GPU surfaces without pixel geometry, defaulting to grayscale antialiasing
+1. **OpenGL Backend** (Linux/macOS focus) - Already correctly configured with `SKPixelGeometry.RgbHorizontal`
+2. **Direct3D 11 Backend** (Windows) - Creating raster surfaces without pixel geometry, defaulting to grayscale antialiasing
+3. **Vulkan Backend** (Cross-platform) - Creating GPU surfaces without pixel geometry, defaulting to grayscale antialiasing
 
 Without proper pixel geometry configuration, SkiaSharp uses standard grayscale antialiasing instead of ClearType-style LCD subpixel rendering, resulting in thinner-looking text that doesn't match native Windows applications.
 
@@ -154,4 +154,3 @@ Potential enhancements for the future:
 - [SkiaSharp Text and Typography Documentation](https://docs.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/text/skiasharp)
 - [Microsoft ClearType Technology](https://learn.microsoft.com/en-us/typography/cleartype/)
 - [SkiaSharp Issue #2308 - ClearType/Subpixel Rendering](https://github.com/mono/SkiaSharp/issues/2308)
-- [S&box UI System Documentation](https://wiki.facepunch.com/sbox/UI_Panels)
