@@ -157,21 +157,15 @@ public class ComboBox : Button
     {
         IsOpen = true;
         
-        // Create dropdown pane
-        DropdownPane = FindRootPanel()?.AddChild(new Panel());
+        // Create dropdown pane using Popup system
+        DropdownPane = new Popup(this, Popup.PositionMode.BelowStretch, 0);
+        
         if (DropdownPane == null) return;
         
         DropdownPane.AddClass("dropdown-panel");
         DropdownPane.AddClass("flat-top");
-        DropdownPane.Style.Position = PositionMode.Absolute;
-        
-        // Position below this element
-        var rect = Box.Rect;
-        DropdownPane.Style.Left = rect.Left;
-        DropdownPane.Style.Top = rect.Bottom;
-        DropdownPane.Style.Width = rect.Width;
-        DropdownPane.Style.ZIndex = 1000;
         DropdownPane.Style.FlexDirection = FlexDirection.Column;
+        DropdownPane.Style.ZIndex = 1000;
         
         // Copy stylesheets for consistent styling
         foreach (var stylesheet in AllStyleSheets)
@@ -247,15 +241,6 @@ public class ComboBox : Button
 
         SetClass("open", DropdownPane != null && !DropdownPane.IsDeleting);
         SetClass("active", DropdownPane != null && !DropdownPane.IsDeleting);
-
-        // Update dropdown position if open
-        if (DropdownPane != null)
-        {
-            var rect = Box.Rect;
-            DropdownPane.Style.Left = rect.Left;
-            DropdownPane.Style.Top = rect.Bottom;
-            DropdownPane.Style.Width = rect.Width;
-        }
     }
 
     public override void SetProperty(string name, string value)

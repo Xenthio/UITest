@@ -7,75 +7,86 @@ using UIVector2 = Sandbox.UI.Vector2;
 
 namespace Avalazor.UI;
 
-public enum GraphicsBackendType
-{
-    OpenGL,
-    Vulkan,
-    DirectX11
-}
-
-public class NativeWindow : INativeWindow, IDisposable
+/// <summary>
+/// A popup window that appears as a separate OS window.
+/// Used for dropdown menus, context menus, and other popups.
+/// </summary>
+public class PopupWindow : IDisposable
 {
     private readonly IWindow _window;
     private IGraphicsBackend _backend;
-    private GraphicsBackendType _backendType;
-
     private IInputContext? _input;
     private IMouse? _mouse;
     private IKeyboard? _keyboard;
     private bool _disposed = false;
 
+    /// <summary>
+    /// The root panel for this popup window
+    /// </summary>
     public RootPanel? RootPanel { get; set; }
 
-    public NativeWindow(int width = 1280, int height = 720, string title = "Avalazor App", GraphicsBackendType? backendType = null)
+    /// <summary>
+    /// The panel that triggered this popup
+    /// </summary>
+    public Panel? SourcePanel { get; set; }
+
+    /// <summary>
+    /// The main application window that owns this popup
+    /// </summary>
+    public NativeWindow? OwnerWindow { get; set; }
+
+    /// <summary>
+    /// Callback invoked when the popup is closed
+    /// </summary>
+    public Action? OnClosed { get; set; }
+
+    public PopupWindow(int x, int y, int width, int height, GraphicsBackendType? backendType = null)
     {
         var options = WindowOptions.Default;
         options.Size = new Vector2D<int>(width, height);
-        options.Title = title;
+        options.Position = new Vector2D<int>(x, y);
+        options.Title = "";
         options.VSync = true;
         options.IsEventDriven = false;
+        
+        // Popup window configuration
+        options.WindowBorder = WindowBorder.Hidden; // No title bar
+        options.IsVisible = true;
+        options.TopMost = true; // Stay on top
 
         // Auto-select best backend for platform if not specified
         if (backendType == null)
         {
             if (OperatingSystem.IsWindows())
             {
-                backendType = GraphicsBackendType.DirectX11; // Best for Windows
-                Console.WriteLine("Auto-selected DirectX11 backend for Windows");
+                backendType = GraphicsBackendType.DirectX11;
             }
             else
             {
-                backendType = GraphicsBackendType.OpenGL; // Works well on Linux/macOS
-                Console.WriteLine("Auto-selected OpenGL backend");
+                backendType = GraphicsBackendType.OpenGL;
             }
         }
-
-        _backendType = backendType.Value;
-        PopupWindowManager.BackendType = _backendType;
 
         // Select backend and configure window options
         switch (backendType)
         {
             case GraphicsBackendType.OpenGL:
-                Console.WriteLine("Starting OpenGL backend...");
                 options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(3, 3));
                 _backend = new OpenGLBackend();
                 break;
 
             case GraphicsBackendType.Vulkan:
-                Console.WriteLine("Starting Vulkan backend...");
-                options.API = GraphicsAPI.DefaultVulkan; // Request Vulkan API
-                options.ShouldSwapAutomatically = false; // We handle swapchain ourselves
+                options.API = GraphicsAPI.DefaultVulkan;
+                options.ShouldSwapAutomatically = false;
                 _backend = new VulkanBackend();
                 break;
 
             case GraphicsBackendType.DirectX11:
-                Console.WriteLine("Starting DirectX11 backend...");
                 if (!OperatingSystem.IsWindows())
                 {
                     throw new PlatformNotSupportedException("DirectX11 backend is only available on Windows");
                 }
-                options.API = GraphicsAPI.None; // D3D11 handles its own context
+                options.API = GraphicsAPI.None;
                 _backend = new D3D11Backend();
                 break;
 
@@ -89,9 +100,21 @@ public class NativeWindow : INativeWindow, IDisposable
         _window.Render += OnRender;
         _window.Closing += OnClosing;
         _window.FramebufferResize += OnFramebufferResize;
+        _window.FocusChanged += OnFocusChanged;
     }
 
+    /// <summary>
+    /// Start the popup window's event loop
+    /// </summary>
     public void Run() => _window.Run();
+
+    /// <summary>
+    /// Close the popup window
+    /// </summary>
+    public void Close()
+    {
+        _window.Close();
+    }
 
     private void OnLoad()
     {
@@ -113,17 +136,11 @@ public class NativeWindow : INativeWindow, IDisposable
             _keyboard.KeyChar += OnKeyChar;
         }
 
-        // Set system DPI scale for UI rendering
         UpdateDpiScale();
-
-        // Register as main window for popup management
-        PopupWindowManager.MainWindow = this;
     }
 
     private void UpdateDpiScale()
     {
-        // Try to get DPI from the window's monitor
-        // Silk.NET uses FramebufferSize / Size to calculate content scale
         var size = _window.Size;
         var fbSize = _window.FramebufferSize;
 
@@ -132,7 +149,6 @@ public class NativeWindow : INativeWindow, IDisposable
             var dpiScaleX = (float)fbSize.X / size.X;
             var dpiScaleY = (float)fbSize.Y / size.Y;
 
-            // Use the larger scale (usually they're the same)
             RootPanel.SystemDpiScale = Math.Max(dpiScaleX, dpiScaleY);
         }
     }
@@ -141,9 +157,6 @@ public class NativeWindow : INativeWindow, IDisposable
     {
         if (size.X <= 0 || size.Y <= 0) return;
 
-        Console.WriteLine($"[NativeWindow] OnFramebufferResize: {size.X}x{size.Y}");
-
-        // Use framebuffer size directly - this is the actual render buffer size
         _backend.Resize(size);
 
         if (RootPanel != null)
@@ -172,8 +185,18 @@ public class NativeWindow : INativeWindow, IDisposable
         _backend.Render(RootPanel);
     }
 
+    private void OnFocusChanged(bool focused)
+    {
+        // Close popup when it loses focus (clicked outside)
+        if (!focused)
+        {
+            Close();
+        }
+    }
+
     private void OnClosing()
     {
+        OnClosed?.Invoke();
         _backend.Dispose();
         _input?.Dispose();
     }
@@ -184,40 +207,6 @@ public class NativeWindow : INativeWindow, IDisposable
         OnClosing();
         _window?.Dispose();
         _disposed = true;
-    }
-
-    // --- Public API for Window control ---
-
-    /// <summary>
-    /// Set the native window title
-    /// </summary>
-    public void SetTitle(string title)
-    {
-        _window.Title = title;
-    }
-
-    /// <summary>
-    /// Get the native window position
-    /// </summary>
-    public (int x, int y) GetPosition()
-    {
-        return (_window.Position.X, _window.Position.Y);
-    }
-
-    /// <summary>
-    /// Set the native window position
-    /// </summary>
-    public void SetPosition(int x, int y)
-    {
-        _window.Position = new Vector2D<int>(x, y);
-    }
-
-    /// <summary>
-    /// Set the native window size
-    /// </summary>
-    public void SetSize(int width, int height)
-    {
-        _window.Size = new Vector2D<int>(width, height);
     }
 
     // --- Input Helpers ---
