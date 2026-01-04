@@ -104,35 +104,24 @@ internal class TextBlockWrapper
             _style.TextColor = color;
         }
         
-        // Configure paint options based on font-smooth setting
-        // Using Edging property (IsAntialias and LcdRenderText are obsolete in RichTextKit)
-        // Default (Auto) now uses SubpixelAntialias for RGB subpixel rendering which provides
-        // sharper text on LCD displays by leveraging the RGB subpixel structure
+        // Configure paint options to match S&box's TextBlock implementation
+        // S&box uses grayscale antialiasing (NOT subpixel) with full hinting
+        // This produces thicker, more substantial text that matches native Windows
+        // Reference: engine/Sandbox.Engine/Systems/UI/Engine/TextBlock.cs lines 556-562
         var edging = _fontSmooth switch
         {
-            FontSmooth.None => SKFontEdging.Alias,  // No antialiasing
-            FontSmooth.Antialiased => SKFontEdging.SubpixelAntialias,  // LCD subpixel rendering (explicit)
-            FontSmooth.GrayscaleAntialiased => SKFontEdging.Antialias,  // Standard grayscale antialiasing 
-            FontSmooth.Auto => SKFontEdging.SubpixelAntialias,  // Auto defaults to LCD subpixel rendering
-            _ => SKFontEdging.SubpixelAntialias  // Fallback to subpixel for unknown values
+            FontSmooth.None => SKFontEdging.Alias,  // No antialiasing (matches S&box FontSmooth.Never)
+            _ => SKFontEdging.Antialias,  // Grayscale antialiasing for all other modes (matches S&box)
         };
         
-        // Select appropriate hinting level for ClearType-like rendering on Windows
-        // Full hinting provides stronger grid-fitting and makes text look thicker and more like native Windows
-        // Normal hinting is a good balance but may look thinner than Windows native text
-        var hinting = SKFontHinting.Full; //_fontSmooth switch
-        // {
-        //     FontSmooth.None => SKFontHinting.None,  // No hinting for aliased text
-        //     FontSmooth.GrayscaleAntialiased => SKFontHinting.Normal,  // Normal hinting for grayscale
-        //     _ => SKFontHinting.Full  // Full hinting for subpixel rendering (matches Windows ClearType)
-        // };
+        // S&box always uses Full hinting regardless of font-smooth setting
+        // This provides strong grid-fitting and makes text thicker
+        var hinting = SKFontHinting.Full;
         
         var paintOptions = new TextPaintOptions
         {
             Edging = edging,
             Hinting = hinting,
-            // Disable subpixel positioning when aliased rendering is requested for consistency
-            SubpixelPositioning = edging != SKFontEdging.Alias,
         };
         
         // Add selection if provided (matches S&box implementation)

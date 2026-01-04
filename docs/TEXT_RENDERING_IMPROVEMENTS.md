@@ -2,61 +2,81 @@
 
 ## Overview
 
-This document explains the improvements made to text rendering in Fazor to make it look more like native Windows text rendering with proper ClearType subpixel antialiasing.
+This document explains the improvements made to text rendering in Fazor to make it look thicker and more like native Windows text rendering by matching S&box's approach.
 
 ## Problem
 
-The text in Fazor applications was appearing "too thin" when rendered, especially on Windows. This was because:
+The text in Fazor applications was appearing "too thin" when rendered, especially on Windows. After investigation and comparison with S&box's source code, we found that:
 
-1. **OpenGL Backend** (Linux/macOS focus) - Already correctly configured with `SKPixelGeometry.RgbHorizontal`
-2. **Direct3D 11 Backend** (Windows) - Creating raster surfaces without pixel geometry, defaulting to grayscale antialiasing
-3. **Vulkan Backend** (Cross-platform) - Creating GPU surfaces without pixel geometry, defaulting to grayscale antialiasing
-
-Without proper pixel geometry configuration, SkiaSharp uses standard grayscale antialiasing instead of ClearType-style LCD subpixel rendering, resulting in thinner-looking text that doesn't match native Windows applications.
+1. **Font Hinting** - We were using subpixel antialiasing (`SKFontEdging.SubpixelAntialias`), but S&box uses grayscale antialiasing (`SKFontEdging.Antialias`) with full hinting
+2. **Inconsistent Implementation** - Our text rendering didn't match S&box's proven approach
 
 ## Solution
 
 ### Key Changes
 
-The fix involves two main improvements:
+The fix involves matching S&box's text rendering approach exactly:
 
-1. **Adding `SKSurfaceProperties` with `SKPixelGeometry.RgbHorizontal`** when creating rendering surfaces in both the D3D11 and Vulkan backends - this enables LCD subpixel rendering.
+**Use grayscale antialiasing (`SKFontEdging.Antialias`) with full hinting (`SKFontHinting.Full`)** instead of subpixel antialiasing.
 
-2. **Setting `SKFontHinting.Full`** in the text rendering pipeline - this provides stronger grid-fitting and makes text look thicker and more like native Windows ClearType.
+This is the key insight from analyzing S&box's TextBlock.cs (engine/Sandbox.Engine/Systems/UI/Engine/TextBlock.cs):
 
-#### 1. D3D11Backend.cs Changes
-
-**Before:**
 ```csharp
-var imageInfo = new SKImageInfo(size.X, size.Y, SKColorType.Bgra8888, SKAlphaType.Premul);
-_surface = SKSurface.Create(imageInfo);
+// S&box's approach (lines 554-562)
+var o = new Topten.RichTextKit.TextPaintOptions
+{
+    Edging = Smooth switch
+    {
+        FontSmooth.Never => SKFontEdging.Alias,
+        _ => SKFontEdging.Antialias,  // NOT SubpixelAntialias!
+    },
+    Hinting = SKFontHinting.Full,  // Always Full
+};
 ```
 
-**After:**
+#### TextBlockWrapper.cs Changes (The Critical Fix)
+
+#### TextBlockWrapper.cs Changes (The Critical Fix)
+
+**Before (Incorrect - used subpixel antialiasing):**
 ```csharp
-var imageInfo = new SKImageInfo(size.X, size.Y, SKColorType.Bgra8888, SKAlphaType.Premul);
+var edging = _fontSmooth switch
+{
+    FontSmooth.None => SKFontEdging.Alias,
+    FontSmooth.Antialiased => SKFontEdging.SubpixelAntialias,  // Wrong!
+    FontSmooth.GrayscaleAntialiased => SKFontEdging.Antialias,
+    FontSmooth.Auto => SKFontEdging.SubpixelAntialias,  // Wrong!
+    _ => SKFontEdging.SubpixelAntialias
+};
 
-// Configure surface properties for RGB subpixel rendering (ClearType on Windows)
-// This makes text appear sharper and more like native Windows text rendering
-// RgbHorizontal is the most common pixel layout on modern LCD displays
-var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
-
-_surface = SKSurface.Create(imageInfo, surfProps);
+var paintOptions = new TextPaintOptions
+{
+    Edging = edging,
+    Hinting = SKFontHinting.Full,
+};
 ```
 
-#### 2. VulkanBackend.cs Changes
-
-**Before:**
+**After (Correct - matches S&box):**
 ```csharp
-_skSurface = SKSurface.Create(_grContext, false, imageInfo);
+// Match S&box's approach: grayscale antialiasing with full hinting
+var edging = _fontSmooth switch
+{
+    FontSmooth.None => SKFontEdging.Alias,
+    _ => SKFontEdging.Antialias,  // Grayscale AA for all other modes
+};
+
+var hinting = SKFontHinting.Full;  // Always Full, just like S&box
+
+var paintOptions = new TextPaintOptions
+{
+    Edging = edging,
+    Hinting = hinting,
+};
 ```
 
-**After:**
-```csharp
-// Configure surface properties for RGB subpixel rendering (ClearType on Windows)
-// This makes text appear sharper and more like native Windows text rendering
-// RgbHorizontal is the most common pixel layout on modern LCD displays
-var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
+#### D3D11Backend.cs and VulkanBackend.cs Changes (Surface Properties)
+
+These changes add proper surface properties, though they're not strictly necessary since we're using grayscale antialiasing. However, they don't hurt and prepare the code for future enhancements.
 
 // Create a GPU-backed surface with subpixel rendering enabled
 _skSurface = SKSurface.Create(_grContext, false, imageInfo, 0, GRSurfaceOrigin.TopLeft, surfProps, false);
