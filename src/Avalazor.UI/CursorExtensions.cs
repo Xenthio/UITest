@@ -21,15 +21,15 @@ public static class CursorExtensions
             StandardCursor.SizeWE => Silk.NET.Input.StandardCursor.HResize,
             StandardCursor.SizeNS => Silk.NET.Input.StandardCursor.VResize,
             
-            // Map other cursors to closest Silk.NET equivalent
-            StandardCursor.HourGlass => Silk.NET.Input.StandardCursor.Arrow, // No direct equivalent
-            StandardCursor.WaitArrow => Silk.NET.Input.StandardCursor.Arrow,
-            StandardCursor.Up => Silk.NET.Input.StandardCursor.Arrow,
-            StandardCursor.SizeNWSE => Silk.NET.Input.StandardCursor.Hand, // No direct equivalent
-            StandardCursor.SizeNESW => Silk.NET.Input.StandardCursor.Hand, // No direct equivalent
-            StandardCursor.SizeALL => Silk.NET.Input.StandardCursor.Hand,
-            StandardCursor.No => Silk.NET.Input.StandardCursor.Arrow, // No direct equivalent
-            StandardCursor.HandClosed => Silk.NET.Input.StandardCursor.Hand,
+            // Map other cursors to closest Silk.NET equivalent or Arrow for unsupported
+            StandardCursor.HourGlass => Silk.NET.Input.StandardCursor.Arrow, // No hourglass in Silk.NET
+            StandardCursor.WaitArrow => Silk.NET.Input.StandardCursor.Arrow, // No wait arrow in Silk.NET
+            StandardCursor.Up => Silk.NET.Input.StandardCursor.Arrow, // Rarely used
+            StandardCursor.SizeNWSE => Silk.NET.Input.StandardCursor.Arrow, // No diagonal resize in Silk.NET
+            StandardCursor.SizeNESW => Silk.NET.Input.StandardCursor.Arrow, // No diagonal resize in Silk.NET
+            StandardCursor.SizeALL => Silk.NET.Input.StandardCursor.Arrow, // No move-all cursor in Silk.NET
+            StandardCursor.No => Silk.NET.Input.StandardCursor.Arrow, // No prohibited cursor in Silk.NET
+            StandardCursor.HandClosed => Silk.NET.Input.StandardCursor.Hand, // Use open hand as closest match
             
             _ => Silk.NET.Input.StandardCursor.Arrow,
         };

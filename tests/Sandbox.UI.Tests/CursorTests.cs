@@ -88,22 +88,32 @@ public class CursorTests
     public void CursorHelper_AllStandardCursorsHaveMappings()
     {
         // Verify all enum values can be reached via CSS strings
-        var mappedValues = new HashSet<StandardCursor>
+        var testMappings = new (string css, StandardCursor expected)[]
         {
-            CursorHelper.FromCssString("default")!.Value,      // Arrow
-            CursorHelper.FromCssString("text")!.Value,         // IBeam
-            CursorHelper.FromCssString("wait")!.Value,         // HourGlass
-            CursorHelper.FromCssString("crosshair")!.Value,    // Crosshair
-            CursorHelper.FromCssString("progress")!.Value,     // WaitArrow
-            CursorHelper.FromCssString("ns-resize")!.Value,    // SizeNS
-            CursorHelper.FromCssString("ew-resize")!.Value,    // SizeWE
-            CursorHelper.FromCssString("nesw-resize")!.Value,  // SizeNESW
-            CursorHelper.FromCssString("nwse-resize")!.Value,  // SizeNWSE
-            CursorHelper.FromCssString("move")!.Value,         // SizeALL
-            CursorHelper.FromCssString("not-allowed")!.Value,  // No
-            CursorHelper.FromCssString("pointer")!.Value,      // Hand
-            CursorHelper.FromCssString("grabbing")!.Value,     // HandClosed
+            ("default", StandardCursor.Arrow),
+            ("text", StandardCursor.IBeam),
+            ("wait", StandardCursor.HourGlass),
+            ("crosshair", StandardCursor.Crosshair),
+            ("progress", StandardCursor.WaitArrow),
+            ("ns-resize", StandardCursor.SizeNS),
+            ("ew-resize", StandardCursor.SizeWE),
+            ("nesw-resize", StandardCursor.SizeNESW),
+            ("nwse-resize", StandardCursor.SizeNWSE),
+            ("move", StandardCursor.SizeALL),
+            ("not-allowed", StandardCursor.No),
+            ("pointer", StandardCursor.Hand),
+            ("grabbing", StandardCursor.HandClosed),
         };
+
+        var mappedValues = new HashSet<StandardCursor>();
+        
+        foreach (var (css, expected) in testMappings)
+        {
+            var result = CursorHelper.FromCssString(css);
+            Assert.NotNull(result);
+            Assert.Equal(expected, result.Value);
+            mappedValues.Add(result.Value);
+        }
 
         // Note: Up is not commonly used in CSS, so we accept it may not be mappable
         // All other standard cursors should be reachable
