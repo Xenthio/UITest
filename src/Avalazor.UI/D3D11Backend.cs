@@ -396,6 +396,9 @@ public class D3D11Backend : IGraphicsBackend
             _pixelBuffer = new byte[requiredSize];
         }
         
+        // Explicitly request sRGB color space for the destination to ensure conversion from Linear sRGB
+        // using var srgb = SKColorSpace.CreateSrgb();
+        // var info = new SKImageInfo(_width, _height, SKColorType.Bgra8888, SKAlphaType.Premul, srgb);
         var info = new SKImageInfo(_width, _height, SKColorType.Bgra8888, SKAlphaType.Premul);
         
         fixed (byte* pixelsPtr = _pixelBuffer)
@@ -436,11 +439,37 @@ public class D3D11Backend : IGraphicsBackend
         
         // Create a raster surface for software rendering with ClearType-style subpixel rendering
         // This will be blitted to D3D11 for display
+        
+        // Get DirectWrite rendering parameters for proper text rendering on Windows
+        float gamma = 2.2f;
+        float contrast = 1.0f;
+        float clearTypeLevel = 1.0f;
+        int pixelGeometry = 1; // RGB
+        int renderingMode = 0;
+
+        if (OperatingSystem.IsWindows())
+        {
+            try
+            {
+                Avalazor.UI.Native.DirectWriteHelper.GetRenderingParams(out gamma, out contrast, out clearTypeLevel, out pixelGeometry, out renderingMode);
+                Console.WriteLine($"[D3D11Backend] DirectWrite Params: Gamma={gamma}, Contrast={contrast}, ClearType={clearTypeLevel}, Geom={pixelGeometry}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[D3D11Backend] Failed to get DirectWrite params: {ex.Message}");
+            }
+        }
+
+        // Use sRGB Linear color space for correct blending and gamma correction
+        // This matches Chromium's behavior for text rendering
+        // var colorSpace = SKColorSpace.CreateSrgbLinear();
+        // var imageInfo = new SKImageInfo(size.X, size.Y, SKColorType.Bgra8888, SKAlphaType.Premul, colorSpace);
         var imageInfo = new SKImageInfo(size.X, size.Y, SKColorType.Bgra8888, SKAlphaType.Premul);
         
         // Configure surface properties for RGB subpixel rendering (ClearType on Windows)
         // This makes text appear sharper and more like native Windows text rendering
         // RgbHorizontal is the most common pixel layout on modern LCD displays
+        // Note: SkiaSharp currently doesn't expose the constructor to set gamma/contrast directly in SKSurfaceProperties
         var surfProps = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
         
         _surface = SKSurface.Create(imageInfo, surfProps);
